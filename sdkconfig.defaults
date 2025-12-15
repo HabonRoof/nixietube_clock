@@ -1,0 +1,2 @@
+# Default WS2812 LED count
+CONFIG_WS2812_LED_COUNT=2
