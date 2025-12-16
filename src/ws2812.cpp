@@ -9,10 +9,8 @@
 
 namespace
 {
-constexpr rmt_channel_t kRmtChannel = RMT_CHANNEL_0;
-constexpr uint32_t kRmtClockDivider = 2;
-constexpr uint32_t kApbClockHz = 80000000;
-constexpr uint32_t kTicksPerMicrosecond = kApbClockHz / 1000000 / kRmtClockDivider;
+constexpr uint32_t kRmtResolutionHz = 40000000; // 25ns resolution
+constexpr uint32_t kTicksPerMicrosecond = kRmtResolutionHz / 1000000;
 
 constexpr uint32_t kT0hTicks = (kTicksPerMicrosecond * 400) / 1000;
 constexpr uint32_t kT0lTicks = (kTicksPerMicrosecond * 850) / 1000;
@@ -28,7 +26,8 @@ const char *kTag = "ws2812";
 Ws2812Strip::Ws2812Strip(gpio_num_t data_pin, std::size_t led_count)
     : data_pin_(data_pin),
       led_count_(led_count),
-      rmt_driver_ready_(false),
+      tx_channel_(nullptr),
+      copy_encoder_(nullptr),
       pixel_buffer_()
 {
     if (led_count_ == 0)
@@ -43,16 +42,22 @@ Ws2812Strip::Ws2812Strip(gpio_num_t data_pin, std::size_t led_count)
     configure_pad(data_pin_);
     if (configure_rmt(data_pin_) == ESP_OK)
     {
-        rmt_driver_ready_ = true;
         ESP_LOGI(kTag, "WS2812 initialized on GPIO%d (total led_count=%zu)", static_cast<int>(data_pin_), led_count_);
     }
 }
 
 Ws2812Strip::~Ws2812Strip()
 {
-    if (rmt_driver_ready_)
+    if (copy_encoder_)
     {
-        rmt_driver_uninstall(kRmtChannel);
+        rmt_del_encoder(copy_encoder_);
+        copy_encoder_ = nullptr;
+    }
+    if (tx_channel_)
+    {
+        rmt_disable(tx_channel_);
+        rmt_del_channel(tx_channel_);
+        tx_channel_ = nullptr;
     }
 }
 
@@ -111,12 +116,12 @@ esp_err_t Ws2812Strip::fill(uint8_t red, uint8_t green, uint8_t blue)
 
 esp_err_t Ws2812Strip::show()
 {
-    if (!rmt_driver_ready_ || pixel_buffer_.empty())
+    if (!tx_channel_ || !copy_encoder_ || pixel_buffer_.empty())
     {
         return ESP_ERR_INVALID_STATE;
     }
 
-    std::vector<rmt_item32_t> items(led_count_ * kItemsPerLed);
+    std::vector<rmt_symbol_word_t> symbols(led_count_ * kItemsPerLed);
     for (std::size_t led = 0; led < led_count_; ++led)
     {
         uint8_t red = pixel_buffer_[led * kBytesPerPixel + 0];
@@ -125,14 +130,29 @@ esp_err_t Ws2812Strip::show()
         uint8_t grb_bytes[3] = {green, red, blue};
         for (std::size_t byte_index = 0; byte_index < 3; ++byte_index)
         {
-            build_rmt_items_for_byte(&items[led * kItemsPerLed + byte_index * 8], grb_bytes[byte_index]);
+            build_symbols_for_byte(&symbols[led * kItemsPerLed + byte_index * 8], grb_bytes[byte_index]);
         }
     }
 
-    esp_err_t status = rmt_write_items(kRmtChannel, items.data(), items.size(), true);
+    rmt_transmit_config_t transmit_config = {
+        .loop_count = 0,
+        .flags = {
+            .eot_level = 0,
+            .queue_nonblocking = 0,
+        },
+    };
+    esp_err_t status = rmt_transmit(tx_channel_, copy_encoder_, symbols.data(),
+                                    symbols.size() * sizeof(rmt_symbol_word_t), &transmit_config);
     if (status != ESP_OK)
     {
-        ESP_LOGE(kTag, "rmt_write_items failed: %d", status);
+        ESP_LOGE(kTag, "rmt_transmit failed: %d", status);
+        return status;
+    }
+
+    status = rmt_tx_wait_all_done(tx_channel_, pdMS_TO_TICKS(100));
+    if (status != ESP_OK)
+    {
+        ESP_LOGE(kTag, "rmt_tx_wait_all_done failed: %d", status);
         return status;
     }
 
@@ -151,41 +171,69 @@ void Ws2812Strip::configure_pad(gpio_num_t data_pin) const
 
 esp_err_t Ws2812Strip::configure_rmt(gpio_num_t data_pin)
 {
-    rmt_config_t config = RMT_DEFAULT_CONFIG_TX(data_pin, kRmtChannel);
-    config.clk_div = kRmtClockDivider;
-    esp_err_t status = rmt_config(&config);
+    rmt_tx_channel_config_t config = {
+        .gpio_num = data_pin,
+        .clk_src = RMT_CLK_SRC_DEFAULT,
+        .resolution_hz = kRmtResolutionHz,
+        .mem_block_symbols = 64,
+        .trans_queue_depth = 4,
+        .intr_priority = 0,
+        .flags = {
+            .invert_out = 0,
+            .with_dma = 0,
+            .io_loop_back = 0,
+            .io_od_mode = 0,
+            .allow_pd = 0,
+        },
+    };
+    esp_err_t status = rmt_new_tx_channel(&config, &tx_channel_);
     if (status != ESP_OK)
     {
-        ESP_LOGE(kTag, "rmt_config failed: %d", status);
+        ESP_LOGE(kTag, "rmt_new_tx_channel failed: %d", status);
         return status;
     }
-    status = rmt_driver_install(config.channel, 0, 0);
+
+    rmt_copy_encoder_config_t encoder_config = {};
+    status = rmt_new_copy_encoder(&encoder_config, &copy_encoder_);
     if (status != ESP_OK)
     {
-        ESP_LOGE(kTag, "rmt_driver_install failed: %d", status);
+        ESP_LOGE(kTag, "rmt_new_copy_encoder failed: %d", status);
+        rmt_del_channel(tx_channel_);
+        tx_channel_ = nullptr;
+        return status;
+    }
+
+    status = rmt_enable(tx_channel_);
+    if (status != ESP_OK)
+    {
+        ESP_LOGE(kTag, "rmt_enable failed: %d", status);
+        rmt_del_encoder(copy_encoder_);
+        copy_encoder_ = nullptr;
+        rmt_del_channel(tx_channel_);
+        tx_channel_ = nullptr;
         return status;
     }
     return ESP_OK;
 }
 
-void Ws2812Strip::build_rmt_items_for_byte(rmt_item32_t *items, uint8_t byte_value) const
+void Ws2812Strip::build_symbols_for_byte(rmt_symbol_word_t *symbols, uint8_t byte_value) const
 {
     for (int bit = 0; bit < 8; ++bit)
     {
         bool is_one = (byte_value & (1 << (7 - bit))) != 0;
         if (is_one)
         {
-            items[bit].level0 = 1;
-            items[bit].duration0 = kT1hTicks;
-            items[bit].level1 = 0;
-            items[bit].duration1 = kT1lTicks;
+            symbols[bit].level0 = 1;
+            symbols[bit].duration0 = kT1hTicks;
+            symbols[bit].level1 = 0;
+            symbols[bit].duration1 = kT1lTicks;
         }
         else
         {
-            items[bit].level0 = 1;
-            items[bit].duration0 = kT0hTicks;
-            items[bit].level1 = 0;
-            items[bit].duration1 = kT0lTicks;
+            symbols[bit].level0 = 1;
+            symbols[bit].duration0 = kT0hTicks;
+            symbols[bit].level1 = 0;
+            symbols[bit].duration1 = kT0lTicks;
         }
     }
 }

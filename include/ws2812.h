@@ -2,7 +2,8 @@
 #pragma once
 
 #include "driver/gpio.h"
-#include "driver/rmt.h"
+#include "driver/rmt_tx.h"
+#include "driver/rmt_encoder.h"
 #include "esp_err.h"
 #include <cstddef>
 #include <cstdint>
@@ -27,10 +28,11 @@ public:
 private:
     void configure_pad(gpio_num_t data_pin) const;
     esp_err_t configure_rmt(gpio_num_t data_pin);
-    void build_rmt_items_for_byte(rmt_item32_t *items, uint8_t byte_value) const;
+    void build_symbols_for_byte(rmt_symbol_word_t *symbols, uint8_t byte_value) const;
 
     gpio_num_t data_pin_;
     std::size_t led_count_;
-    bool rmt_driver_ready_;
+    rmt_channel_handle_t tx_channel_;
+    rmt_encoder_handle_t copy_encoder_;
     std::vector<uint8_t> pixel_buffer_;
 };
