@@ -25,8 +25,8 @@ constexpr std::size_t kItemsPerLed = 24;
 const char *kTag = "ws2812";
 } // namespace
 
-Ws2812Strip::Ws2812Strip(gpio_num_t output_pin, std::size_t led_count)
-    : output_pin_(output_pin),
+Ws2812Strip::Ws2812Strip(gpio_num_t data_pin, std::size_t led_count)
+    : data_pin_(data_pin),
       led_count_(led_count),
       rmt_driver_ready_(false),
       pixel_buffer_()
@@ -40,11 +40,11 @@ Ws2812Strip::Ws2812Strip(gpio_num_t output_pin, std::size_t led_count)
 #endif
     }
     pixel_buffer_.assign(led_count_ * kBytesPerPixel, 0);
-    configure_pad(output_pin_);
-    if (configure_rmt(output_pin_) == ESP_OK)
+    configure_pad(data_pin_);
+    if (configure_rmt(data_pin_) == ESP_OK)
     {
         rmt_driver_ready_ = true;
-        ESP_LOGI(kTag, "WS2812 initialized on GPIO%d (led_count=%zu)", static_cast<int>(output_pin_), led_count_);
+        ESP_LOGI(kTag, "WS2812 initialized on GPIO%d (total led_count=%zu)", static_cast<int>(data_pin_), led_count_);
     }
 }
 
@@ -140,18 +140,18 @@ esp_err_t Ws2812Strip::show()
     return ESP_OK;
 }
 
-void Ws2812Strip::configure_pad(gpio_num_t output_pin) const
+void Ws2812Strip::configure_pad(gpio_num_t data_pin) const
 {
-    if (GPIO_IS_VALID_GPIO(output_pin))
+    if (GPIO_IS_VALID_GPIO(data_pin))
     {
-        esp_rom_gpio_pad_select_gpio(output_pin);
-        gpio_reset_pin(output_pin);
+        esp_rom_gpio_pad_select_gpio(data_pin);
+        gpio_reset_pin(data_pin);
     }
 }
 
-esp_err_t Ws2812Strip::configure_rmt(gpio_num_t output_pin)
+esp_err_t Ws2812Strip::configure_rmt(gpio_num_t data_pin)
 {
-    rmt_config_t config = RMT_DEFAULT_CONFIG_TX(output_pin, kRmtChannel);
+    rmt_config_t config = RMT_DEFAULT_CONFIG_TX(data_pin, kRmtChannel);
     config.clk_div = kRmtClockDivider;
     esp_err_t status = rmt_config(&config);
     if (status != ESP_OK)
