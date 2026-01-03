@@ -1,6 +1,7 @@
 #pragma once
 
 #include "color_model.h"
+#include "led_group.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include <cstdint>
@@ -11,6 +12,8 @@ enum class LedMode
     kStaticColor,
     kDigitRainbowFlow,
     kPixelSpin,
+    kGroupRainbow,
+    kBreathing,
 };
 
 enum class SpinDirection
@@ -65,10 +68,18 @@ public:
     void set_numeral(uint8_t numeral);
     void update_back_light(const BackLightState &back_light);
 
+    void attach_led_group(const LedGroup &group);
+    void update(uint32_t dt_ms);
+
 private:
     void lock() const;
     void unlock() const;
 
     mutable SemaphoreHandle_t mutex_;
     DigitState state_;
+    LedGroup led_group_;
+
+    // Animation state
+    float animation_phase_;
+    float spin_phase_;
 };

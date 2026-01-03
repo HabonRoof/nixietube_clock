@@ -9,7 +9,9 @@
 #include <cstdint>
 #include <vector>
 
-class Ws2812Strip
+#include "led_interface.h"
+
+class Ws2812Strip : public ILedStrip
 {
 public:
     static constexpr std::size_t kTotalLedCount = 24;
@@ -19,11 +21,11 @@ public:
     explicit Ws2812Strip(gpio_num_t data_pin, std::size_t led_count = kTotalLedCount);
     ~Ws2812Strip();
 
-    std::size_t get_led_count() const;
-    esp_err_t set_pixel(std::size_t index, uint8_t red, uint8_t green, uint8_t blue);
+    std::size_t get_led_count() const override;
+    esp_err_t set_pixel(std::size_t index, uint8_t red, uint8_t green, uint8_t blue) override;
     esp_err_t set_group(std::size_t group_index, uint8_t red, uint8_t green, uint8_t blue);
     esp_err_t fill(uint8_t red, uint8_t green, uint8_t blue);
-    esp_err_t show();
+    esp_err_t show() override;
 
 private:
     void configure_pad(gpio_num_t data_pin) const;

@@ -70,7 +70,7 @@ void test_nixie_digit_state_roundtrip()
         .speed = 0.8f,
     };
     LedAnimationConfig animation{
-        .mode = LedAnimation::kPixelSpin,
+        .mode = LedMode::kPixelSpin,
         .breath = breath,
         .spin = spin,
     };
