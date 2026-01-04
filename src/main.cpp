@@ -8,7 +8,7 @@
 #include "driver/gpio.h"
 
 static const char *kLogTag = "main";
-static constexpr gpio_num_t kLedDataInPin = static_cast<gpio_num_t>(39);
+static constexpr gpio_num_t kLedDataInPin = static_cast<gpio_num_t>(11);
 static constexpr gpio_num_t kDfPlayerRxPin = static_cast<gpio_num_t>(17);
 static constexpr gpio_num_t kDfPlayerTxPin = static_cast<gpio_num_t>(18);
 static constexpr uart_port_t kDfPlayerUart = UART_NUM_1;
@@ -32,4 +32,6 @@ extern "C" void app_main(void)
     audio_config.rx_pin = kDfPlayerRxPin;
     initialize_audio_module(audio_config, audio_handles);
     (void)audio_handles; // reserved for later control hooks
+    vTaskDelay(5000);
+    audio_handles.player->stop();  
 }
