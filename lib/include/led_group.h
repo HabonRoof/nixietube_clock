@@ -8,8 +8,7 @@ class LedGroup
 {
 public:
     LedGroup() = default;
-    
-    // Allow construction from a list of Leds if needed, or just methods to add
+
     void add_led(const Led &led)
     {
         leds_.push_back(led);
@@ -20,14 +19,9 @@ public:
         return leds_.size();
     }
 
-    Led &operator[](std::size_t index)
+    bool empty() const
     {
-        return leds_[index];
-    }
-
-    const Led &operator[](std::size_t index) const
-    {
-        return leds_[index];
+        return leds_.empty();
     }
 
     void set_hsv(const HsvColor &hsv)
@@ -54,17 +48,6 @@ public:
         }
     }
 
-    void set_color_for_subset(std::size_t start_index, std::size_t count, const HsvColor &color)
-    {
-        for (std::size_t i = 0; i < count; ++i)
-        {
-            if (start_index + i < leds_.size())
-            {
-                leds_[start_index + i].set_hsv(color);
-            }
-        }
-    }
-    
     // Iterators
     using iterator = std::vector<Led>::iterator;
     using const_iterator = std::vector<Led>::const_iterator;

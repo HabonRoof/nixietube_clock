@@ -3,7 +3,7 @@
 #include "color_model.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "nixie_digit.h"
+#include "nixie_tube.h"
 
 void setUp() {}
 void tearDown() {}
@@ -60,24 +60,10 @@ void test_gamma_extremes()
 
 void test_nixie_digit_state_roundtrip()
 {
-    NixieDigit digit;
-    BreathConfig breath{
-        .enabled = true,
-        .speed = 1.5f,
-    };
-    SpinConfig spin{
-        .direction = SpinDirection::kCounterClockwise,
-        .speed = 0.8f,
-    };
-    LedAnimationConfig animation{
-        .mode = LedMode::kPixelSpin,
-        .breath = breath,
-        .spin = spin,
-    };
+    NixieTube digit;
     BackLightState back_light{
         .color = HsvColor{90, 200, 180},
         .brightness = 180,
-        .animation = animation,
     };
     DigitState expected{
         .numeral = 7,
@@ -92,11 +78,6 @@ void test_nixie_digit_state_roundtrip()
     TEST_ASSERT_EQUAL_UINT8(expected.back_light.color.saturation, actual.back_light.color.saturation);
     TEST_ASSERT_EQUAL_UINT8(expected.back_light.color.value, actual.back_light.color.value);
     TEST_ASSERT_EQUAL_UINT8(expected.back_light.brightness, actual.back_light.brightness);
-    TEST_ASSERT_EQUAL(expected.back_light.animation.mode, actual.back_light.animation.mode);
-    TEST_ASSERT_EQUAL(expected.back_light.animation.breath.enabled, actual.back_light.animation.breath.enabled);
-    TEST_ASSERT_FLOAT_WITHIN(0.0001f, expected.back_light.animation.breath.speed, actual.back_light.animation.breath.speed);
-    TEST_ASSERT_EQUAL(expected.back_light.animation.spin.direction, actual.back_light.animation.spin.direction);
-    TEST_ASSERT_FLOAT_WITHIN(0.0001f, expected.back_light.animation.spin.speed, actual.back_light.animation.spin.speed);
 }
 
 extern "C" void app_main(void)
