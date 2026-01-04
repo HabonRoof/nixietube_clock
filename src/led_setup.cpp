@@ -14,7 +14,7 @@ NixieTubeArray &nixie_tube_array()
 BackLightState make_default_backlight(uint8_t brightness)
 {
     BackLightState back_light{};
-    back_light.color = HsvColor{180, 255, 255};
+    back_light.color = HsvColor{35, 255, 255};
     back_light.brightness = brightness;
     return back_light;
 }

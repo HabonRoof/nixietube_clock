@@ -22,16 +22,30 @@
   - Base `LedEffect`: stores targets (`std::vector<NixieTube*>`), base `BackLightState`, enabled flag, and a mutex.
   - `BreathEffect`: parameters `speed_hz`, `max_brightness`; modulates brightness sinusoidally.
   - `RainbowEffect`: parameter `degrees_per_second`; sweeps hue while preserving brightness.
-  - `LedService`: single FreeRTOS task ticking effects; categories (`Backlight`, reserved `Beats`) ensure one active effect per lane. Mutex guards configuration; task calls `tick(dt_ms)` then `strip.show()` when updates occurred.
+- `LedService`: single FreeRTOS task ticking effects; categories (`Backlight`, reserved `Beats`) ensure one active effect per lane. Mutex guards configuration; task calls `tick(dt_ms)` then `strip.show()` when updates occurred.
 - Setup (`lib/include/led_setup.h`, `src/led_setup.cpp`):
   - Builds tube array, attaches LED groups, seeds default backlight, wires `LedService` with breathing backlight and rainbow ready but disabled.
   - Returns `LedControlHandles {service, backlight, rainbow}` for higher-level control.
+
+## Audio (DFPlayer Mini)
+- UART-backed DFPlayer control (`lib/include/dfplayer_mini.h`, `src/dfplayer_mini.cpp`):
+  - Commands for volume (set/up/down), track playback, next/previous, loop toggling, pause/resume, EQ presets, low-power sleep/wake, and reset.
+  - Holds `AudioPlaybackState` (volume, track, loop, low power, paused) behind a FreeRTOS mutex.
+- Audio setup (`lib/include/audio_setup.h`, `src/audio_setup.cpp`):
+  - `AudioConfig` defaults to `UART_NUM_1` with TX=GPIO18, RX=GPIO17 at 9600 baud; sets a starting volume/track and optional loop/low-power flags.
+  - `initialize_audio_module` configures the UART, boots the DFPlayer, and returns `AudioControlHandles { player }` for later control while keeping `app_main` slim.
+  - Static track-name map logs friendly titles when playing tracks (e.g., "steins gate opening1/2").
+- Audio control quickstart (after calling `initialize_audio_module` and holding `AudioControlHandles audio_handles`):
+  - Start/change track: `audio_handles.player->play_track(track_number);`
+  - Pause/resume: `audio_handles.player->pause();` then `audio_handles.player->resume();`
+  - Stop playback: `audio_handles.player->stop();` (sends loop-off + pause)
+  - Other helpers: `play_next()`, `play_previous()`, `set_loop(bool)`, `set_low_power_mode(bool)`, `set_volume(uint8_t)`.
 
 ## Adding a New LED Effect (step by step)
 1) **Define the effect class**  
    - Derive from `LedEffect` in `led_effect.h/led_effect.cpp`.  
    - Implement `run(uint32_t dt_ms)`; use `base_backlight()`, adjust its fields, and call `apply_backlight_to_targets()`.  
-   - Add setters for parameters you need (e.g., speed, color); guard shared state with the provided mutex (`mutex_handle()`).
+   - Add setters for parameters you need (e.g., speed, color); guard shared state with the provided mutex (`mutex_handle()`).  
 
 2) **Instantiate and configure**  
    - In `initialize_led_module` (or a new setup file), create a `static` instance of your effect.  
