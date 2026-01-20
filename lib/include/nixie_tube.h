@@ -1,7 +1,6 @@
 #pragma once
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
 #include <cstdint>
 
 struct DigitState
@@ -23,9 +22,5 @@ public:
     void set_numeral(uint8_t numeral);
 
 private:
-    void lock() const;
-    void unlock() const;
-
-    mutable SemaphoreHandle_t mutex_;
     DigitState state_;
 };
