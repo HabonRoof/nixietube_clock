@@ -61,23 +61,14 @@ void test_gamma_extremes()
 void test_nixie_digit_state_roundtrip()
 {
     NixieTube digit;
-    BackLightState back_light{
-        .color = HsvColor{90, 200, 180},
-        .brightness = 180,
-    };
     DigitState expected{
         .numeral = 7,
         .nixie_brightness = 150,
-        .back_light = back_light,
     };
     digit.set_state(expected);
     DigitState actual = digit.get_state();
     TEST_ASSERT_EQUAL_UINT8(expected.numeral, actual.numeral);
     TEST_ASSERT_EQUAL_UINT8(expected.nixie_brightness, actual.nixie_brightness);
-    TEST_ASSERT_EQUAL_UINT16(expected.back_light.color.hue, actual.back_light.color.hue);
-    TEST_ASSERT_EQUAL_UINT8(expected.back_light.color.saturation, actual.back_light.color.saturation);
-    TEST_ASSERT_EQUAL_UINT8(expected.back_light.color.value, actual.back_light.color.value);
-    TEST_ASSERT_EQUAL_UINT8(expected.back_light.brightness, actual.back_light.brightness);
 }
 
 extern "C" void app_main(void)

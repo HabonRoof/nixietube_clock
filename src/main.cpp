@@ -1,13 +1,18 @@
-#include "ws2812.h"
-#include "led_setup.h"
-#include "audio_setup.h"
-
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
 
+#include "nixie_driver.h"
+#include "led_driver.h"
+#include "audio_driver.h"
+#include "daemons/display_daemon.h"
+#include "daemons/audio_daemon.h"
+#include "system_controller.h"
+
 static const char *kLogTag = "main";
+
+// Pin Definitions
 static constexpr gpio_num_t kLedDataInPin = static_cast<gpio_num_t>(11);
 static constexpr gpio_num_t kDfPlayerRxPin = static_cast<gpio_num_t>(17);
 static constexpr gpio_num_t kDfPlayerTxPin = static_cast<gpio_num_t>(18);
@@ -15,23 +20,35 @@ static constexpr uart_port_t kDfPlayerUart = UART_NUM_1;
 
 extern "C" void app_main(void)
 {
-    ESP_LOGI(kLogTag, "Initializing Nixie Clock backlight...");
+    ESP_LOGI(kLogTag, "Starting Nixie Clock System...");
 
-    static Ws2812Strip led_strip(kLedDataInPin);
+    // 1. Initialize Hardware Drivers
+    
+    // Initialize LED Strip Driver
+    static LedDriver led_driver(kLedDataInPin);
+    
+    // Initialize Nixie Driver
+    // Now NixieDriver manages its own tubes internally.
+    static NixieDriver nixie_driver; 
+    
+    // Initialize Audio Driver
+    static AudioDriver audio_driver(kDfPlayerUart, kDfPlayerTxPin, kDfPlayerRxPin);
 
-    BackLightState default_backlight = make_default_backlight(128);
-    LedControlHandles led_handles{};
-    initialize_led_module(led_strip, default_backlight, led_handles);
-    (void)led_handles; // for future WebUI/App wiring
+    // 2. Initialize Daemons
+    static DisplayDaemon display_daemon(nixie_driver, led_driver);
+    static AudioDaemon audio_daemon(audio_driver);
 
-    ESP_LOGI(kLogTag, "Initializing DFPlayer Mini audio...");
-    AudioControlHandles audio_handles{};
-    AudioConfig audio_config = make_default_audio_config();
-    audio_config.uart_port = kDfPlayerUart;
-    audio_config.tx_pin = kDfPlayerTxPin;
-    audio_config.rx_pin = kDfPlayerRxPin;
-    initialize_audio_module(audio_config, audio_handles);
-    (void)audio_handles; // reserved for later control hooks
-    vTaskDelay(5000);
-    audio_handles.player->stop();  
+    // 3. Initialize System Controller
+    static SystemController system_controller(display_daemon, audio_daemon);
+
+    // 4. Start Tasks
+    ESP_LOGI(kLogTag, "Starting Daemons...");
+    display_daemon.start();
+    audio_daemon.start();
+    system_controller.start();
+
+    ESP_LOGI(kLogTag, "System Running.");
+    
+    // Main task can now delete itself or monitor stack usage
+    vTaskDelete(nullptr);
 }

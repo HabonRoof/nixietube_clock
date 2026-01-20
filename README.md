@@ -7,61 +7,40 @@
 
 ## Nixie Tube Model
 - `NixieTube` (`lib/include/nixie_tube.h`, `src/nixie_tube.cpp`):
-  - Holds `DigitState` (numeral, nixie brightness, `BackLightState` with HSV + brightness).
-  - Owns an attached `LedGroup` (4 LEDs for one tube).
-  - Thread-safe via an internal mutex around state changes and LED updates.
-  - Methods: `set_state`, `update_back_light`, `turn_off_back_light`, `attach_led_group`.
-- `NixieTubeArray` (`lib/include/nixie_array.h`, `src/nixie_array.cpp`):
-  - Owns the 6 tubes; attaches LED groups to the shared strip; seeds backlight defaults; exposes tube pointers for effects.
+  - Holds `DigitState` (numeral, nixie brightness).
+  - Thread-safe via an internal mutex around state changes.
+  - Methods: `set_state`, `set_numeral`.
+- `NixieDriver` (`lib/include/nixie_driver.h`, `src/nixie_driver.cpp`):
+  - Owns the 6 tubes directly.
+  - Provides high-level methods like `display_time`.
 
-## LED Effects and Service
-- Strip/LED abstractions:
-  - `ILedStrip` interface, `Ws2812Strip` implementation (`lib/include/ws2812.h`, `src/ws2812.cpp`).
-  - `Led` wraps a strip pixel; `LedGroup` holds per-tube LEDs.
-- Effect engine (`lib/include/led_effect.h`, `src/led_effect.cpp`):
-  - Base `LedEffect`: stores targets (`std::vector<NixieTube*>`), base `BackLightState`, enabled flag, and a mutex.
-  - `BreathEffect`: parameters `speed_hz`, `max_brightness`; modulates brightness sinusoidally.
-  - `RainbowEffect`: parameter `degrees_per_second`; sweeps hue while preserving brightness.
-- `LedService`: single FreeRTOS task ticking effects; categories (`Backlight`, reserved `Beats`) ensure one active effect per lane. Mutex guards configuration; task calls `tick(dt_ms)` then `strip.show()` when updates occurred.
-- Setup (`lib/include/led_setup.h`, `src/led_setup.cpp`):
-  - Builds tube array, attaches LED groups, seeds default backlight, wires `LedService` with breathing backlight and rainbow ready but disabled.
-  - Returns `LedControlHandles {service, backlight, rainbow}` for higher-level control.
+## LED Control
+- `ILedDriver` (`lib/include/led_driver.h`, `src/led_driver.cpp`):
+  - Abstract interface for controlling LEDs.
+  - `LedDriver` implementation wraps `Ws2812Strip`.
+- `DisplayDaemon` (`src/daemons/display_daemon.cpp`):
+  - Manages LED effects (Breath, Rainbow) internally.
+  - Maps tubes to LEDs (e.g., Tube 0 -> LEDs 0-3) and updates `LedDriver` directly.
 
 ## Audio (DFPlayer Mini)
 - UART-backed DFPlayer control (`lib/include/dfplayer_mini.h`, `src/dfplayer_mini.cpp`):
   - Commands for volume (set/up/down), track playback, next/previous, loop toggling, pause/resume, EQ presets, low-power sleep/wake, and reset.
   - Holds `AudioPlaybackState` (volume, track, loop, low power, paused) behind a FreeRTOS mutex.
-- Audio setup (`lib/include/audio_setup.h`, `src/audio_setup.cpp`):
-  - `AudioConfig` defaults to `UART_NUM_1` with TX=GPIO18, RX=GPIO17 at 9600 baud; sets a starting volume/track and optional loop/low-power flags.
-  - `initialize_audio_module` configures the UART, boots the DFPlayer, and returns `AudioControlHandles { player }` for later control while keeping `app_main` slim.
-  - Static track-name map logs friendly titles when playing tracks (e.g., "steins gate opening1/2").
-- Audio control quickstart (after calling `initialize_audio_module` and holding `AudioControlHandles audio_handles`):
-  - Start/change track: `audio_handles.player->play_track(track_number);`
-  - Pause/resume: `audio_handles.player->pause();` then `audio_handles.player->resume();`
-  - Stop playback: `audio_handles.player->stop();` (sends loop-off + pause)
-  - Other helpers: `play_next()`, `play_previous()`, `set_loop(bool)`, `set_low_power_mode(bool)`, `set_volume(uint8_t)`.
+- Audio Driver (`lib/include/audio_driver.h`, `src/audio_driver.cpp`):
+  - `IAudioDriver` interface defines standard audio operations (play, stop, pause, volume control).
+  - `AudioDriver` implements the interface using `DfPlayerMini`.
+  - Initialized in `app_main` with UART configuration.
+- Audio Daemon (`src/daemons/audio_daemon.cpp`, `src/daemons/audio_daemon.h`):
+  - Runs in its own task to handle audio operations asynchronously.
+  - Receives commands via a queue (`AudioMessage`).
+  - Processes commands like `PLAY_TRACK`, `STOP`, `PAUSE`, `SET_VOLUME`, etc.
 
-## Adding a New LED Effect (step by step)
-1) **Define the effect class**  
-   - Derive from `LedEffect` in `led_effect.h/led_effect.cpp`.  
-   - Implement `run(uint32_t dt_ms)`; use `base_backlight()`, adjust its fields, and call `apply_backlight_to_targets()`.  
-   - Add setters for parameters you need (e.g., speed, color); guard shared state with the provided mutex (`mutex_handle()`).  
+## Adding a New LED Effect
+1) **Implement effect logic in `DisplayDaemon`**
+   - Add a new method `run_my_effect(uint32_t dt_ms)` in `DisplayDaemon`.
+   - Use `apply_backlight_to_all(state)` or manipulate `led_driver_` directly.
 
-2) **Instantiate and configure**  
-   - In `initialize_led_module` (or a new setup file), create a `static` instance of your effect.  
-   - Call `set_targets(nixie_tube_array().tube_pointers())`, `set_base_backlight(...)`, parameter setters, and `set_enabled(true/false)` depending on default state.
-
-3) **Register with the service**  
-   - Decide the lane: use `LedEffectCategory::kBacklight` for the main backlight, or `kBeats` if you later use the reserved lane.  
-   - `led_service.set_effect(category, &your_effect);`  
-   - Enable/disable the lane with `enable_category(category, true/false)`; keep only one effect active per lane to avoid fighting writes.
-
-4) **Expose control hooks**  
-   - Surface handles (similar to `LedControlHandles`) so UI/network code can call setters and `set_targets` (single tube vs all tubes).
-
-5) **Test quickly**  
-   - Build (`pio run` or `idf.py build`) and flash. Use logs to confirm the service loop is running and the effect toggles as expected.
-
-### Notes
-- Mutex usage: `LedEffect`/`LedService` guard shared config with FreeRTOS mutexes; `NixieTube` guards its state similarly. Avoid long work inside the critical sections.
-- Categories: they’re optional but help ensure only one effect drives a lane (e.g., backlight) at a time; you can swap the effect pointer to change modes.
+2) **Register with DisplayDaemon**
+   - Add a new `LedEffectType` enum.
+   - Update `DisplayDaemon::process_message` to handle switching to the new effect.
+   - Update `DisplayDaemon::update_effects` to call your new method.

@@ -1,0 +1,88 @@
+#pragma once
+
+#include <cstdint>
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+
+// --- Audio Daemon Messages ---
+enum class AudioCmd : uint8_t
+{
+    PLAY_TRACK,
+    STOP,
+    PAUSE,
+    RESUME,
+    SET_VOLUME,
+    VOLUME_UP,
+    VOLUME_DOWN,
+    NEXT,
+    PREVIOUS
+};
+
+struct AudioMessage
+{
+    AudioCmd command;
+    union
+    {
+        uint16_t track_number;
+        uint8_t volume;
+    } param;
+};
+
+// --- Display Daemon Messages ---
+enum class DisplayCmd : uint8_t
+{
+    UPDATE_TIME,
+    SET_MODE,
+    SET_BACKLIGHT_COLOR,
+    SET_BACKLIGHT_BRIGHTNESS,
+    SET_EFFECT,
+    ENABLE_EFFECT
+};
+
+enum class DisplayMode : uint8_t
+{
+    CLOCK_HHMMSS,
+    DATE_YYMMDD,
+    SETTING_MODE,
+    OFF
+};
+
+struct DisplayMessage
+{
+    DisplayCmd command;
+    union
+    {
+        struct
+        {
+            uint8_t h, m, s;
+        } time;
+        DisplayMode mode;
+        struct
+        {
+            uint8_t r, g, b;
+        } color;
+        uint8_t brightness;
+        uint8_t effect_id; // 0: None, 1: Breath, 2: Rainbow, etc.
+    } data;
+};
+
+// --- System Controller Messages (Input from other tasks/ISRs) ---
+enum class SystemEvent : uint8_t
+{
+    BUTTON_PRESSED,
+    ALARM_TRIGGERED,
+    WIFI_CONNECTED,
+    WIFI_DISCONNECTED,
+    RTC_UPDATE
+};
+
+struct SystemMessage
+{
+    SystemEvent event;
+    union
+    {
+        uint8_t button_id;
+        // TODO: Add other features 
+        // Add other event data as needed
+    } data;
+};
