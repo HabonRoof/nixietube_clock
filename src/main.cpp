@@ -9,6 +9,7 @@
 #include "daemons/display_daemon.h"
 #include "daemons/audio_daemon.h"
 #include "system_controller.h"
+#include "daemons/cli_daemon.h"
 
 static const char *kLogTag = "main";
 
@@ -41,11 +42,15 @@ extern "C" void app_main(void)
     // 3. Initialize System Controller
     static SystemController system_controller(display_daemon, audio_daemon);
 
-    // 4. Start Tasks
+    // 4. Initialize CLI Daemon
+    static CliDaemon cli_daemon(system_controller);
+
+    // 5. Start Tasks
     ESP_LOGI(kLogTag, "Starting Daemons...");
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
+    cli_daemon.start();
 
     ESP_LOGI(kLogTag, "System Running.");
     

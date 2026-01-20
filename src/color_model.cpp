@@ -78,6 +78,50 @@ RgbColor hsv_to_rgb(const HsvColor &hsv)
     return RgbColor{red, green, blue};
 }
 
+HsvColor rgb_to_hsv(const RgbColor &rgb)
+{
+    float r = static_cast<float>(rgb.red) / 255.0f;
+    float g = static_cast<float>(rgb.green) / 255.0f;
+    float b = static_cast<float>(rgb.blue) / 255.0f;
+
+    float max_val = std::max({r, g, b});
+    float min_val = std::min({r, g, b});
+    float delta = max_val - min_val;
+
+    float h = 0.0f;
+    float s = 0.0f;
+    float v = max_val;
+
+    if (delta > 0.0f)
+    {
+        s = delta / max_val;
+
+        if (max_val == r)
+        {
+            h = (g - b) / delta;
+        }
+        else if (max_val == g)
+        {
+            h = 2.0f + (b - r) / delta;
+        }
+        else
+        {
+            h = 4.0f + (r - g) / delta;
+        }
+
+        h *= 60.0f;
+        if (h < 0.0f)
+        {
+            h += 360.0f;
+        }
+    }
+
+    return HsvColor{
+        static_cast<uint16_t>(std::round(h)),
+        static_cast<uint8_t>(std::round(s * 255.0f)),
+        static_cast<uint8_t>(std::round(v * 255.0f))};
+}
+
 RgbColor apply_gamma(const RgbColor &linear_color)
 {
     RgbColor corrected{};

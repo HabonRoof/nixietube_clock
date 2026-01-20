@@ -35,6 +35,16 @@
   - Receives commands via a queue (`AudioMessage`).
   - Processes commands like `PLAY_TRACK`, `STOP`, `PAUSE`, `SET_VOLUME`, etc.
 
+## CLI Interface
+The system includes a UART-based CLI for debugging and control.
+- **Connection**: 115200 baud, 8N1.
+- **Commands**:
+  - `set_nixie --number <value>`: Display a specific number on the tubes.
+  - `set_backlight --rgb <r,g,b> --brightness <value>`: Set backlight color and brightness.
+  - `get_uuid`: Get the device UUID (MAC address).
+  - `get_hw_version`: Get hardware version.
+  - `get_fw_version`: Get firmware version (git commit).
+
 ## Adding a New LED Effect
 1) **Implement effect logic in `DisplayDaemon`**
    - Add a new method `run_my_effect(uint32_t dt_ms)` in `DisplayDaemon`.

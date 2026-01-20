@@ -41,6 +41,7 @@ private:
 
     // State
     DisplayMode current_mode_;
+    uint32_t manual_number_;
     LedEffectType current_effect_type_;
     
     // Effect parameters
