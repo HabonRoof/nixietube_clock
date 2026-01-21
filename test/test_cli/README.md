@@ -29,7 +29,11 @@ This document outlines the test plan for the Nixie Clock CLI.
     *   Expected Result: Output similar to `HW Version: ESP32-S3 (Rev 1), Board: v1.0`.
 8.  **Get FW Version**:
     *   Command: `get_fw_version`
-    *   Expected Result: Output similar to `FW Version: a1b2c3d...`.
+    *   Expected Result: Output similar to:
+        ```
+        App Version: a1b2c3d...
+        IDF Version: v5.x.x...
+        ```
 9.  **Invalid Command**:
     *   Command: `set_nixie --number` (missing value)
     *   Expected Result: Error message indicating missing argument.

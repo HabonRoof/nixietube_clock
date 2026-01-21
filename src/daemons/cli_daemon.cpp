@@ -17,7 +17,7 @@ static SystemController *g_system_controller = nullptr;
 #define GIT_COMMIT_HASH "unknown"
 #endif
 
-#define DEV_BOARD_VERSION "v1.0" // Hardcoded for now
+#define DEV_BOARD_VERSION "v0.9.0" // Hardcoded for now
 
 // --- Command: set_nixie ---
 struct set_nixie_args {
@@ -113,7 +113,8 @@ static int get_hw_version_func(int argc, char **argv)
 // --- Command: get_fw_version ---
 static int get_fw_version_func(int argc, char **argv)
 {
-    printf("FW Version: %s\n", GIT_COMMIT_HASH);
+    printf("App Version: %s\n", GIT_COMMIT_HASH);
+    printf("IDF Version: %s\n", esp_get_idf_version());
     return 0;
 }
 
@@ -238,7 +239,7 @@ void CliDaemon::loop()
            "\n");
 
     while (true) {
-        char *line = linenoise("nixie> ");
+        char *line = linenoise("nixie_clock> ");
         if (line == NULL) {
             break;
         }
