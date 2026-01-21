@@ -53,7 +53,7 @@ static int set_nixie_func(int argc, char **argv)
 
 // --- Command: set_backlight ---
 struct set_backlight_args {
-    struct arg_int *rgb;
+    struct arg_str *rgb;
     struct arg_int *brightness;
     struct arg_end *end;
 };
@@ -75,15 +75,26 @@ static int set_backlight_func(int argc, char **argv)
     msg.data.cli.backlight.has_brightness = false;
 
     if (backlight_args.rgb->count > 0) {
-        msg.data.cli.backlight.has_color = true;
-        msg.data.cli.backlight.r = backlight_args.rgb->ival[0];
-        msg.data.cli.backlight.g = backlight_args.rgb->ival[1];
-        msg.data.cli.backlight.b = backlight_args.rgb->ival[2];
+        int r, g, b;
+        if (sscanf(backlight_args.rgb->sval[0], "%d,%d,%d", &r, &g, &b) == 3) {
+            // TODO: check RGB value is in 255 range
+            msg.data.cli.backlight.has_color = true;
+            msg.data.cli.backlight.r = r;
+            msg.data.cli.backlight.g = g;
+            msg.data.cli.backlight.b = b;
+            printf("set backlight Color \e[0;31mR:%d, \e[0;32mG:%d, \e[0;34mB:%d\n\e[39m",r, g, b);
+        } else {
+            printf("Invalid RGB format. Use r,g,b\n");
+            printf("For example: 'set_backlight --rgb 255,255,255'");
+            return 1;
+        }
     }
 
     if (backlight_args.brightness->count > 0) {
         msg.data.cli.backlight.has_brightness = true;
+        // TODO: check brightness value is in 255 range
         msg.data.cli.backlight.brightness = backlight_args.brightness->ival[0];
+        printf("set backlight Brightness:%d\n",msg.data.cli.backlight.brightness);
     }
 
     if (g_system_controller) {
@@ -106,7 +117,7 @@ static int get_hw_version_func(int argc, char **argv)
 {
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
-    printf("HW Version: ESP32-S3 (Rev %d), Board: %s\n", chip_info.revision, DEV_BOARD_VERSION);
+    printf("HW Version: ESP32-S3 (Rev %d)\nBoard version: %s\n", chip_info.revision, DEV_BOARD_VERSION);
     return 0;
 }
 
@@ -114,7 +125,30 @@ static int get_hw_version_func(int argc, char **argv)
 static int get_fw_version_func(int argc, char **argv)
 {
     printf("App Version: %s\n", GIT_COMMIT_HASH);
-    printf("IDF Version: %s\n", esp_get_idf_version());
+    printf("IDF FW Version: %s\n", esp_get_idf_version());
+    return 0;
+}
+
+// --- Command: get_fw_version ---
+static int reboot_func(int argc, char **argv)
+{
+    printf("Reboot the device");
+    esp_restart();
+    return 0;
+}
+
+// --- Command: help ---
+static int help_func(int argc, char **argv)
+{
+    // TODO: complete the help dialog
+    printf("============= NIXIE TUBE CLOCK CLI V0.9.0 ============================\n");
+    printf("help                                            Show this help message\n");
+    printf("set_backlight --rgb <r,g,b> --brightness <int>  Set LED backlight color and brightness\n");
+    printf("set_nixie --number <123456>                     Set nixie digit number, 6 digits\n");
+    printf("get_uuid                                        Get UUID of device\n");
+    printf("get_hw_version                                  Get hardware version\n");
+    printf("get_fw_version                                  Get firmware version\n");
+    printf("reboot                                          reboot the device\n");
     return 0;
 }
 
@@ -186,7 +220,7 @@ void CliDaemon::register_commands()
     ESP_ERROR_CHECK(esp_console_cmd_register(&set_nixie_cmd));
 
     // Register: set_backlight
-    backlight_args.rgb = arg_intn(NULL, "rgb", "<r,g,b>", 0, 3, "RGB Color");
+    backlight_args.rgb = arg_str0(NULL, "rgb", "<r,g,b>", "RGB Color");
     backlight_args.brightness = arg_int0(NULL, "brightness", "<b>", "Brightness");
     backlight_args.end = arg_end(20);
     const esp_console_cmd_t set_backlight_cmd = {
@@ -227,6 +261,26 @@ void CliDaemon::register_commands()
         .argtable = NULL
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&get_fw_version_cmd));
+
+    // Register: reboot
+    const esp_console_cmd_t reboot_cmd = {
+        .command = "reboot",
+        .help = "Reboot the device",
+        .hint = NULL,
+        .func = &reboot_func,
+        .argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&reboot_cmd));
+
+    // Register: help
+    const esp_console_cmd_t help_cmd = {
+        .command = "help",
+        .help = "Print this help information",
+        .hint = NULL,
+        .func = &help_func,
+        .argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&help_cmd));
 }
 
 void CliDaemon::loop()
