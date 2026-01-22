@@ -30,6 +30,7 @@ extern "C" void app_main(void)
     // Initialize Nixie Driver
     // Now NixieDriver manages its own tubes internally.
     static NixieDriver nixie_driver; 
+    nixie_driver.nixie_scan_start();
     
     // Initialize Audio Driver
     static AudioDriver audio_driver(kDfPlayerUart, kDfPlayerTxPin, kDfPlayerRxPin);

@@ -8,4 +8,5 @@ idf_component_register(SRCS ${app_sources} ${driver_sources}
                        INCLUDE_DIRS "." 
                                     "../lib/include"
                                     "../lib/drivers/dfplayer"
-                                    "../lib/drivers/ws2812")
+                                    "../lib/drivers/ws2812"
+                                    "../lib/drivers/pca9685")
