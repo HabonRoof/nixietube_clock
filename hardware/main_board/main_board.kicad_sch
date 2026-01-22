@@ -8204,7 +8204,7 @@
 		)
 		(uuid "e30c9aeb-c446-4d9d-b477-8d2879054f42")
 	)
-	(text "RTC circuit, directly connect VBAT \nto Lipo battery since there should\nbe UVLO protection on battery\nAddress: 0x64"
+	(text "RTC circuit, directly connect VBAT \nto Lipo battery since there should\nbe UVLO protection on battery\nAddress: 0x68"
 		(exclude_from_sim no)
 		(at 148.59 160.782 0)
 		(effects
