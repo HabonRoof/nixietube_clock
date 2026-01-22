@@ -12,6 +12,7 @@
 #include "ds3231/ds3231.h"
 
 struct HardwareHandles {
+    i2c_port_t i2c_port;
     rmt_channel_handle_t led_rmt_channel;
     rmt_encoder_handle_t led_rmt_encoder;
     uart_port_t audio_uart_port;

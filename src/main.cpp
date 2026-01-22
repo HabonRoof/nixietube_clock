@@ -29,8 +29,8 @@ extern "C" void app_main(void)
     
     // Initialize Nixie Driver
     // Now NixieDriver manages its own tubes internally.
-    static NixieDriver nixie_driver; 
-    nixie_driver.nixie_scan_start();
+    static NixieDriver nixie_driver;
+    nixie_driver.nixie_scan_start(hw_handles.i2c_port);
     
     // Initialize Audio Driver
     static AudioDriver audio_driver(hw_handles.audio_uart_port);

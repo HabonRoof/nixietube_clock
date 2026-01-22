@@ -17,7 +17,7 @@ public:
     virtual void display_number(uint32_t number) = 0;
     virtual void set_brightness(uint8_t brightness) = 0; // PWM or similar if supported
     virtual void set_digits(const std::array<uint8_t, 6> &digits) = 0;
-    virtual void nixie_scan_start() = 0;
+    virtual void nixie_scan_start(i2c_port_t i2c_port) = 0;
     virtual std::vector<NixieTube *> get_tubes() = 0;
 };
 
@@ -32,7 +32,7 @@ public:
     void display_number(uint32_t number) override;
     void set_brightness(uint8_t brightness) override;
     void set_digits(const std::array<uint8_t, 6> &digits) override;
-    void nixie_scan_start() override;
+    void nixie_scan_start(i2c_port_t i2c_port) override;
     std::vector<NixieTube *> get_tubes() override;
 
 private:
@@ -47,4 +47,5 @@ private:
     std::array<uint8_t, 6> digit_cache_{};
     uint8_t brightness_ = 0;
     TaskHandle_t scan_task_ = nullptr;
+    i2c_port_t i2c_port_ = I2C_NUM_0;
 };

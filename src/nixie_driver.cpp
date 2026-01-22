@@ -8,11 +8,7 @@
 
 namespace
 {
-constexpr i2c_port_t kI2cPort = I2C_NUM_0;
-constexpr gpio_num_t kI2cSda = static_cast<gpio_num_t>(6);
-constexpr gpio_num_t kI2cScl = static_cast<gpio_num_t>(5);
 constexpr gpio_num_t kPca9685OePin = static_cast<gpio_num_t>(4);
-constexpr uint32_t kI2cClockHz = 400000;
 
 constexpr float kPwmFrequencyHz = 200.0f;
 constexpr uint32_t kScanFrameHz = 100;
@@ -122,11 +118,12 @@ void NixieDriver::set_digits(const std::array<uint8_t, 6> &digits)
     }
 }
 
-void NixieDriver::nixie_scan_start()
+void NixieDriver::nixie_scan_start(i2c_port_t i2c_port)
 {
     if (scan_task_) {
         return;
     }
+    i2c_port_ = i2c_port;
     init_default_mapping();
     xTaskCreate(scan_task_entry, "nixie_scan", 4096, this, 6, &scan_task_);
 }
@@ -149,21 +146,17 @@ void NixieDriver::scan_task_entry(void *param)
 
 void NixieDriver::scan_loop()
 {
-    if (!Pca9685::init_i2c(kI2cPort, kI2cSda, kI2cScl, kI2cClockHz)) {
-        ESP_LOGE(kTag, "Failed to init I2C");
-        vTaskDelete(nullptr);
-        return;
-    }
-
+    // I2C is initialized by SystemController
+    
     std::array<Pca9685, 4> pca = {
-        Pca9685(kI2cPort, kPcaAddresses[0]),
-        Pca9685(kI2cPort, kPcaAddresses[1]),
-        Pca9685(kI2cPort, kPcaAddresses[2]),
-        Pca9685(kI2cPort, kPcaAddresses[3])
+        Pca9685(i2c_port_, kPcaAddresses[0]),
+        Pca9685(i2c_port_, kPcaAddresses[1]),
+        Pca9685(i2c_port_, kPcaAddresses[2]),
+        Pca9685(i2c_port_, kPcaAddresses[3])
     };
 
     for (auto &chip : pca) {
-        if (!chip.init(kI2cClockHz, kPwmFrequencyHz)) {
+        if (!chip.init(kPwmFrequencyHz)) {
             ESP_LOGE(kTag, "Failed to init PCA9685");
             vTaskDelete(nullptr);
             return;

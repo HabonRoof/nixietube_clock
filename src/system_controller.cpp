@@ -38,6 +38,7 @@ HardwareHandles SystemController::init_hardware()
     i2c_conf.master.clk_speed = kI2cClockHz;
     ESP_ERROR_CHECK(i2c_param_config(kI2cPort, &i2c_conf));
     ESP_ERROR_CHECK(i2c_driver_install(kI2cPort, i2c_conf.mode, 0, 0, 0));
+    handles.i2c_port = kI2cPort;
     ESP_LOGI(TAG, "I2C Initialized");
 
     // 2. Initialize UART

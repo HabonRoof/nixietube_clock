@@ -10,8 +10,7 @@ class Pca9685
 public:
     Pca9685(i2c_port_t port, uint8_t address);
 
-    static bool init_i2c(i2c_port_t port, gpio_num_t sda, gpio_num_t scl, uint32_t i2c_clock_hz);
-    bool init(uint32_t i2c_clock_hz, float pwm_frequency_hz);
+    bool init(float pwm_frequency_hz);
     bool set_pwm(uint8_t channel, uint16_t on, uint16_t off);
     bool set_duty(uint8_t channel, uint16_t duty);
     bool set_all_off();

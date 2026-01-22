@@ -22,29 +22,8 @@ Pca9685::Pca9685(i2c_port_t port, uint8_t address)
 {
 }
 
-bool Pca9685::init_i2c(i2c_port_t port, gpio_num_t sda, gpio_num_t scl, uint32_t i2c_clock_hz)
+bool Pca9685::init(float pwm_frequency_hz)
 {
-    i2c_config_t conf = {};
-    conf.mode = I2C_MODE_MASTER;
-    conf.sda_io_num = sda;
-    conf.scl_io_num = scl;
-    conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-    conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-    conf.master.clk_speed = i2c_clock_hz;
-
-    if (i2c_param_config(port, &conf) != ESP_OK) {
-        return false;
-    }
-    esp_err_t err = i2c_driver_install(port, conf.mode, 0, 0, 0);
-    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
-        return false;
-    }
-    return true;
-}
-
-bool Pca9685::init(uint32_t i2c_clock_hz, float pwm_frequency_hz)
-{
-    (void)i2c_clock_hz;
     const uint8_t mode1 = kMode1AutoInc;
     if (!write_register(kMode1, mode1)) {
         return false;
