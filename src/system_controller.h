@@ -10,6 +10,7 @@
 #include "daemons/display_daemon.h"
 #include "daemons/audio_daemon.h"
 #include "ds3231/ds3231.h"
+#include "settings_store.h"
 
 struct HardwareHandles {
     i2c_port_t i2c_port;
@@ -28,6 +29,7 @@ public:
 
     void start();
     QueueHandle_t get_queue() const;
+    void apply_settings(const ClockSettings &settings, const struct tm *new_time);
 
 private:
     static void task_entry(void *param);
@@ -42,4 +44,5 @@ private:
     
     // State
     Ds3231 rtc_;
+    ClockSettings settings_;
 };

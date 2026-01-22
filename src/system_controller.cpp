@@ -1,6 +1,7 @@
 #include "system_controller.h"
 #include "esp_log.h"
 #include <ctime>
+#include "settings_store.h"
 #include "driver/i2c.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
@@ -111,7 +112,8 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       audio_daemon_(audio_daemon),
       queue_(nullptr),
       task_handle_(nullptr),
-      rtc_(kI2cPort)
+      rtc_(kI2cPort),
+      settings_(SettingsStore::defaults())
 {
     queue_ = xQueueCreate(10, sizeof(SystemMessage));
     
@@ -210,6 +212,51 @@ void SystemController::process_message(const SystemMessage &msg)
             break;
         default:
             break;
+    }
+}
+
+void SystemController::apply_settings(const ClockSettings &settings, const struct tm *new_time)
+{
+    settings_ = settings;
+
+    if (new_time) {
+        struct tm adjusted = *new_time;
+        adjusted.tm_isdst = 0;
+        time_t epoch = mktime(&adjusted);
+        if (epoch != -1) {
+            localtime_r(&epoch, &adjusted);
+        }
+        rtc_.set_time(&adjusted);
+    }
+
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
+    dmsg.data.color.r = settings.backlight_r;
+    dmsg.data.color.g = settings.backlight_g;
+    dmsg.data.color.b = settings.backlight_b;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_BACKLIGHT_BRIGHTNESS;
+    dmsg.data.brightness = settings.backlight_brightness;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    AudioMessage amsg = {};
+    amsg.command = AudioCmd::SET_VOLUME;
+    amsg.param.volume = settings.volume;
+    xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
+
+    if (settings.alarm_enabled) {
+        struct tm alarm = {};
+        alarm.tm_hour = settings.alarm_hour;
+        alarm.tm_min = settings.alarm_minute;
+        alarm.tm_sec = settings.alarm_second;
+        alarm.tm_mday = 1;
+        rtc_.set_alarm1(&alarm);
+        rtc_.clear_alarm1_flag();
+        rtc_.enable_alarm1_interrupt(true);
+    } else {
+        rtc_.enable_alarm1_interrupt(false);
+        rtc_.clear_alarm1_flag();
     }
 }
 
