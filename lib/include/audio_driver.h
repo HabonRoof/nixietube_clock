@@ -24,7 +24,7 @@ public:
 class AudioDriver : public IAudioDriver
 {
 public:
-    AudioDriver(uart_port_t uart_num, gpio_num_t tx_pin, gpio_num_t rx_pin);
+    explicit AudioDriver(uart_port_t uart_num);
     ~AudioDriver() override = default;
 
     esp_err_t play_track(uint16_t track_number) override;

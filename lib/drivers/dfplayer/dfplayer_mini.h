@@ -32,7 +32,7 @@ struct AudioPlaybackState
 class DfPlayerMini
 {
 public:
-    DfPlayerMini(uart_port_t uart_num, gpio_num_t tx_pin, gpio_num_t rx_pin);
+    explicit DfPlayerMini(uart_port_t uart_num);
     ~DfPlayerMini();
     DfPlayerMini(const DfPlayerMini &) = delete;
     DfPlayerMini &operator=(const DfPlayerMini &) = delete;
@@ -61,8 +61,6 @@ private:
     static uint16_t calculate_checksum(uint8_t command, uint16_t parameter, bool request_feedback);
 
     uart_port_t uart_num_;
-    gpio_num_t tx_pin_;
-    gpio_num_t rx_pin_;
     int baud_rate_;
     AudioPlaybackState state_;
     std::map<uint16_t, std::string> track_names_;

@@ -1,7 +1,8 @@
 #include "led_driver.h"
 #include "ws2812.h"
 
-LedDriver::LedDriver(gpio_num_t pin) : strip_(new Ws2812Strip(pin))
+LedDriver::LedDriver(rmt_channel_handle_t tx_channel, rmt_encoder_handle_t copy_encoder)
+    : strip_(new Ws2812Strip(tx_channel, copy_encoder))
 {
 }
 

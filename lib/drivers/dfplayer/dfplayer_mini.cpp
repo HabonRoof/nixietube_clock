@@ -36,10 +36,8 @@ uint8_t clamp_volume(uint8_t volume)
 }
 } // namespace
 
-DfPlayerMini::DfPlayerMini(uart_port_t uart_num, gpio_num_t tx_pin, gpio_num_t rx_pin)
+DfPlayerMini::DfPlayerMini(uart_port_t uart_num)
     : uart_num_(uart_num),
-      tx_pin_(tx_pin),
-      rx_pin_(rx_pin),
       baud_rate_(9600),
       state_{.volume = 0, .track_number = 0, .looping = false, .low_power = false, .paused = false},
       mutex_(xSemaphoreCreateMutex()),
@@ -57,22 +55,16 @@ DfPlayerMini::~DfPlayerMini()
 
     if (initialized_)
     {
-        uart_driver_delete(uart_num_);
+        // We don't delete driver as it might be shared or managed externally
     }
 }
 
 esp_err_t DfPlayerMini::begin(int baud_rate)
 {
     baud_rate_ = baud_rate;
-    esp_err_t err = configure_uart(baud_rate);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(kLogTag, "Failed to configure UART: %s", esp_err_to_name(err));
-        return err;
-    }
-
+    // UART is assumed to be initialized externally
     initialized_ = true;
-    ESP_LOGI(kLogTag, "DFPlayer ready on UART%d (TX=%d, RX=%d) at %d baud", uart_num_, tx_pin_, rx_pin_, baud_rate_);
+    ESP_LOGI(kLogTag, "DFPlayer ready on UART%d at %d baud", uart_num_, baud_rate_);
     return ESP_OK;
 }
 
@@ -273,34 +265,7 @@ void DfPlayerMini::set_track_names(const std::map<uint16_t, std::string> &track_
 
 esp_err_t DfPlayerMini::configure_uart(int baud_rate)
 {
-    uart_config_t uart_config = {
-        .baud_rate = baud_rate,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
-    };
-
-    esp_err_t err = uart_param_config(uart_num_, &uart_config);
-    if (err != ESP_OK)
-    {
-        return err;
-    }
-
-    err = uart_set_pin(uart_num_, tx_pin_, rx_pin_, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    if (err != ESP_OK)
-    {
-        return err;
-    }
-
-    // Allocate small buffers; DFPlayer responses are short.
-    err = uart_driver_install(uart_num_, 256, 0, 0, nullptr, 0);
-    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
-    {
-        return err;
-    }
-
+    // Deprecated/Unused in centralized init mode
     return ESP_OK;
 }
 

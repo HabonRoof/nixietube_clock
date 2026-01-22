@@ -16,7 +16,7 @@ public:
     static constexpr std::size_t kGroupSize = 4;
     static constexpr std::size_t kGroupCount = kTotalLedCount / kGroupSize;
 
-    explicit Ws2812Strip(gpio_num_t data_pin, std::size_t led_count = kTotalLedCount);
+    explicit Ws2812Strip(rmt_channel_handle_t tx_channel, rmt_encoder_handle_t copy_encoder, std::size_t led_count = kTotalLedCount);
     ~Ws2812Strip();
 
     std::size_t get_led_count() const;
@@ -26,11 +26,8 @@ public:
     esp_err_t show();
 
 private:
-    void configure_pad(gpio_num_t data_pin) const;
-    esp_err_t configure_rmt(gpio_num_t data_pin);
     void build_symbols_for_byte(rmt_symbol_word_t *symbols, uint8_t byte_value) const;
 
-    gpio_num_t data_pin_;
     std::size_t led_count_;
     rmt_channel_handle_t tx_channel_;
     rmt_encoder_handle_t copy_encoder_;

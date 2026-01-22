@@ -1,7 +1,7 @@
 #include "audio_driver.h"
 
-AudioDriver::AudioDriver(uart_port_t uart_num, gpio_num_t tx_pin, gpio_num_t rx_pin)
-    : player_(uart_num, tx_pin, rx_pin)
+AudioDriver::AudioDriver(uart_port_t uart_num)
+    : player_(uart_num)
 {
     player_.begin();
 }

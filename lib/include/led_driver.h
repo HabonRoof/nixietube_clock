@@ -2,6 +2,8 @@
 
 #include "esp_err.h"
 #include "driver/gpio.h"
+#include "driver/rmt_tx.h"
+#include "driver/rmt_encoder.h"
 #include "color_model.h"
 #include <cstddef>
 #include <cstdint>
@@ -35,7 +37,7 @@ class Ws2812Strip;
 class LedDriver : public ILedDriver
 {
 public:
-    explicit LedDriver(gpio_num_t pin);
+    explicit LedDriver(rmt_channel_handle_t tx_channel, rmt_encoder_handle_t copy_encoder);
     ~LedDriver() override;
 
     std::size_t get_led_count() const override;

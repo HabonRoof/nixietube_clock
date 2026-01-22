@@ -35,7 +35,8 @@ bool Pca9685::init_i2c(i2c_port_t port, gpio_num_t sda, gpio_num_t scl, uint32_t
     if (i2c_param_config(port, &conf) != ESP_OK) {
         return false;
     }
-    if (i2c_driver_install(port, conf.mode, 0, 0, 0) != ESP_OK) {
+    esp_err_t err = i2c_driver_install(port, conf.mode, 0, 0, 0);
+    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
         return false;
     }
     return true;

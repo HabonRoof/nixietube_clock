@@ -9,8 +9,9 @@
 namespace
 {
 constexpr i2c_port_t kI2cPort = I2C_NUM_0;
-constexpr gpio_num_t kI2cSda = static_cast<gpio_num_t>(8);
-constexpr gpio_num_t kI2cScl = static_cast<gpio_num_t>(9);
+constexpr gpio_num_t kI2cSda = static_cast<gpio_num_t>(6);
+constexpr gpio_num_t kI2cScl = static_cast<gpio_num_t>(5);
+constexpr gpio_num_t kPca9685OePin = static_cast<gpio_num_t>(4);
 constexpr uint32_t kI2cClockHz = 400000;
 
 constexpr float kPwmFrequencyHz = 200.0f;
@@ -169,6 +170,9 @@ void NixieDriver::scan_loop()
         }
         chip.set_all_off();
     }
+
+    // Enable PCA9685 outputs
+    gpio_set_level(kPca9685OePin, 0);
 
     size_t tube_index = 0;
     while (true) {

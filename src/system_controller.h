@@ -3,13 +3,25 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "driver/rmt_tx.h"
+#include "driver/rmt_encoder.h"
+#include "driver/uart.h"
 #include "message_types.h"
 #include "daemons/display_daemon.h"
 #include "daemons/audio_daemon.h"
+#include "ds3231/ds3231.h"
+
+struct HardwareHandles {
+    rmt_channel_handle_t led_rmt_channel;
+    rmt_encoder_handle_t led_rmt_encoder;
+    uart_port_t audio_uart_port;
+};
 
 class SystemController
 {
 public:
+    static HardwareHandles init_hardware();
+
     SystemController(DisplayDaemon &display_daemon, AudioDaemon &audio_daemon);
     ~SystemController();
 
@@ -28,5 +40,5 @@ private:
     TaskHandle_t task_handle_;
     
     // State
-    // RTC handle, WiFi handle, etc. can be added here
+    Ds3231 rtc_;
 };

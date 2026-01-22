@@ -23,11 +23,10 @@ constexpr std::size_t kItemsPerLed = 24;
 const char *kTag = "ws2812";
 } // namespace
 
-Ws2812Strip::Ws2812Strip(gpio_num_t data_pin, std::size_t led_count)
-    : data_pin_(data_pin),
-      led_count_(led_count),
-      tx_channel_(nullptr),
-      copy_encoder_(nullptr),
+Ws2812Strip::Ws2812Strip(rmt_channel_handle_t tx_channel, rmt_encoder_handle_t copy_encoder, std::size_t led_count)
+    : led_count_(led_count),
+      tx_channel_(tx_channel),
+      copy_encoder_(copy_encoder),
       pixel_buffer_()
 {
     if (led_count_ == 0)
@@ -39,26 +38,12 @@ Ws2812Strip::Ws2812Strip(gpio_num_t data_pin, std::size_t led_count)
 #endif
     }
     pixel_buffer_.assign(led_count_ * kBytesPerPixel, 0);
-    configure_pad(data_pin_);
-    if (configure_rmt(data_pin_) == ESP_OK)
-    {
-        ESP_LOGI(kTag, "WS2812 initialized on GPIO%d (total led_count=%zu)", static_cast<int>(data_pin_), led_count_);
-    }
+    ESP_LOGI(kTag, "WS2812 initialized (total led_count=%zu)", led_count_);
 }
 
 Ws2812Strip::~Ws2812Strip()
 {
-    if (copy_encoder_)
-    {
-        rmt_del_encoder(copy_encoder_);
-        copy_encoder_ = nullptr;
-    }
-    if (tx_channel_)
-    {
-        rmt_disable(tx_channel_);
-        rmt_del_channel(tx_channel_);
-        tx_channel_ = nullptr;
-    }
+    // Handles are owned by SystemController/HardwareManager
 }
 
 std::size_t Ws2812Strip::get_led_count() const
@@ -160,61 +145,6 @@ esp_err_t Ws2812Strip::show()
     return ESP_OK;
 }
 
-void Ws2812Strip::configure_pad(gpio_num_t data_pin) const
-{
-    if (GPIO_IS_VALID_GPIO(data_pin))
-    {
-        esp_rom_gpio_pad_select_gpio(data_pin);
-        gpio_reset_pin(data_pin);
-    }
-}
-
-esp_err_t Ws2812Strip::configure_rmt(gpio_num_t data_pin)
-{
-    rmt_tx_channel_config_t config = {
-        .gpio_num = data_pin,
-        .clk_src = RMT_CLK_SRC_DEFAULT,
-        .resolution_hz = kRmtResolutionHz,
-        .mem_block_symbols = 64,
-        .trans_queue_depth = 4,
-        .intr_priority = 0,
-        .flags = {
-            .invert_out = 0,
-            .with_dma = 0,
-            .io_loop_back = 0,
-            .io_od_mode = 0,
-            .allow_pd = 0,
-        },
-    };
-    esp_err_t status = rmt_new_tx_channel(&config, &tx_channel_);
-    if (status != ESP_OK)
-    {
-        ESP_LOGE(kTag, "rmt_new_tx_channel failed: %d", status);
-        return status;
-    }
-
-    rmt_copy_encoder_config_t encoder_config = {};
-    status = rmt_new_copy_encoder(&encoder_config, &copy_encoder_);
-    if (status != ESP_OK)
-    {
-        ESP_LOGE(kTag, "rmt_new_copy_encoder failed: %d", status);
-        rmt_del_channel(tx_channel_);
-        tx_channel_ = nullptr;
-        return status;
-    }
-
-    status = rmt_enable(tx_channel_);
-    if (status != ESP_OK)
-    {
-        ESP_LOGE(kTag, "rmt_enable failed: %d", status);
-        rmt_del_encoder(copy_encoder_);
-        copy_encoder_ = nullptr;
-        rmt_del_channel(tx_channel_);
-        tx_channel_ = nullptr;
-        return status;
-    }
-    return ESP_OK;
-}
 
 void Ws2812Strip::build_symbols_for_byte(rmt_symbol_word_t *symbols, uint8_t byte_value) const
 {
