@@ -1,46 +1,100 @@
 # Nixie Clock Firmware
 
 ## Overview
-- ESP-IDF firmware for a 6-tube nixie clock with WS2812 backlight (4 LEDs per tube).
-- Structure favors small modules: tubes/backlight state, LED strip driver, effect engine, and a slim `app_main`.
-- Effects run in a single LED service task; backlight parameters can be updated dynamically (e.g., UI, network).
+This is the ESP-IDF firmware for a 6-tube Nixie clock powered by an ESP32-S3. It features:
+- **6-Tube Display**: Multiplexed control using PCA9685 PWM drivers.
+- **RGB Backlight**: WS2812 addressable LEDs (4 per tube) for visual effects.
+- **Audio**: DFPlayer Mini integration for sound effects and announcements.
+- **RTC**: DS3231 for precise timekeeping.
+- **Modular Architecture**: Separate daemons for display and audio, coordinated by a system controller.
 
-## Nixie Tube Model
-- `NixieTube` (`lib/include/nixie_tube.h`, `src/nixie_tube.cpp`):
-  - Holds `DigitState` (numeral, nixie brightness).
-  - Thread-safe via an internal mutex around state changes.
-  - Methods: `set_state`, `set_numeral`.
-- `NixieDriver` (`lib/include/nixie_driver.h`, `src/nixie_driver.cpp`):
-  - Owns the 6 tubes directly.
-  - Provides high-level methods like `display_time`.
+## Hardware Configuration
 
-## LED Control
-- `ILedDriver` (`lib/include/led_driver.h`, `src/led_driver.cpp`):
-  - Abstract interface for controlling LEDs.
-  - `LedDriver` implementation wraps `Ws2812Strip`.
-- `DisplayDaemon` (`src/daemons/display_daemon.cpp`):
-  - Manages LED effects (Breath, Rainbow) internally.
-  - Maps tubes to LEDs (e.g., Tube 0 -> LEDs 0-3) and updates `LedDriver` directly.
+The firmware is configured for the following pinout (defined in `src/system_controller.cpp`):
 
-## Audio (DFPlayer Mini)
-- UART-backed DFPlayer control (`lib/include/dfplayer_mini.h`, `src/dfplayer_mini.cpp`):
-  - Commands for volume (set/up/down), track playback, next/previous, loop toggling, pause/resume, EQ presets, low-power sleep/wake, and reset.
-  - Holds `AudioPlaybackState` (volume, track, loop, low power, paused) behind a FreeRTOS mutex.
-- Audio Driver (`lib/include/audio_driver.h`, `src/audio_driver.cpp`):
-  - `IAudioDriver` interface defines standard audio operations (play, stop, pause, volume control).
-  - `AudioDriver` implements the interface using `DfPlayerMini`.
-  - Initialized in `app_main` with UART configuration.
-- Audio Daemon (`src/daemons/audio_daemon.cpp`, `src/daemons/audio_daemon.h`):
-  - Runs in its own task to handle audio operations asynchronously.
-  - Receives commands via a queue (`AudioMessage`).
-  - Processes commands like `PLAY_TRACK`, `STOP`, `PAUSE`, `SET_VOLUME`, etc.
+| Peripheral | Pin Name | GPIO | Description |
+| :--- | :--- | :--- | :--- |
+| **I2C** | SDA | GPIO 6 | I2C Data (DS3231, PCA9685) |
+| | SCL | GPIO 5 | I2C Clock |
+| **UART** | TX | GPIO 18 | Audio TX (to DFPlayer RX) |
+| | RX | GPIO 17 | Audio RX (from DFPlayer TX) |
+| **GPIO** | RTC_INT | GPIO 8 | DS3231 Interrupt (Active Low) |
+| | PCA_OE | GPIO 4 | PCA9685 Output Enable (Active Low) |
+| **RMT** | LED_DATA | GPIO 7 | WS2812 LED Data Line |
 
-## Adding a New LED Effect
-1) **Implement effect logic in `DisplayDaemon`**
-   - Add a new method `run_my_effect(uint32_t dt_ms)` in `DisplayDaemon`.
+## Architecture
+
+The system is built on FreeRTOS and follows a daemon-based architecture:
+
+### 1. System Controller (`src/system_controller.cpp`)
+- **Role**: Central coordinator.
+- **Responsibilities**:
+  - Initializes all hardware peripherals (I2C, UART, RMT, GPIO).
+  - Manages the DS3231 RTC.
+  - Periodically (1Hz) reads time and sends updates to the `DisplayDaemon`.
+  - Handles system-wide events (e.g., button presses).
+
+### 2. Display Daemon (`src/daemons/display_daemon.cpp`)
+- **Role**: Manages all visual output.
+- **Responsibilities**:
+  - Controls Nixie tubes via `NixieDriver`.
+  - Controls LED backlights via `LedDriver`.
+  - Runs the LED effects engine (Breath, Rainbow).
+  - Updates hardware at 50Hz.
+
+### 3. Audio Daemon (`src/daemons/audio_daemon.cpp`)
+- **Role**: Manages audio playback.
+- **Responsibilities**:
+  - Asynchronously handles audio commands (Play, Stop, Volume).
+  - Communicates with the DFPlayer Mini via `AudioDriver`.
+
+### 4. Drivers (`lib/drivers/`, `src/*_driver.cpp`)
+- **NixieDriver**: Manages 4x PCA9685 chips to drive 6 tubes. Handles multiplexing in a dedicated high-priority task.
+- **LedDriver**: Wraps the RMT peripheral to drive WS2812 LEDs.
+- **AudioDriver**: Provides a high-level interface for the DFPlayer Mini.
+- **Ds3231**: Low-level driver for the RTC.
+
+## Building and Flashing
+
+This project uses **PlatformIO**.
+
+### Prerequisites
+- Visual Studio Code with PlatformIO extension installed.
+
+### Build
+```bash
+pio run
+```
+
+### Flash
+Connect your ESP32-S3 board via USB and run:
+```bash
+pio run -t upload
+```
+
+### Monitor
+To view serial logs:
+```bash
+pio run -t monitor
+```
+
+## Directory Structure
+
+- `src/`: Application source code.
+  - `daemons/`: High-level tasks (Display, Audio).
+  - `main.cpp`: Entry point, system startup.
+  - `system_controller.cpp`: Hardware init and coordination.
+- `lib/`: Reusable hardware drivers.
+  - `drivers/`: Low-level device drivers (DS3231, PCA9685, WS2812).
+  - `include/`: Abstract interfaces for drivers.
+- `include/`: Project-wide headers.
+
+## Development Guide
+
+### Adding a New LED Effect
+1. **Implement Logic**: Add a new method `run_my_effect(uint32_t dt_ms)` in `DisplayDaemon`.
    - Use `apply_backlight_to_all(state)` or manipulate `led_driver_` directly.
-
-2) **Register with DisplayDaemon**
-   - Add a new `LedEffectType` enum.
-   - Update `DisplayDaemon::process_message` to handle switching to the new effect.
+2. **Register Effect**:
+   - Add a new entry to the `LedEffectType` enum in `DisplayDaemon.h`.
+   - Update `DisplayDaemon::process_message` to handle the new effect type.
    - Update `DisplayDaemon::update_effects` to call your new method.
