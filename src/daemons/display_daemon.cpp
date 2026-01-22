@@ -14,6 +14,7 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver)
       queue_(nullptr),
       task_handle_(nullptr),
       current_mode_(DisplayMode::CLOCK_HHMMSS),
+      manual_number_(0),
       current_effect_type_(LedEffectType::BREATH),
       effect_color_phase_(0.0f),
       effect_speed_(0.35f),
@@ -83,11 +84,31 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             break;
         case DisplayCmd::SET_MODE:
             current_mode_ = msg.data.mode;
+            if (current_mode_ == DisplayMode::MANUAL_DISPLAY) {
+                nixie_driver_.display_number(manual_number_);
+            }
+            break;
+        case DisplayCmd::SET_MANUAL_NUMBER:
+            manual_number_ = msg.data.number;
+            if (current_mode_ == DisplayMode::MANUAL_DISPLAY) {
+                nixie_driver_.display_number(manual_number_);
+            }
             break;
         case DisplayCmd::SET_BACKLIGHT_COLOR:
-            // Update base color for effects
-            // Simplified: assuming message data structure needs update or we use fixed color for now
-            // base_backlight_.color = ...
+            base_backlight_.color.hue = 0; // Reset hue if using RGB, but we use HSV internally
+            // Convert RGB to HSV or just use what we have.
+            // The message structure has RGB, but the CLI sends HSV.
+            // Let's assume the message structure was updated or we interpret it.
+            // Wait, message_types.h has RGB in union.
+            // I should have updated message_types.h to support HSV or convert here.
+            // Let's stick to RGB in message for now and convert.
+            {
+                RgbColor rgb = {msg.data.color.r, msg.data.color.g, msg.data.color.b};
+                base_backlight_.color = rgb_to_hsv(rgb);
+            }
+            break;
+        case DisplayCmd::SET_BACKLIGHT_BRIGHTNESS:
+            base_backlight_.brightness = msg.data.brightness;
             break;
         case DisplayCmd::SET_EFFECT:
             if (msg.data.effect_id == 1) {

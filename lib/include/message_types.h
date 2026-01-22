@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "color_model.h"
 
 // --- Audio Daemon Messages ---
 enum class AudioCmd : uint8_t
@@ -33,6 +34,7 @@ enum class DisplayCmd : uint8_t
 {
     UPDATE_TIME,
     SET_MODE,
+    SET_MANUAL_NUMBER,
     SET_BACKLIGHT_COLOR,
     SET_BACKLIGHT_BRIGHTNESS,
     SET_EFFECT,
@@ -44,6 +46,7 @@ enum class DisplayMode : uint8_t
     CLOCK_HHMMSS,
     DATE_YYMMDD,
     SETTING_MODE,
+    MANUAL_DISPLAY,
     OFF
 };
 
@@ -57,10 +60,12 @@ struct DisplayMessage
             uint8_t h, m, s;
         } time;
         DisplayMode mode;
+        uint32_t number;
         struct
         {
             uint8_t r, g, b;
         } color;
+        HsvColor hsv;
         uint8_t brightness;
         uint8_t effect_id; // 0: None, 1: Breath, 2: Rainbow, etc.
     } data;
@@ -73,7 +78,26 @@ enum class SystemEvent : uint8_t
     ALARM_TRIGGERED,
     WIFI_CONNECTED,
     WIFI_DISCONNECTED,
-    RTC_UPDATE
+    RTC_UPDATE,
+    CLI_COMMAND
+};
+
+enum class CliCommandType : uint8_t
+{
+    SET_NIXIE,
+    SET_BACKLIGHT
+};
+
+struct CliData
+{
+    CliCommandType type;
+    uint32_t value; // For SET_NIXIE
+    struct {
+        uint8_t r, g, b;
+        uint8_t brightness;
+        bool has_color;
+        bool has_brightness;
+    } backlight;
 };
 
 struct SystemMessage
@@ -82,7 +106,8 @@ struct SystemMessage
     union
     {
         uint8_t button_id;
-        // TODO: Add other features 
+        CliData cli;
+        // TODO: Add other features
         // Add other event data as needed
     } data;
 };

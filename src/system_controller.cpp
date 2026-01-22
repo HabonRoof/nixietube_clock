@@ -181,6 +181,33 @@ void SystemController::process_message(const SystemMessage &msg)
             // ...
             // xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
             break;
+        case SystemEvent::CLI_COMMAND:
+            if (msg.data.cli.type == CliCommandType::SET_NIXIE) {
+                DisplayMessage dmsg;
+                dmsg.command = DisplayCmd::SET_MODE;
+                dmsg.data.mode = DisplayMode::MANUAL_DISPLAY;
+                xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+                dmsg.command = DisplayCmd::SET_MANUAL_NUMBER;
+                dmsg.data.number = msg.data.cli.value;
+                xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+            } else if (msg.data.cli.type == CliCommandType::SET_BACKLIGHT) {
+                if (msg.data.cli.backlight.has_color) {
+                    DisplayMessage dmsg;
+                    dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
+                    dmsg.data.color.r = msg.data.cli.backlight.r;
+                    dmsg.data.color.g = msg.data.cli.backlight.g;
+                    dmsg.data.color.b = msg.data.cli.backlight.b;
+                    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+                }
+                if (msg.data.cli.backlight.has_brightness) {
+                    DisplayMessage dmsg;
+                    dmsg.command = DisplayCmd::SET_BACKLIGHT_BRIGHTNESS;
+                    dmsg.data.brightness = msg.data.cli.backlight.brightness;
+                    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+                }
+            }
+            break;
         default:
             break;
     }

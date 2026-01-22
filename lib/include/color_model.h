@@ -17,4 +17,5 @@ struct HsvColor
 };
 
 RgbColor hsv_to_rgb(const HsvColor &hsv);
+HsvColor rgb_to_hsv(const RgbColor &rgb);
 RgbColor apply_gamma(const RgbColor &linear_color);
