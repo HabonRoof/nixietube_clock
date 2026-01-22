@@ -4,3 +4,13 @@
 .vscode/launch.json
 .vscode/ipch
 build/
+hardware/**/bom/
+hardware/**/production/
+hardware/**/manufacture/
+hardware/**/backups/
+hardware/**/*.kicad_sch.lck
+hardware/**/*~
+hardware/**/*-bak
+hardware/**/*.kicad_pcb-bak
+hardware/**/*.kicad_sch-bak
+hardware/**/*.kicad_pro-bak
