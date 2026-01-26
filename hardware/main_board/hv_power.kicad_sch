@@ -2796,7 +2796,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 228.6 81.28 0)
 			(effects
 				(font
@@ -3343,7 +3343,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "0.47u/200V"
+		(property "Value" "10u/400v"
 			(at 214.63 45.7262 0)
 			(effects
 				(font
@@ -3352,7 +3352,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric"
+		(property "Footprint" "Capacitor_THT:C_Radial_D8.0mm_H11.5mm_P3.50mm"
 			(at 212.09 44.45 0)
 			(effects
 				(font
@@ -3379,7 +3379,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C725802"
+		(property "LCSC PN" "C46867081"
 			(at 212.09 44.45 0)
 			(effects
 				(font
@@ -3903,7 +3903,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 228.6 95.25 0)
 			(effects
 				(font
