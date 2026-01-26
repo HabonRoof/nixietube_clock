@@ -112,6 +112,13 @@ static int get_uuid_func(int argc, char **argv)
     return 0;
 }
 
+// --- Command: ggtool ---
+static int ggtool_func(int argc, char **argv)
+{
+    // TODO: Add ggtool support for gasgauge
+    return 0;
+}
+
 // --- Command: get_hw_version ---
 static int get_hw_version_func(int argc, char **argv)
 {
@@ -231,6 +238,16 @@ void CliDaemon::register_commands()
         .argtable = &backlight_args
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&set_backlight_cmd));
+
+    // Register: ggtool
+    const esp_console_cmd_t ggtool = {
+        .command = "ggtool",
+        .help = "Get Device Battery status",
+        .hint = NULL,
+        .func = &ggtool_func,
+        .argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&ggtool));
 
     // Register: get_uuid
     const esp_console_cmd_t get_uuid_cmd = {

@@ -210,6 +210,14 @@ void SystemController::process_message(const SystemMessage &msg)
                 }
             }
             break;
+        case SystemEvent::BATTERY_UPDATE:
+            {
+                DisplayMessage dmsg;
+                dmsg.command = DisplayCmd::UPDATE_BATTERY;
+                dmsg.data.battery = msg.data.battery;
+                xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+            }
+            break;
         default:
             break;
     }

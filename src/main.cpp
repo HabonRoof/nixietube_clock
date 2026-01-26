@@ -8,6 +8,8 @@
 #include "audio_driver.h"
 #include "daemons/display_daemon.h"
 #include "daemons/audio_daemon.h"
+#include "daemons/gasgauge_daemon.h"
+#include "bq27441/bq27441.h"
 #include "system_controller.h"
 #include "daemons/cli_daemon.h"
 #include "settings_store.h"
@@ -47,12 +49,18 @@ extern "C" void app_main(void)
     // Initialize Audio Driver
     static AudioDriver audio_driver(hw_handles.audio_uart_port);
 
+    // Initialize Gasgauge Driver
+    static Bq27441 gasgauge_driver(hw_handles.i2c_port);
+
     // 2. Initialize Daemons
     static DisplayDaemon display_daemon(nixie_driver, led_driver);
     static AudioDaemon audio_daemon(audio_driver);
 
     // 3. Initialize System Controller
     static SystemController system_controller(display_daemon, audio_daemon);
+
+    // Initialize Gasgauge Daemon (needs system queue)
+    static GasgaugeDaemon gasgauge_daemon(gasgauge_driver, system_controller.get_queue());
 
     // 3.1 Load persisted settings and apply
     static SettingsStore settings_store;
@@ -72,6 +80,7 @@ extern "C" void app_main(void)
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
+    gasgauge_daemon.start();
     cli_daemon.start();
     web_server.start();
 

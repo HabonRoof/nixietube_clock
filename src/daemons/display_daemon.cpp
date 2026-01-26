@@ -122,6 +122,11 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             }
             effect_color_phase_ = 0.0f;
             break;
+        case DisplayCmd::UPDATE_BATTERY:
+            ESP_LOGI(TAG, "Battery Update: %d%%, %d mV, %d mA, SOH: %d%%",
+                     msg.data.battery.soc, msg.data.battery.voltage_mv,
+                     msg.data.battery.current_ma, msg.data.battery.soh);
+            break;
         default:
             break;
     }
