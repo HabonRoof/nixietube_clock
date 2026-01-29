@@ -672,6 +672,10 @@
     [
       "4c618ed4-5bc0-4f4d-8f94-8dcddc8fa827",
       "Root"
+    ],
+    [
+      "39b6da47-2681-4d5c-803c-009a49b44034",
+      "LED_Backlight_Array"
     ]
   ],
   "text_variables": {}
