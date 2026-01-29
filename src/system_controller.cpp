@@ -218,6 +218,15 @@ void SystemController::process_message(const SystemMessage &msg)
                 xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
             }
             break;
+        case SystemEvent::POWER_UPDATE:
+            {
+                // Log power data for now, or forward to display if needed
+                // ESP_LOGI(TAG, "Power Update: HV=%dmV %dmA, CHG=%dmV %dmA, LED=%dmV %dmA",
+                //          msg.data.power.hv.voltage_mv, msg.data.power.hv.current_ma,
+                //          msg.data.power.charging.voltage_mv, msg.data.power.charging.current_ma,
+                //          msg.data.power.led.voltage_mv, msg.data.power.led.current_ma);
+            }
+            break;
         default:
             break;
     }

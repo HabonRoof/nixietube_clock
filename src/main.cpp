@@ -9,7 +9,9 @@
 #include "daemons/display_daemon.h"
 #include "daemons/audio_daemon.h"
 #include "daemons/gasgauge_daemon.h"
+#include "daemons/power_daemon.h"
 #include "bq27441/bq27441.h"
+#include "ina3221/ina3221.h"
 #include "system_controller.h"
 #include "daemons/cli_daemon.h"
 #include "settings_store.h"
@@ -52,6 +54,9 @@ extern "C" void app_main(void)
     // Initialize Gasgauge Driver
     static Bq27441 gasgauge_driver(hw_handles.i2c_port);
 
+    // Initialize Power Monitor Driver
+    static Ina3221 power_monitor_driver(hw_handles.i2c_port);
+
     // 2. Initialize Daemons
     static DisplayDaemon display_daemon(nixie_driver, led_driver);
     static AudioDaemon audio_daemon(audio_driver);
@@ -61,6 +66,9 @@ extern "C" void app_main(void)
 
     // Initialize Gasgauge Daemon (needs system queue)
     static GasgaugeDaemon gasgauge_daemon(gasgauge_driver, system_controller.get_queue());
+
+    // Initialize Power Daemon (needs system queue)
+    static PowerDaemon power_daemon(power_monitor_driver, system_controller.get_queue());
 
     // 3.1 Load persisted settings and apply
     static SettingsStore settings_store;
@@ -81,6 +89,7 @@ extern "C" void app_main(void)
     audio_daemon.start();
     system_controller.start();
     gasgauge_daemon.start();
+    power_daemon.start();
     cli_daemon.start();
     web_server.start();
 

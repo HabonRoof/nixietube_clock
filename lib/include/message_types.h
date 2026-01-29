@@ -5,6 +5,7 @@
 #include "freertos/queue.h"
 #include "color_model.h"
 #include "gasgauge_driver.h"
+#include "powermonitor_driver.h"
 
 // --- Audio Daemon Messages ---
 enum class AudioCmd : uint8_t
@@ -83,7 +84,8 @@ enum class SystemEvent : uint8_t
     WIFI_DISCONNECTED,
     RTC_UPDATE,
     CLI_COMMAND,
-    BATTERY_UPDATE
+    BATTERY_UPDATE,
+    POWER_UPDATE
 };
 
 enum class CliCommandType : uint8_t
@@ -112,6 +114,7 @@ struct SystemMessage
         uint8_t button_id;
         CliData cli;
         GasgaugeData battery;
+        PowerMonitorData power;
         // TODO: Add other features
         // Add other event data as needed
     } data;
