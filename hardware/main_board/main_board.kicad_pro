@@ -48,7 +48,7 @@
         "silk_text_thickness": 0.15,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.5
+          "min_clearance": 0.25
         }
       },
       "diff_pair_dimensions": [
@@ -139,7 +139,7 @@
         "min_through_hole_diameter": 0.2,
         "min_track_width": 0.0,
         "min_via_annular_width": 0.1,
-        "min_via_diameter": 0.5,
+        "min_via_diameter": 0.4,
         "solder_mask_clearance": 0.0,
         "solder_mask_min_width": 0.0,
         "solder_mask_to_copper_clearance": 0.005,
@@ -192,6 +192,7 @@
       "track_widths": [
         0.0,
         0.2,
+        0.3,
         0.5,
         0.75,
         1.0
@@ -226,6 +227,10 @@
         {
           "diameter": 0.0,
           "drill": 0.0
+        },
+        {
+          "diameter": 0.4,
+          "drill": 0.2
         },
         {
           "diameter": 0.5,
@@ -666,6 +671,10 @@
     [
       "da1eec9e-eb99-4f2b-9355-052f758d548e",
       "hv_power"
+    ],
+    [
+      "0cd333dd-e8ef-4279-9123-81fa88a25cdb",
+      "nixie_anode_mux"
     ]
   ],
   "text_variables": {}

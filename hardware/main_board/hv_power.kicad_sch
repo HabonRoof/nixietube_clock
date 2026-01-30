@@ -1512,12 +1512,6 @@
 		(uuid "70ce3bfb-a6ec-4c23-8a65-ef0f987d8203")
 	)
 	(junction
-		(at 212.09 64.77)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "7c9256c9-5e9f-470c-8ec7-7cbc10f5522e")
-	)
-	(junction
 		(at 160.02 45.72)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2611,16 +2605,6 @@
 	)
 	(wire
 		(pts
-			(xy 212.09 64.77) (xy 260.35 64.77)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f3b4b39e-5987-4529-9245-b7b9ebab1438")
-	)
-	(wire
-		(pts
 			(xy 241.3 92.71) (xy 241.3 90.17)
 		)
 		(stroke
@@ -2713,7 +2697,7 @@
 			)
 		)
 	)
-	(hierarchical_label "PWR_VIN-"
+	(hierarchical_label "GND"
 		(shape input)
 		(at 45.72 80.01 180)
 		(effects
@@ -2756,17 +2740,6 @@
 			(justify right)
 		)
 		(uuid "ac8736ff-d000-4a70-8203-4cee47315491")
-	)
-	(hierarchical_label "PWR_HV-"
-		(shape input)
-		(at 260.35 64.77 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "e5c192fb-786f-4eb0-a0a1-025be51d3bbc")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
