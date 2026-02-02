@@ -6887,7 +6887,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Switch:SW_MEC_5G"
+		(symbol "Switch:SW_Push"
 			(pin_numbers
 				(hide yes)
 			)
@@ -6907,7 +6907,7 @@
 					(justify left)
 				)
 			)
-			(property "Value" "SW_MEC_5G"
+			(property "Value" "SW_Push"
 				(at 0 -1.524 0)
 				(effects
 					(font
@@ -6924,7 +6924,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "http://www.apem.com/int/index.php?controller=attachment&id_attachment=488"
+			(property "Datasheet" "~"
 				(at 0 5.08 0)
 				(effects
 					(font
@@ -6933,7 +6933,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "MEC 5G single pole normally-open tactile switch"
+			(property "Description" "Push button switch, generic, two pins"
 				(at 0 0 0)
 				(effects
 					(font
@@ -6951,16 +6951,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_fp_filters" "SW*MEC*5G*"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "SW_MEC_5G_0_1"
+			(symbol "SW_Push_0_1"
 				(circle
 					(center -2.032 0)
 					(radius 0.508)
@@ -7010,7 +7001,7 @@
 				(pin passive line
 					(at -5.08 0 0)
 					(length 2.54)
-					(name "A"
+					(name "1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -7028,28 +7019,7 @@
 				(pin passive line
 					(at 5.08 0 180)
 					(length 2.54)
-					(name "B"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(symbol "SW_MEC_5G_1_1"
-				(pin passive line
-					(at -5.08 0 0)
-					(length 2.54)
-					(hide yes)
-					(name "A"
+					(name "2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -7057,25 +7027,6 @@
 						)
 					)
 					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 5.08 0 180)
-					(length 2.54)
-					(hide yes)
-					(name "B"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "4"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -14779,6 +14730,74 @@
 		)
 	)
 	(symbol
+		(lib_id "Jumper:Jumper_2_Bridged")
+		(at 119.38 121.92 0)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "03980817-f4f2-41df-9d3c-b8125691bb20")
+		(property "Reference" "JP4"
+			(at 119.38 127 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "NC"
+			(at 119.38 124.46 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
+			(at 119.38 121.92 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 119.38 121.92 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Jumper, 2-pole, closed/bridged"
+			(at 119.38 121.92 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "02a8e441-05ff-4740-9434-6423ef7b5cbd")
+		)
+		(pin "2"
+			(uuid "0ec86590-c9e4-452a-9ced-bbd4b5a0eab0")
+		)
+		(instances
+			(project "main_board"
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
+					(reference "JP4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Jumper:Jumper_2_Open")
 		(at 303.53 31.75 0)
 		(unit 1)
@@ -15459,6 +15478,74 @@
 		)
 	)
 	(symbol
+		(lib_id "Jumper:Jumper_2_Open")
+		(at 274.32 158.75 0)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "1386dd28-4b98-482f-aeb3-ced71307ae70")
+		(property "Reference" "JP6"
+			(at 274.32 165.1 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "NO"
+			(at 274.32 162.56 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
+			(at 274.32 158.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 274.32 158.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Jumper, 2-pole, open"
+			(at 274.32 158.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "93d93142-28e6-4937-8c28-eedd659b01ba")
+		)
+		(pin "2"
+			(uuid "886110e6-17dd-4858-867d-3ab108aa6a4c")
+		)
+		(instances
+			(project "main_board"
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
+					(reference "JP6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:C_Small")
 		(at 288.29 105.41 90)
 		(unit 1)
@@ -15686,74 +15773,6 @@
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
 					(reference "C14")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Jumper:Jumper_2_Bridged")
-		(at 274.32 156.21 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "156162a9-cf94-4f5e-aa30-4039b1f34be7")
-		(property "Reference" "JP5"
-			(at 274.32 151.13 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "NC"
-			(at 274.32 153.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm"
-			(at 274.32 156.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 274.32 156.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Jumper, 2-pole, closed/bridged"
-			(at 274.32 156.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "e9494263-702c-487f-877f-4a6bd4f78d19")
-		)
-		(pin "2"
-			(uuid "3caa59c5-0c88-47dd-955f-cb1e13345316")
-		)
-		(instances
-			(project "main_board"
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
-					(reference "JP5")
 					(unit 1)
 				)
 			)
@@ -16166,6 +16185,84 @@
 		)
 	)
 	(symbol
+		(lib_id "Switch:SW_Push")
+		(at 189.23 57.15 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "1eafbaa6-9654-4c63-a83f-b5d3086f7f25")
+		(property "Reference" "SW1"
+			(at 184.15 55.372 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "SW_Push"
+			(at 180.34 57.658 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Button_Switch_SMD:SW_SPST_CK_RS282G05A3"
+			(at 194.31 57.15 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 194.31 57.15 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Push button switch, generic, two pins"
+			(at 189.23 57.15 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC PN" "C36498960"
+			(at 189.23 57.15 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "85b3ee25-82c0-4480-b499-fec636b1823e")
+		)
+		(pin "2"
+			(uuid "c65db2a8-2ee0-42cf-97e6-886567cea264")
+		)
+		(instances
+			(project ""
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
+					(reference "SW1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Timer_RTC:DS3231MZ")
 		(at 189.23 176.53 0)
 		(unit 1)
@@ -16395,74 +16492,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Jumper:Jumper_2_Open")
-		(at 43.18 134.62 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "28999b0a-1769-465f-9a75-eef2df37ac21")
-		(property "Reference" "JP1"
-			(at 43.18 128.27 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "NO"
-			(at 43.18 130.81 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
-			(at 43.18 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 43.18 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Jumper, 2-pole, open"
-			(at 43.18 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "e7e335e3-4c9b-4cbe-b960-95a80a2ad730")
-		)
-		(pin "2"
-			(uuid "c32b90f4-bf24-4a0a-a100-3e6588a03c54")
-		)
-		(instances
-			(project "main_board"
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
-					(reference "JP1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Connector:Conn_01x04_Pin")
 		(at 102.87 138.43 90)
 		(unit 1)
@@ -16677,74 +16706,6 @@
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
 					(reference "#PWR016")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Jumper:Jumper_2_Bridged")
-		(at 274.32 158.75 0)
-		(mirror x)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "2fcdd032-efd0-4570-9492-611ba5fc5c26")
-		(property "Reference" "JP6"
-			(at 274.32 164.846 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "NC"
-			(at 274.32 162.306 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm"
-			(at 274.32 158.75 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 274.32 158.75 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Jumper, 2-pole, closed/bridged"
-			(at 274.32 158.75 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "5e030c8d-8851-4488-bb78-b9ceafbfd07a")
-		)
-		(pin "2"
-			(uuid "ac336709-1c0c-4184-ae92-57a0fbd94601")
-		)
-		(instances
-			(project "main_board"
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
-					(reference "JP6")
 					(unit 1)
 				)
 			)
@@ -17078,6 +17039,74 @@
 			(project ""
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
 					(reference "J1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Jumper:Jumper_2_Bridged")
+		(at 43.18 134.62 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "3501dc78-3136-4e01-8f38-ac6ecb279e30")
+		(property "Reference" "JP1"
+			(at 43.18 129.54 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "NC"
+			(at 43.18 132.08 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
+			(at 43.18 134.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 43.18 134.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Jumper, 2-pole, closed/bridged"
+			(at 43.18 134.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "cc0c12e2-d5e5-4db9-9f46-b500fcbd00c0")
+		)
+		(pin "2"
+			(uuid "4473f178-9120-4fce-ade0-64b902869849")
+		)
+		(instances
+			(project "main_board"
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
+					(reference "JP1")
 					(unit 1)
 				)
 			)
@@ -17764,74 +17793,6 @@
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
 					(reference "C2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Jumper:Jumper_2_Open")
-		(at 43.18 137.16 0)
-		(mirror x)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "48278290-e359-45d6-a546-52436f66cf12")
-		(property "Reference" "JP2"
-			(at 43.18 143.764 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "NO"
-			(at 43.18 141.224 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
-			(at 43.18 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 43.18 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Jumper, 2-pole, open"
-			(at 43.18 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "ea898ebf-62e0-499f-9c2f-c943da8719d6")
-		)
-		(pin "2"
-			(uuid "8f62720b-e334-4e4c-aec9-c064f5359ce4")
-		)
-		(instances
-			(project "main_board"
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
-					(reference "JP2")
 					(unit 1)
 				)
 			)
@@ -19990,6 +19951,74 @@
 		)
 	)
 	(symbol
+		(lib_id "Jumper:Jumper_2_Open")
+		(at 274.32 156.21 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "7142c54a-4757-42d4-a1e5-53dccd0c8dd1")
+		(property "Reference" "JP5"
+			(at 274.32 149.86 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "NO"
+			(at 274.32 152.4 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
+			(at 274.32 156.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 274.32 156.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Jumper, 2-pole, open"
+			(at 274.32 156.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "4dc7569d-a570-4ffb-a893-cac79eac1ec5")
+		)
+		(pin "2"
+			(uuid "e602b6f7-8491-4e7e-9336-d64ada35da47")
+		)
+		(instances
+			(project "main_board"
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
+					(reference "JP5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+3V3")
 		(at 316.23 67.31 90)
 		(unit 1)
@@ -21337,43 +21366,33 @@
 		)
 	)
 	(symbol
-		(lib_id "Switch:SW_MEC_5G")
-		(at 189.23 57.15 270)
+		(lib_id "Jumper:Jumper_2_Bridged")
+		(at 119.38 118.11 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(uuid "89f0c9f8-f8ed-4607-b760-a838d9b706a3")
-		(property "Reference" "SW1"
-			(at 180.848 56.134 90)
+		(fields_autoplaced yes)
+		(uuid "8a648c80-617c-432d-a744-27b17ade9b18")
+		(property "Reference" "JP3"
+			(at 119.38 113.03 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
 			)
 		)
-		(property "Value" "SW_MEC_5G"
-			(at 177.038 58.42 90)
+		(property "Value" "NC"
+			(at 119.38 115.57 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
 			)
 		)
-		(property "Footprint" "Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A"
-			(at 194.31 57.15 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "http://www.apem.com/int/index.php?controller=attachment&id_attachment=488"
-			(at 194.31 57.15 0)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
+			(at 119.38 118.11 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -21381,8 +21400,8 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "MEC 5G single pole normally-open tactile switch"
-			(at 189.23 57.15 0)
+		(property "Datasheet" "~"
+			(at 119.38 118.11 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -21390,31 +21409,25 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C49108634"
-			(at 189.23 57.15 90)
+		(property "Description" "Jumper, 2-pole, closed/bridged"
+			(at 119.38 118.11 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(hide yes)
 			)
-		)
-		(pin "3"
-			(uuid "6ca70083-3cef-45d7-9d4b-ec2ee13e2a70")
-		)
-		(pin "4"
-			(uuid "72e62084-194e-4197-9dfb-e9c8fbb15278")
-		)
-		(pin "2"
-			(uuid "8179e492-7f42-48c1-a608-e945b813a13f")
 		)
 		(pin "1"
-			(uuid "a898fd72-8712-4133-8535-db7420ede471")
+			(uuid "fca6af24-f03e-4df2-98b0-f92e07aa7163")
+		)
+		(pin "2"
+			(uuid "04768aae-d902-4139-910f-73e2548a0686")
 		)
 		(instances
 			(project ""
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
-					(reference "SW1")
+					(reference "JP3")
 					(unit 1)
 				)
 			)
@@ -24029,6 +24042,74 @@
 		)
 	)
 	(symbol
+		(lib_id "Jumper:Jumper_2_Bridged")
+		(at 43.18 137.16 0)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "cd4e4f66-39fa-4d8b-b0ce-932d3f5796f4")
+		(property "Reference" "JP2"
+			(at 43.18 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "NC"
+			(at 43.18 139.7 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
+			(at 43.18 137.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 43.18 137.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Jumper, 2-pole, closed/bridged"
+			(at 43.18 137.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "76d446d1-8e0b-48eb-b08a-1530b58776cd")
+		)
+		(pin "2"
+			(uuid "b60d915a-e344-439d-aad3-eb546d6f8f34")
+		)
+		(instances
+			(project "main_board"
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
+					(reference "JP2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+3V3")
 		(at 250.19 259.08 0)
 		(unit 1)
@@ -24230,142 +24311,6 @@
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
 					(reference "#PWR026")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Jumper:Jumper_2_Open")
-		(at 119.38 121.92 0)
-		(mirror x)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "d1b0fcaf-bbd6-426b-97b1-50282d9f205c")
-		(property "Reference" "JP4"
-			(at 119.38 128.27 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "NO"
-			(at 119.38 125.73 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
-			(at 119.38 121.92 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 119.38 121.92 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Jumper, 2-pole, open"
-			(at 119.38 121.92 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "cf0e2699-ee9a-49cf-b3fd-5342e2b3f477")
-		)
-		(pin "2"
-			(uuid "260d4ba9-8e1e-4574-a6b2-1a67b063a647")
-		)
-		(instances
-			(project "main_board"
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
-					(reference "JP4")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Jumper:Jumper_2_Open")
-		(at 119.38 118.11 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "d212bf1d-3253-4cce-b702-9bfd1e2b6ebe")
-		(property "Reference" "JP3"
-			(at 119.38 111.76 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "NO"
-			(at 119.38 114.3 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
-			(at 119.38 118.11 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 119.38 118.11 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Jumper, 2-pole, open"
-			(at 119.38 118.11 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "30cc98c3-ef46-44fa-87d1-7b65dbba0cec")
-		)
-		(pin "2"
-			(uuid "fe570a0f-ea74-4d76-a8be-fc730a07c52a")
-		)
-		(instances
-			(project "main_board"
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
-					(reference "JP3")
 					(unit 1)
 				)
 			)
