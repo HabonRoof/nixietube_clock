@@ -115,7 +115,7 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       rtc_(kI2cPort),
       settings_(SettingsStore::defaults())
 {
-    queue_ = xQueueCreate(10, sizeof(SystemMessage));
+    queue_ = xQueueCreate(32, sizeof(SystemMessage));
     
     if (rtc_.init()) {
         ESP_LOGI(TAG, "RTC Initialized");
@@ -154,21 +154,26 @@ void SystemController::task_entry(void *param)
 void SystemController::loop()
 {
     ESP_LOGI(TAG, "System Controller Started");
-    
-    TickType_t last_wake_time = xTaskGetTickCount();
+
+    const TickType_t poll_interval = pdMS_TO_TICKS(20);
     const TickType_t update_interval = pdMS_TO_TICKS(1000); // Update time every second
+    TickType_t next_time_update = xTaskGetTickCount() + update_interval;
 
     while (true) {
         SystemMessage msg;
-        // Check for system events (buttons, etc.)
-        if (xQueueReceive(queue_, &msg, 0) == pdTRUE) {
+        // Drain all pending messages so producers won't overflow the queue.
+        while (xQueueReceive(queue_, &msg, 0) == pdTRUE) {
             process_message(msg);
         }
 
-        // Periodic tasks
-        update_time();
+        // Keep clock update at 1Hz while queue is processed at a higher rate.
+        TickType_t now = xTaskGetTickCount();
+        if ((int32_t)(now - next_time_update) >= 0) {
+            update_time();
+            next_time_update += update_interval;
+        }
 
-        vTaskDelayUntil(&last_wake_time, update_interval);
+        vTaskDelay(poll_interval);
     }
 }
 
