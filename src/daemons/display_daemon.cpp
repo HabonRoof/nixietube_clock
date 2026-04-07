@@ -5,8 +5,6 @@
 
 static const char *TAG = "DisplayDaemon";
 static constexpr float kTwoPi = 6.28318530718f;
-static constexpr size_t kLedsPerTube = 4;
-static constexpr size_t kTubeCount = 6;
 
 DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver)
     : nixie_driver_(nixie_driver),
@@ -156,14 +154,10 @@ void DisplayDaemon::apply_backlight_to_all(const BackLightState &state)
     RgbColor rgb = hsv_to_rgb(adjusted);
     rgb = apply_gamma(rgb);
 
-    // Map tubes to LEDs: Tube i -> LEDs [i*2, i*2+1]
-    for (size_t i = 0; i < kTubeCount; ++i) {
-        for (size_t j = 0; j < kLedsPerTube; ++j) {
-            size_t led_index = i * kLedsPerTube + j;
-            if (led_index < led_driver_.get_led_count()) {
-                led_driver_.set_pixel(led_index, rgb.red, rgb.green, rgb.blue);
-            }
-        }
+    // Apply backlight color to all LEDs reported by the driver.
+    const size_t led_count = led_driver_.get_led_count();
+    for (size_t led_index = 0; led_index < led_count; ++led_index) {
+        led_driver_.set_pixel(led_index, rgb.red, rgb.green, rgb.blue);
     }
 }
 

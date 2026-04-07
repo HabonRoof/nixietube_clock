@@ -12,8 +12,8 @@
 class Ws2812Strip
 {
 public:
-    static constexpr std::size_t kTotalLedCount = 24;
-    static constexpr std::size_t kGroupSize = 4;
+    static constexpr std::size_t kTotalLedCount = 48;
+    static constexpr std::size_t kGroupSize = 8;
     static constexpr std::size_t kGroupCount = kTotalLedCount / kGroupSize;
 
     explicit Ws2812Strip(rmt_channel_handle_t tx_channel, rmt_encoder_handle_t copy_encoder, std::size_t led_count = kTotalLedCount);
