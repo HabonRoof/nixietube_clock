@@ -29,7 +29,7 @@ static constexpr uint16_t kSubCmdSoftReset = 0x0042;
 static constexpr uint16_t kSubCmdSealed = 0x0020;
 
 // Configuration
-static constexpr uint16_t kDesignCapacityMah = 4200;
+static constexpr uint16_t kDesignCapacityMah = 3600;
 
 Bq27441::Bq27441(i2c_port_t port)
     : port_(port)
