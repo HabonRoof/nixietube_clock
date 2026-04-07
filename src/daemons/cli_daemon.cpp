@@ -12,6 +12,7 @@
 
 static const char *TAG = "CliDaemon";
 static SystemController *g_system_controller = nullptr;
+static ChargerDaemon *g_charger_daemon = nullptr;
 
 #ifndef GIT_COMMIT_HASH
 #define GIT_COMMIT_HASH "unknown"
@@ -144,6 +145,82 @@ static int reboot_func(int argc, char **argv)
     return 0;
 }
 
+// --- Command: get_bq25601_status ---
+static int get_bq25601_status_func(int argc, char **argv)
+{
+    if (!g_charger_daemon) {
+        printf("charger daemon not ready\n");
+        return 1;
+    }
+
+    uint8_t status = 0;
+    if (!g_charger_daemon->read_status_register(status)) {
+        printf("Failed to read BQ25601 status register (REG08)\n");
+        return 1;
+    }
+
+    uint8_t reg01 = 0;
+    if (!g_charger_daemon->read_power_on_config_register(reg01)) {
+        printf("Failed to read BQ25601 power-on config register (REG01)\n");
+        return 1;
+    }
+
+    const bool otg_enabled = (reg01 & 0x20U) != 0U; // OTG_CONFIG bit[5]
+
+    printf("BQ25601 REG08 (System Status): 0x%02X\n", status);
+    printf("BQ25601 REG01 (Power-on Config): 0x%02X\n", reg01);
+    printf("OTG_CONFIG (REG01 bit5): %s\n", otg_enabled ? "enabled" : "disabled");
+    return 0;
+}
+
+// --- Command: enable_otg_output ---
+static int enable_otg_output_func(int argc, char **argv)
+{
+    if (!g_charger_daemon) {
+        printf("charger daemon not ready\n");
+        return 1;
+    }
+    bool ok = g_charger_daemon->enable_otg();
+    printf(ok ? "OTG output enabled\n" : "Failed to enable OTG output\n");
+    return ok ? 0 : 1;
+}
+
+// --- Command: disable_otg_output ---
+static int disable_otg_output_func(int argc, char **argv)
+{
+    if (!g_charger_daemon) {
+        printf("charger daemon not ready\n");
+        return 1;
+    }
+    bool ok = g_charger_daemon->disable_otg();
+    printf(ok ? "OTG output disabled\n" : "Failed to disable OTG output\n");
+    return ok ? 0 : 1;
+}
+
+// --- Command: enable_charging ---
+static int enable_charging_func(int argc, char **argv)
+{
+    if (!g_charger_daemon) {
+        printf("charger daemon not ready\n");
+        return 1;
+    }
+    bool ok = g_charger_daemon->enable_charging();
+    printf(ok ? "Charging enabled\n" : "Failed to enable charging\n");
+    return ok ? 0 : 1;
+}
+
+// --- Command: disable_charging ---
+static int disable_charging_func(int argc, char **argv)
+{
+    if (!g_charger_daemon) {
+        printf("charger daemon not ready\n");
+        return 1;
+    }
+    bool ok = g_charger_daemon->disable_charging();
+    printf(ok ? "Charging disabled\n" : "Failed to disable charging\n");
+    return ok ? 0 : 1;
+}
+
 // --- Command: help ---
 static int help_func(int argc, char **argv)
 {
@@ -155,14 +232,20 @@ static int help_func(int argc, char **argv)
     printf("get_uuid                                        Get UUID of device\n");
     printf("get_hw_version                                  Get hardware version\n");
     printf("get_fw_version                                  Get firmware version\n");
+    printf("get_bq25601_status                             Get BQ25601 status register (REG08, REG01 OTG_CONFIG)\n");
+    printf("enable_otg_output                               Enable OTG output\n");
+    printf("disable_otg_output                              Disable OTG output\n");
+    printf("enable_charging                                 Enable charging\n");
+    printf("disable_charging                                Disable charging\n");
     printf("reboot                                          reboot the device\n");
     return 0;
 }
 
-CliDaemon::CliDaemon(SystemController &system_controller)
-    : system_controller_(system_controller), task_handle_(nullptr)
+CliDaemon::CliDaemon(SystemController &system_controller, ChargerDaemon &charger_daemon)
+    : system_controller_(system_controller), charger_daemon_(charger_daemon), task_handle_(nullptr)
 {
     g_system_controller = &system_controller;
+    g_charger_daemon = &charger_daemon;
 }
 
 CliDaemon::~CliDaemon()
@@ -288,6 +371,56 @@ void CliDaemon::register_commands()
         .argtable = NULL
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&reboot_cmd));
+
+    // Register: get_bq25601_status
+    const esp_console_cmd_t get_bq25601_status_cmd = {
+        .command = "get_bq25601_status",
+        .help = "Get BQ25601 status register (REG08, REG01 OTG_CONFIG)",
+        .hint = NULL,
+        .func = &get_bq25601_status_func,
+        .argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&get_bq25601_status_cmd));
+
+    // Register: enable_otg_output
+    const esp_console_cmd_t enable_otg_output_cmd = {
+        .command = "enable_otg_output",
+        .help = "Enable OTG output",
+        .hint = NULL,
+        .func = &enable_otg_output_func,
+        .argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&enable_otg_output_cmd));
+
+    // Register: disable_otg_output
+    const esp_console_cmd_t disable_otg_output_cmd = {
+        .command = "disable_otg_output",
+        .help = "Disable OTG output",
+        .hint = NULL,
+        .func = &disable_otg_output_func,
+        .argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&disable_otg_output_cmd));
+
+    // Register: enable_charging
+    const esp_console_cmd_t enable_charging_cmd = {
+        .command = "enable_charging",
+        .help = "Enable charging",
+        .hint = NULL,
+        .func = &enable_charging_func,
+        .argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&enable_charging_cmd));
+
+    // Register: disable_charging
+    const esp_console_cmd_t disable_charging_cmd = {
+        .command = "disable_charging",
+        .help = "Disable charging",
+        .hint = NULL,
+        .func = &disable_charging_func,
+        .argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&disable_charging_cmd));
 
     // Register: help
     const esp_console_cmd_t help_cmd = {

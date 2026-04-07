@@ -4,11 +4,12 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "system_controller.h"
+#include "daemons/charger_daemon.h"
 
 class CliDaemon
 {
 public:
-    CliDaemon(SystemController &system_controller);
+    CliDaemon(SystemController &system_controller, ChargerDaemon &charger_daemon);
     ~CliDaemon();
 
     void start();
@@ -19,5 +20,6 @@ private:
     void register_commands();
 
     SystemController &system_controller_;
+    ChargerDaemon &charger_daemon_;
     TaskHandle_t task_handle_;
 };

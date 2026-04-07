@@ -6,6 +6,7 @@
 #include "color_model.h"
 #include "gasgauge_driver.h"
 #include "powermonitor_driver.h"
+#include "charger_driver.h"
 
 // --- Audio Daemon Messages ---
 enum class AudioCmd : uint8_t
@@ -85,7 +86,8 @@ enum class SystemEvent : uint8_t
     RTC_UPDATE,
     CLI_COMMAND,
     BATTERY_UPDATE,
-    POWER_UPDATE
+    POWER_UPDATE,
+    CHARGER_UPDATE
 };
 
 enum class CliCommandType : uint8_t
@@ -115,6 +117,7 @@ struct SystemMessage
         CliData cli;
         GasgaugeData battery;
         PowerMonitorData power;
+        ChargerData charger;
         // TODO: Add other features
         // Add other event data as needed
     } data;
