@@ -10,8 +10,10 @@
 #include "daemons/audio_daemon.h"
 #include "daemons/gasgauge_daemon.h"
 #include "daemons/power_daemon.h"
+#include "daemons/charger_daemon.h"
 #include "bq27441/bq27441.h"
 #include "ina3221/ina3221.h"
+#include "bq25601/bq25601.h"
 #include "system_controller.h"
 #include "daemons/cli_daemon.h"
 #include "settings_store.h"
@@ -25,6 +27,9 @@ static const char *kLogTag = "main";
 
 extern "C" void app_main(void)
 {
+    // Reduce console noise so CLI interaction is usable on serial monitor.
+    esp_log_level_set("*", ESP_LOG_INFO);
+
     ESP_LOGI(kLogTag, "Starting Nixie Clock System...");
 
     esp_err_t nvs_err = nvs_flash_init();
@@ -57,6 +62,9 @@ extern "C" void app_main(void)
     // Initialize Power Monitor Driver
     static Ina3221 power_monitor_driver(hw_handles.i2c_port);
 
+    // Initialize Charger Driver
+    static Bq25601 charger_driver(hw_handles.i2c_port);
+
     // 2. Initialize Daemons
     static DisplayDaemon display_daemon(nixie_driver, led_driver);
     static AudioDaemon audio_daemon(audio_driver);
@@ -70,6 +78,9 @@ extern "C" void app_main(void)
     // Initialize Power Daemon (needs system queue)
     static PowerDaemon power_daemon(power_monitor_driver, system_controller.get_queue());
 
+    // Initialize Charger Daemon (needs system queue)
+    static ChargerDaemon charger_daemon(charger_driver, system_controller.get_queue());
+
     // 3.1 Load persisted settings and apply
     static SettingsStore settings_store;
     ClockSettings settings;
@@ -78,7 +89,7 @@ extern "C" void app_main(void)
     }
 
     // 4. Initialize CLI Daemon
-    static CliDaemon cli_daemon(system_controller);
+    static CliDaemon cli_daemon(system_controller, charger_daemon);
 
     // 4.1 Initialize Web Server
     static WebServer web_server(system_controller, settings_store);
@@ -90,6 +101,7 @@ extern "C" void app_main(void)
     system_controller.start();
     gasgauge_daemon.start();
     power_daemon.start();
+    charger_daemon.start();
     cli_daemon.start();
     web_server.start();
 
