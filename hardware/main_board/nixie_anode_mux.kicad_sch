@@ -1388,12 +1388,6 @@
 		(uuid "b363ea8e-2576-4ab7-a296-97c63553ecf7")
 	)
 	(junction
-		(at 55.88 176.53)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "b8356a1d-b607-4eb1-9ef5-09385eccad96")
-	)
-	(junction
 		(at 125.73 49.53)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -1410,12 +1404,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "d9d7101d-b184-4b18-9b20-9e10321236f3")
-	)
-	(junction
-		(at 55.88 142.24)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "e0ed7db8-4131-49f1-a7d4-1d45205b0ddb")
 	)
 	(junction
 		(at 62.23 49.53)
@@ -1636,16 +1624,6 @@
 			(type default)
 		)
 		(uuid "28ca7877-72a0-4dc6-8c10-36b69578ec5c")
-	)
-	(wire
-		(pts
-			(xy 45.72 176.53) (xy 55.88 176.53)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2c1b3073-bfb8-4113-a1d0-d87c6faa9ecb")
 	)
 	(wire
 		(pts
@@ -2049,16 +2027,6 @@
 	)
 	(wire
 		(pts
-			(xy 45.72 144.78) (xy 45.72 142.24)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "89319137-4502-4214-a9bb-59a8c74945bc")
-	)
-	(wire
-		(pts
 			(xy 100.33 152.4) (xy 102.87 152.4)
 		)
 		(stroke
@@ -2329,16 +2297,6 @@
 	)
 	(wire
 		(pts
-			(xy 45.72 149.86) (xy 45.72 176.53)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d0740390-431d-46a7-87c2-b0a0b72659bd")
-	)
-	(wire
-		(pts
 			(xy 30.48 113.03) (xy 33.02 113.03)
 		)
 		(stroke
@@ -2376,16 +2334,6 @@
 			(type default)
 		)
 		(uuid "d7139f7f-619f-4bc6-bd66-3d60b9660d27")
-	)
-	(wire
-		(pts
-			(xy 45.72 142.24) (xy 55.88 142.24)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d9863f31-5d98-4bba-a1a7-9c7687caa454")
 	)
 	(wire
 		(pts
@@ -3138,7 +3086,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105578"
+		(property "LCSC PN" "C22935"
 			(at 180.34 45.72 0)
 			(effects
 				(font
@@ -3402,7 +3350,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C114622"
+		(property "LCSC PN" "C23178"
 			(at 109.22 49.53 90)
 			(effects
 				(font
@@ -3622,7 +3570,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105579"
+		(property "LCSC PN" "C25819"
 			(at 201.93 106.68 90)
 			(effects
 				(font
@@ -3778,7 +3726,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C106248"
+		(property "LCSC PN" "C5199872"
 			(at 55.88 147.32 0)
 			(effects
 				(font
@@ -3855,7 +3803,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105579"
+		(property "LCSC PN" "C25819"
 			(at 68.58 105.41 90)
 			(effects
 				(font
@@ -3932,7 +3880,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C114622"
+		(property "LCSC PN" "C23178"
 			(at 45.72 105.41 90)
 			(effects
 				(font
@@ -4032,7 +3980,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C916394"
+		(property "LCSC PN" "C94389"
 			(at 38.1 57.15 0)
 			(effects
 				(font
@@ -4201,7 +4149,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C20069146"
+		(property "LCSC PN" "C82049"
 			(at 59.69 40.64 0)
 			(effects
 				(font
@@ -4347,7 +4295,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105579"
+		(property "LCSC PN" "C25819"
 			(at 196.85 50.8 90)
 			(effects
 				(font
@@ -4789,7 +4737,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105578"
+		(property "LCSC PN" "C22935"
 			(at 52.07 100.33 0)
 			(effects
 				(font
@@ -4866,7 +4814,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C114622"
+		(property "LCSC PN" "C23178"
 			(at 110.49 105.41 90)
 			(effects
 				(font
@@ -4966,7 +4914,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C20069146"
+		(property "LCSC PN" "C82049"
 			(at 59.69 96.52 0)
 			(effects
 				(font
@@ -5125,7 +5073,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105578"
+		(property "LCSC PN" "C22935"
 			(at 116.84 100.33 0)
 			(effects
 				(font
@@ -5268,7 +5216,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C114622"
+		(property "LCSC PN" "C23178"
 			(at 45.72 49.53 90)
 			(effects
 				(font
@@ -5345,7 +5293,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105579"
+		(property "LCSC PN" "C25819"
 			(at 133.35 105.41 90)
 			(effects
 				(font
@@ -5445,7 +5393,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C20069146"
+		(property "LCSC PN" "C82049"
 			(at 193.04 97.79 0)
 			(effects
 				(font
@@ -5548,7 +5496,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C916394"
+		(property "LCSC PN" "C94389"
 			(at 171.45 114.3 0)
 			(effects
 				(font
@@ -5628,7 +5576,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C114622"
+		(property "LCSC PN" "C23178"
 			(at 173.99 50.8 90)
 			(effects
 				(font
@@ -5707,7 +5655,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105578"
+		(property "LCSC PN" "C22935"
 			(at 185.42 101.6 0)
 			(effects
 				(font
@@ -5807,7 +5755,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C20069146"
+		(property "LCSC PN" "C82049"
 			(at 187.96 41.91 0)
 			(effects
 				(font
@@ -5910,7 +5858,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C916394"
+		(property "LCSC PN" "C94389"
 			(at 166.37 58.42 0)
 			(effects
 				(font
@@ -6013,7 +5961,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C916394"
+		(property "LCSC PN" "C94389"
 			(at 38.1 113.03 0)
 			(effects
 				(font
@@ -6116,7 +6064,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C916394"
+		(property "LCSC PN" "C94389"
 			(at 101.6 57.15 0)
 			(effects
 				(font
@@ -6196,7 +6144,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105579"
+		(property "LCSC PN" "C25819"
 			(at 132.08 49.53 90)
 			(effects
 				(font
@@ -6273,7 +6221,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105579"
+		(property "LCSC PN" "C25819"
 			(at 68.58 49.53 90)
 			(effects
 				(font
@@ -6350,7 +6298,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C114622"
+		(property "LCSC PN" "C23178"
 			(at 179.07 106.68 90)
 			(effects
 				(font
@@ -6369,85 +6317,6 @@
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/0cd333dd-e8ef-4279-9123-81fa88a25cdb"
 					(reference "R54")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:C_Small")
-		(at 45.72 147.32 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "e099e7ca-dd5a-4a65-8b18-a2176eb54c3b")
-		(property "Reference" "C42"
-			(at 48.26 146.0562 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "0.1u"
-			(at 48.26 148.5962 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
-			(at 45.72 147.32 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 45.72 147.32 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Unpolarized capacitor, small symbol"
-			(at 45.72 147.32 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "LCSC PN" "C36911391"
-			(at 45.72 147.32 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "a2a48317-2e7c-47ed-b6fd-0f1264bc7ec4")
-		)
-		(pin "2"
-			(uuid "a73635cc-01d8-4a05-abf3-bdd61a3530f6")
-		)
-		(instances
-			(project "main_board"
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/0cd333dd-e8ef-4279-9123-81fa88a25cdb"
-					(reference "C42")
 					(unit 1)
 				)
 			)
@@ -6529,7 +6398,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C20069146"
+		(property "LCSC PN" "C82049"
 			(at 123.19 40.64 0)
 			(effects
 				(font
@@ -6632,7 +6501,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C20069146"
+		(property "LCSC PN" "C82049"
 			(at 124.46 96.52 0)
 			(effects
 				(font
@@ -6735,7 +6604,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C916394"
+		(property "LCSC PN" "C94389"
 			(at 102.87 113.03 0)
 			(effects
 				(font
@@ -6883,7 +6752,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105578"
+		(property "LCSC PN" "C22935"
 			(at 52.07 44.45 0)
 			(effects
 				(font
@@ -6962,7 +6831,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C105578"
+		(property "LCSC PN" "C22935"
 			(at 115.57 44.45 0)
 			(effects
 				(font
