@@ -37,9 +37,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.762,
-          "height": 1.524,
-          "width": 1.524
+          "drill": 3.2,
+          "height": 3.2,
+          "width": 3.2
         },
         "silk_line_width": 0.15,
         "silk_text_italic": false,
@@ -48,7 +48,7 @@
         "silk_text_thickness": 0.15,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.3
+          "min_clearance": 0.25
         }
       },
       "diff_pair_dimensions": [
@@ -531,7 +531,7 @@
       "plot": "manufacture/",
       "pos_files": "./",
       "specctra_dsn": "",
-      "step": "",
+      "step": "display_board_in4.stl",
       "svg": "",
       "vrml": ""
     },
@@ -580,6 +580,12 @@
         },
         {
           "group_by": true,
+          "label": "LCSC PN",
+          "name": "LCSC PN",
+          "show": true
+        },
+        {
+          "group_by": true,
           "label": "Exclude from BOM",
           "name": "${EXCLUDE_FROM_BOM}",
           "show": true
@@ -613,12 +619,6 @@
           "label": "#",
           "name": "${ITEM_NUMBER}",
           "show": false
-        },
-        {
-          "group_by": true,
-          "label": "LCSC PN",
-          "name": "LCSC PN",
-          "show": true
         }
       ],
       "filter_string": "",
@@ -626,7 +626,7 @@
       "include_excluded_from_bom": true,
       "name": "",
       "sort_asc": false,
-      "sort_field": "LCSC PN"
+      "sort_field": "${ITEM_NUMBER}"
     },
     "connection_grid_size": 50.0,
     "drawing": {
