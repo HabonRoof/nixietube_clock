@@ -672,12 +672,16 @@
       "Root"
     ],
     [
-      "da1eec9e-eb99-4f2b-9355-052f758d548e",
-      "hv_power"
-    ],
-    [
       "0cd333dd-e8ef-4279-9123-81fa88a25cdb",
       "nixie_anode_mux"
+    ],
+    [
+      "23960838-3dbf-4684-acd4-edccf335cc3f",
+      "Gasgauge"
+    ],
+    [
+      "ac187de9-7d82-4fdd-b064-4ef8ee34b2fe",
+      "hv_power_flyback"
     ]
   ],
   "text_variables": {}
