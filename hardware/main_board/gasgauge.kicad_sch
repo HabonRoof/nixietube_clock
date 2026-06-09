@@ -622,12 +622,6 @@
 		(uuid "16e30012-9489-4563-ae9d-0621ddae5e7d")
 	)
 	(junction
-		(at 120.65 100.33)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "3227d052-4687-4596-a7fd-86e0a3b3ffee")
-	)
-	(junction
 		(at 90.17 77.47)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -638,6 +632,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "7253c4ff-7c48-4bcf-b483-46a20034d9fd")
+	)
+	(junction
+		(at 118.11 100.33)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a0f551ac-a533-4fa3-ba73-f9f6f56b0f24")
 	)
 	(junction
 		(at 105.41 77.47)
@@ -769,7 +769,7 @@
 	)
 	(wire
 		(pts
-			(xy 120.65 93.98) (xy 120.65 92.71)
+			(xy 118.11 93.98) (xy 118.11 92.71)
 		)
 		(stroke
 			(width 0)
@@ -786,16 +786,6 @@
 			(type default)
 		)
 		(uuid "715756fe-e221-450d-8ddb-45f96e2c8eba")
-	)
-	(wire
-		(pts
-			(xy 120.65 100.33) (xy 137.16 100.33)
-		)
-		(stroke
-			(width 0.5)
-			(type default)
-		)
-		(uuid "72640796-ee4a-44fe-b880-03de62cd2e3b")
 	)
 	(wire
 		(pts
@@ -849,7 +839,7 @@
 	)
 	(wire
 		(pts
-			(xy 124.46 92.71) (xy 120.65 92.71)
+			(xy 124.46 92.71) (xy 118.11 92.71)
 		)
 		(stroke
 			(width 0)
@@ -879,7 +869,7 @@
 	)
 	(wire
 		(pts
-			(xy 120.65 99.06) (xy 120.65 100.33)
+			(xy 118.11 99.06) (xy 118.11 100.33)
 		)
 		(stroke
 			(width 0)
@@ -899,7 +889,7 @@
 	)
 	(wire
 		(pts
-			(xy 105.41 100.33) (xy 120.65 100.33)
+			(xy 105.41 100.33) (xy 118.11 100.33)
 		)
 		(stroke
 			(width 0.5)
@@ -916,6 +906,16 @@
 			(type default)
 		)
 		(uuid "cb386b8b-81b8-4952-9094-0e60336082aa")
+	)
+	(wire
+		(pts
+			(xy 118.11 100.33) (xy 120.65 100.33)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cfbeeb68-2bf0-4e1d-9ddb-36fbe858506c")
 	)
 	(wire
 		(pts
@@ -966,6 +966,16 @@
 			(type default)
 		)
 		(uuid "e54c1609-d992-495d-8ae2-c1e09929c8d5")
+	)
+	(wire
+		(pts
+			(xy 118.11 100.33) (xy 137.16 100.33)
+		)
+		(stroke
+			(width 0.5)
+			(type default)
+		)
+		(uuid "e66ce834-7250-4e84-bdce-e5234affdd4e")
 	)
 	(wire
 		(pts
@@ -1042,6 +1052,85 @@
 			(justify right)
 		)
 		(uuid "f48086e5-a2ad-484c-b030-5c7fd9e96bad")
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 118.11 96.52 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "00a6db7b-a8a0-4d82-b959-4b0a31644ce0")
+		(property "Reference" "R15"
+			(at 120.65 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "10k"
+			(at 120.65 97.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
+			(at 118.11 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 118.11 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor, small symbol"
+			(at 118.11 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC PN" "C25744"
+			(at 118.11 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "44d581cd-790b-4698-91bb-c3e53805339e")
+		)
+		(pin "2"
+			(uuid "ef2de8f5-0899-48bf-a7b4-79d61987fe12")
+		)
+		(instances
+			(project "main_board"
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/23960838-3dbf-4684-acd4-edccf335cc3f"
+					(reference "R15")
+					(unit 1)
+				)
+			)
+		)
 	)
 	(symbol
 		(lib_id "Battery_Management:BQ27441DRZR-G1A")
@@ -1249,7 +1338,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "0.47u"
+		(property "Value" "470n"
 			(at 177.546 88.646 0)
 			(effects
 				(font
@@ -1328,7 +1417,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "1u"
+		(property "Value" "100n"
 			(at 107.95 92.7162 0)
 			(effects
 				(font
@@ -1337,7 +1426,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 105.41 91.44 0)
 			(effects
 				(font
@@ -1364,7 +1453,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C5199872"
+		(property "LCSC PN" "C1525"
 			(at 105.41 91.44 0)
 			(effects
 				(font
@@ -1416,7 +1505,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 160.02 78.74 0)
 			(effects
 				(font
@@ -1443,7 +1532,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C98220"
+		(property "LCSC PN" "C25744"
 			(at 160.02 78.74 0)
 			(effects
 				(font
@@ -1462,85 +1551,6 @@
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/23960838-3dbf-4684-acd4-edccf335cc3f"
 					(reference "R19")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R_Small")
-		(at 120.65 96.52 180)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "ff070032-caeb-443e-92c8-7216c4fd6443")
-		(property "Reference" "R15"
-			(at 123.19 95.2499 0)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-				(justify right)
-			)
-		)
-		(property "Value" "10k"
-			(at 123.19 97.7899 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 120.65 96.52 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 120.65 96.52 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Resistor, small symbol"
-			(at 120.65 96.52 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "LCSC PN" "C98220"
-			(at 120.65 96.52 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "31d7eb9f-0bbe-4dd8-881c-67e1c0e3ffad")
-		)
-		(pin "2"
-			(uuid "aaa2bff0-294c-4871-9c1e-c23687039e42")
-		)
-		(instances
-			(project "main_board"
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/23960838-3dbf-4684-acd4-edccf335cc3f"
-					(reference "R15")
 					(unit 1)
 				)
 			)

@@ -1277,7 +1277,7 @@
 							)
 						)
 					)
-					(number "7"
+					(number "5"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2161,24 +2161,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "f7e1798c-6ff0-443c-8b49-c5b1211b151c")
-	)
-	(bus_entry
-		(at 119.38 124.46)
-		(size 2.54 2.54)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "70d40e5b-0f17-46ff-8686-3f7374a55daa")
-	)
-	(bus_entry
-		(at 90.17 129.54)
-		(size -2.54 2.54)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e9120ad7-8bf2-454c-8593-6a7cc9cd89cc")
 	)
 	(wire
 		(pts
@@ -3463,7 +3445,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "WSLP1206R0330FEA"
+		(property "Value" "SMF12M1FR047T"
 			(at 185.166 72.39 0)
 			(effects
 				(font
@@ -3490,7 +3472,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Resistor, small symbol"
+		(property "Description" "1W 47mΩ Current Sense Resistor SMD ±1% ±50ppm/℃"
 			(at 196.342 76.962 0)
 			(effects
 				(font
@@ -3499,7 +3481,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C2084257"
+		(property "LCSC PN" "C845295"
 			(at 182.88 71.12 0)
 			(effects
 				(font
@@ -3607,7 +3589,7 @@
 		(at 226.06 54.61 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
@@ -5394,89 +5376,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Johnson_Symbol_Lib:ER9.5_auto_transformer")
-		(at 181.61 40.64 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "d1146509-0e5e-4f90-a9b8-f449b5cca11b")
-		(property "Reference" "L5"
-			(at 182.245 20.32 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "ER9.5 Transformer"
-			(at 182.245 22.86 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "KiCad_Library:Transformer_ER9.5_11.6mmx8.2mm"
-			(at 181.61 40.64 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "https://www.tdk-electronics.tdk.com/inf/80/db/fer/er_9_5_5.pdf"
-			(at 181.61 40.64 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "ER9.5 boost autotransformer"
-			(at 181.61 40.64 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Digikey PN" "B65527B1008T001"
-			(at 181.864 43.434 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "7"
-			(uuid "99cde71d-c269-4ce9-98f4-e7255c14e98c")
-		)
-		(pin "8"
-			(uuid "487bdba2-4b25-4bb5-aa50-fdbd4e1b815a")
-		)
-		(pin "1"
-			(uuid "27622ace-5801-43c1-a718-8239a8e6181f")
-		)
-		(pin "4"
-			(uuid "3492a283-eb29-4ef0-afd3-fcd2e821e1a5")
-		)
-		(instances
-			(project ""
-				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/ac187de9-7d82-4fdd-b064-4ef8ee34b2fe"
-					(reference "L5")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:R_Small")
 		(at 80.01 45.72 0)
 		(mirror y)
@@ -5627,6 +5526,89 @@
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/ac187de9-7d82-4fdd-b064-4ef8ee34b2fe"
 					(reference "R79")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Johnson_Symbol_Lib:ER9.5_auto_transformer")
+		(at 181.61 40.64 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "db130012-8421-4cae-bd12-6508f5525892")
+		(property "Reference" "L2"
+			(at 182.245 20.32 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "ER9.5 Transformer"
+			(at 182.245 22.86 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "KiCad_Library:Transformer_ER9.5_11.6mmx8.2mm"
+			(at 181.61 40.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.tdk-electronics.tdk.com/inf/80/db/fer/er_9_5_5.pdf"
+			(at 181.61 40.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "ER9.5 boost autotransformer"
+			(at 181.61 40.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digikey PN" "B65527B1008T001"
+			(at 181.864 43.434 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "8"
+			(uuid "0ce9be8d-2ce8-4561-92e3-a279d0e5f27e")
+		)
+		(pin "5"
+			(uuid "7fc7f5bb-b325-456d-8090-de86e2dea8a1")
+		)
+		(pin "1"
+			(uuid "1a554a4c-21dc-4fe5-a5d3-3d7db6a29e6e")
+		)
+		(pin "4"
+			(uuid "640a471a-c065-41f0-ae07-ed92a331abcd")
+		)
+		(instances
+			(project ""
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/ac187de9-7d82-4fdd-b064-4ef8ee34b2fe"
+					(reference "L2")
 					(unit 1)
 				)
 			)
