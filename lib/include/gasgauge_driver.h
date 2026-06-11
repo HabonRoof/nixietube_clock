@@ -16,4 +16,5 @@ public:
 
     virtual bool init() = 0;
     virtual bool get_data(GasgaugeData &data) = 0;
+    virtual bool is_ready() const { return false; }
 };

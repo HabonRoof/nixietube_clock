@@ -79,6 +79,33 @@ bool Pca9685::set_duty(uint8_t channel, uint16_t duty)
     return set_pwm(channel, 0, duty);
 }
 
+bool Pca9685::set_pwm_block(uint8_t start_channel, const uint16_t duties[], uint8_t channel_count)
+{
+    if (channel_count == 0 || start_channel >= 16 ||
+        static_cast<uint32_t>(start_channel) + channel_count > 16) {
+        return false;
+    }
+
+    uint8_t data[64] = {};
+    for (uint8_t i = 0; i < channel_count; ++i) {
+        const uint16_t duty = duties[i];
+        const uint16_t off = duty >= 4095 ? static_cast<uint16_t>(4095) : duty;
+        data[(i * 4) + 0] = 0x00;
+        data[(i * 4) + 1] = 0x00;
+        data[(i * 4) + 2] = static_cast<uint8_t>(off & 0xFF);
+        data[(i * 4) + 3] = static_cast<uint8_t>((off >> 8) & 0x0F);
+    }
+
+    const uint8_t reg = static_cast<uint8_t>(kLed0OnL + (4 * start_channel));
+    return write_registers(reg, data, 4 * channel_count);
+}
+
+bool Pca9685::zero_all_channels()
+{
+    uint8_t zeros[64] = {};
+    return write_registers(kLed0OnL, zeros, sizeof(zeros));
+}
+
 bool Pca9685::set_all_off()
 {
     uint8_t data[4] = {0x00, 0x00, 0x00, 0x10};

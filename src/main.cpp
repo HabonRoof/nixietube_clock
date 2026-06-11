@@ -43,21 +43,23 @@ extern "C" void app_main(void)
     // 0. Initialize Hardware (I2C, UART, GPIO, RMT)
     HardwareHandles hw_handles = SystemController::init_hardware();
 
+    // Initialize Gasgauge early (before nixie scan uses I2C)
+    static Bq27441 gasgauge_driver(hw_handles.i2c_port);
+    ESP_LOGI(kLogTag, "Initializing BQ27441 at boot...");
+    if (!gasgauge_driver.init()) {
+        ESP_LOGW(kLogTag, "BQ27441 init failed at boot; gasgauge daemon will retry");
+    } else {
+        ESP_LOGI(kLogTag, "BQ27441 ready at boot");
+    }
+
     // 1. Initialize Hardware Drivers
-    
-    // Initialize LED Strip Driver
+
     static LedDriver led_driver(hw_handles.led_rmt_channel, hw_handles.led_rmt_encoder);
-    
-    // Initialize Nixie Driver
-    // Now NixieDriver manages its own tubes internally.
+
     static NixieDriver nixie_driver;
     nixie_driver.nixie_scan_start(hw_handles.i2c_port);
-    
-    // Initialize Audio Driver
-    static AudioDriver audio_driver(hw_handles.audio_uart_port);
 
-    // Initialize Gasgauge Driver
-    static Bq27441 gasgauge_driver(hw_handles.i2c_port);
+    static AudioDriver audio_driver(hw_handles.audio_uart_port);
 
     // Initialize Power Monitor Driver
     static Ina3221 power_monitor_driver(hw_handles.i2c_port);

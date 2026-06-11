@@ -13,6 +13,8 @@ public:
     bool init(float pwm_frequency_hz);
     bool set_pwm(uint8_t channel, uint16_t on, uint16_t off);
     bool set_duty(uint8_t channel, uint16_t duty);
+    bool set_pwm_block(uint8_t start_channel, const uint16_t duties[], uint8_t channel_count);
+    bool zero_all_channels();
     bool set_all_off();
 
 private:

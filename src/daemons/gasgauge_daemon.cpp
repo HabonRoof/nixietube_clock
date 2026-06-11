@@ -32,30 +32,44 @@ void GasgaugeDaemon::loop()
 {
     ESP_LOGI(TAG, "Gasgauge Daemon Started");
 
-    if (!driver_.init()) {
-        ESP_LOGE(TAG, "Failed to initialize Gasgauge Driver");
-        // Should we retry or just exit?
-        // Let's retry periodically
+    TickType_t last_wake_time = xTaskGetTickCount();
+    const TickType_t update_interval = pdMS_TO_TICKS(1000);
+    const TickType_t retry_interval = pdMS_TO_TICKS(30000);
+
+    bool init_ok = driver_.is_ready();
+    if (!init_ok) {
+        init_ok = driver_.init();
+    }
+    if (!init_ok) {
+        ESP_LOGW(TAG, "Gasgauge unavailable; retrying init every 30s");
+    } else {
+        ESP_LOGI(TAG, "Gasgauge ready");
+        last_wake_time = xTaskGetTickCount();
     }
 
-    TickType_t last_wake_time = xTaskGetTickCount();
-    const TickType_t update_interval = pdMS_TO_TICKS(1000); // Update every second
-
     while (true) {
+        if (!init_ok) {
+            vTaskDelay(retry_interval);
+            init_ok = driver_.init();
+            if (init_ok) {
+                ESP_LOGI(TAG, "Gasgauge initialized");
+                last_wake_time = xTaskGetTickCount();
+            }
+            continue;
+        }
+
         GasgaugeData data;
         if (driver_.get_data(data)) {
-            // Send data to System Controller
             SystemMessage msg;
             msg.event = SystemEvent::BATTERY_UPDATE;
             msg.data.battery = data;
-            
-            // Use a timeout of 0 to avoid blocking if queue is full
+
             if (xQueueSend(system_queue_, &msg, 0) != pdTRUE) {
                 ESP_LOGW(TAG, "System queue full, dropped battery update");
             }
         } else {
-            ESP_LOGW(TAG, "Failed to read gasgauge data");
-            // Try to re-init if communication fails repeatedly?
+            ESP_LOGW(TAG, "Gasgauge read failed; will retry init in 30s");
+            init_ok = false;
         }
 
         vTaskDelayUntil(&last_wake_time, update_interval);

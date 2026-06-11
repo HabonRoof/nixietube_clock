@@ -21,6 +21,9 @@ constexpr int kUartBaudRate = 9600;
 
 constexpr gpio_num_t kRtcIntPin = static_cast<gpio_num_t>(8);
 constexpr gpio_num_t kPca9685OePin = static_cast<gpio_num_t>(4);
+constexpr gpio_num_t kAnodeA0 = static_cast<gpio_num_t>(9);
+constexpr gpio_num_t kAnodeA1 = static_cast<gpio_num_t>(10);
+constexpr gpio_num_t kAnodeA2 = static_cast<gpio_num_t>(11);
 constexpr gpio_num_t kLedDataInPin = static_cast<gpio_num_t>(7);
 constexpr uint32_t kRmtResolutionHz = 40000000; // 25ns resolution
 
@@ -76,6 +79,19 @@ HardwareHandles SystemController::init_hardware()
     ESP_ERROR_CHECK(gpio_config(&oe_conf));
     ESP_ERROR_CHECK(gpio_set_level(kPca9685OePin, 1)); // Disable output (Active LOW)
     ESP_LOGI(TAG, "PCA9685 OE Pin Initialized (Disabled)");
+
+    // 4b. Initialize 74HC238 anode mux (blank until scan task starts)
+    gpio_config_t anode_conf = {};
+    anode_conf.intr_type = GPIO_INTR_DISABLE;
+    anode_conf.mode = GPIO_MODE_OUTPUT;
+    anode_conf.pin_bit_mask = (1ULL << kAnodeA0) | (1ULL << kAnodeA1) | (1ULL << kAnodeA2);
+    anode_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    anode_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    ESP_ERROR_CHECK(gpio_config(&anode_conf));
+    ESP_ERROR_CHECK(gpio_set_level(kAnodeA0, 1));
+    ESP_ERROR_CHECK(gpio_set_level(kAnodeA1, 1));
+    ESP_ERROR_CHECK(gpio_set_level(kAnodeA2, 1));
+    ESP_LOGI(TAG, "74HC238 Anode Mux Initialized (Blank)");
 
     // 5. Initialize RMT for WS2812
     ESP_LOGI(TAG, "Initializing RMT for WS2812...");
