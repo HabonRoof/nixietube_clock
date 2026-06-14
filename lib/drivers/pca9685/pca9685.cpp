@@ -1,4 +1,5 @@
 #include "pca9685.h"
+#include "i2c_bus.h"
 #include "freertos/FreeRTOS.h"
 
 namespace
@@ -119,6 +120,7 @@ bool Pca9685::write_register(uint8_t reg, uint8_t value)
 
 bool Pca9685::write_registers(uint8_t reg, const uint8_t *data, size_t length)
 {
+    I2cBusLock lock(port_);
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, static_cast<uint8_t>(address_ << 1), true);

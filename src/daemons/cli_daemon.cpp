@@ -1,4 +1,6 @@
 #include "daemons/cli_daemon.h"
+#include "daemons/gasgauge_daemon.h"
+#include "bq27441/bq27441_regs.h"
 #include "esp_console.h"
 #include "esp_log.h"
 #include "esp_chip_info.h"
@@ -13,6 +15,7 @@
 static const char *TAG = "CliDaemon";
 static SystemController *g_system_controller = nullptr;
 static ChargerDaemon *g_charger_daemon = nullptr;
+static GasgaugeDaemon *g_gasgauge_daemon = nullptr;
 
 #ifndef GIT_COMMIT_HASH
 #define GIT_COMMIT_HASH "unknown"
@@ -114,10 +117,177 @@ static int get_uuid_func(int argc, char **argv)
 }
 
 // --- Command: ggtool ---
+struct ggtool_args {
+    struct arg_str *subcmd;
+    struct arg_end *end;
+};
+
+static struct ggtool_args ggtool_args;
+
 static int ggtool_func(int argc, char **argv)
 {
-    // TODO: Add ggtool support for gasgauge
-    return 0;
+    int nerrors = arg_parse(argc, argv, (void **)&ggtool_args);
+    if (nerrors > 0) {
+        arg_print_errors(stdout, ggtool_args.end, "ggtool");
+        return 1;
+    }
+
+    if (!g_gasgauge_daemon) {
+        printf("gasgauge daemon not ready\n");
+        return 1;
+    }
+
+    if (ggtool_args.subcmd->count == 0) {
+        printf("Usage: ggtool <status|peek|block|config|read|cache> [args...]\n");
+        return 1;
+    }
+
+    const char *subcmd = ggtool_args.subcmd->sval[0];
+
+    if (strcmp(subcmd, "peek") == 0) {
+        if (argc < 3) {
+            printf("Usage: ggtool peek <reg_hex> [len]\n");
+            return 1;
+        }
+
+        const uint8_t reg = static_cast<uint8_t>(strtoul(argv[2], nullptr, 16));
+        const size_t len = (argc >= 4) ? static_cast<size_t>(strtoul(argv[3], nullptr, 10)) : 1U;
+        if (len == 0 || len > 32) {
+            printf("len must be 1..32\n");
+            return 1;
+        }
+
+        uint8_t buf[32] = {};
+        if (!g_gasgauge_daemon->peek_registers(reg, buf, len)) {
+            printf("Failed to peek register 0x%02X\n", reg);
+            return 1;
+        }
+
+        printf("Reg 0x%02X:", reg);
+        for (size_t i = 0; i < len; ++i) {
+            printf(" %02X", buf[i]);
+        }
+        printf("\n");
+
+        if (len == 2) {
+            const uint16_t word = static_cast<uint16_t>((buf[1] << 8) | buf[0]);
+            printf("Word (LE): %u (0x%04X)\n", word, word);
+        }
+        return 0;
+    }
+
+    if (strcmp(subcmd, "block") == 0) {
+        const uint8_t class_id = (argc >= 3)
+            ? static_cast<uint8_t>(strtoul(argv[2], nullptr, 0))
+            : static_cast<uint8_t>(82);
+        const uint8_t block_index = (argc >= 4)
+            ? static_cast<uint8_t>(strtoul(argv[3], nullptr, 0))
+            : static_cast<uint8_t>(0);
+
+        uint8_t data[32] = {};
+        uint8_t checksum = 0;
+        if (!g_gasgauge_daemon->dump_state_block(class_id, block_index, data, &checksum)) {
+            printf("Failed to dump state block (class=%u block=%u)\n", class_id, block_index);
+            return 1;
+        }
+
+        printf("State block class=%u block=%u checksum=0x%02X\n", class_id, block_index, checksum);
+        for (uint8_t i = 0; i < 32; ++i) {
+            if (i % 16 == 0) {
+                printf("%02X:", i);
+            }
+            printf(" %02X", data[i]);
+            if (i % 16 == 15) {
+                printf("\n");
+            }
+        }
+        if (32 % 16 != 0) {
+            printf("\n");
+        }
+
+        const uint16_t design_cap =
+            static_cast<uint16_t>((data[9] << 8) | data[10]);
+        const uint16_t design_energy =
+            static_cast<uint16_t>((data[11] << 8) | data[12]);
+        printf("DesignCapacity (offset 9): %u mAh\n", design_cap);
+        printf("DesignEnergy (offset 11): %u mWh\n", design_energy);
+        return 0;
+    }
+
+    if (strcmp(subcmd, "status") == 0) {
+        GasgaugeDeviceInfo info;
+        if (!g_gasgauge_daemon->probe_device_info(info)) {
+            printf("Failed to probe BQ27441\n");
+            return 1;
+        }
+        printf("Device Type: 0x%04X\n", info.device_type);
+        printf("FW Version: 0x%04X\n", info.fw_version);
+        printf("Design Capacity: %u mAh\n", info.design_capacity);
+        printf("Control Status: 0x%04X\n", info.control_status);
+        printf("Flags: 0x%04X\n", info.flags);
+        printf("Sealed: %s\n", info.sealed ? "yes" : "no");
+        printf("CFGUPMODE: %s\n", (info.flags & bq27441::kFlagCfgUpdate) ? "yes" : "no");
+        printf("Battery detected (BAT_DET): %s\n", info.battery_detected ? "yes" : "no");
+        printf("Init complete (INITCOMP): %s\n", info.init_complete ? "yes" : "no");
+        printf("ITPOR (needs reconfig): %s\n", info.needs_reconfig ? "yes" : "no");
+        const bool gauging_ready =
+            info.battery_detected &&
+            info.init_complete &&
+            (info.flags & bq27441::kFlagCfgUpdate) == 0;
+        printf("Gauging ready: %s\n", gauging_ready ? "yes" : "no");
+        return 0;
+    }
+
+    if (strcmp(subcmd, "config") == 0) {
+        uint16_t mah = GasgaugeDaemon::kDefaultCapacityMah;
+        if (argc >= 3) {
+            mah = static_cast<uint16_t>(strtoul(argv[2], nullptr, 10));
+        }
+
+        const bool ok = g_gasgauge_daemon->configure_capacity(mah, true);
+        if (!ok) {
+            printf("Failed to configure design capacity to %u mAh\n", mah);
+            return 1;
+        }
+        printf("Design capacity configured to %u mAh\n", mah);
+        return 0;
+    }
+
+    if (strcmp(subcmd, "read") == 0) {
+        GasgaugeData data;
+        if (!g_gasgauge_daemon->read_live(data)) {
+            printf("Failed to read live gasgauge data\n");
+            return 1;
+        }
+        printf("SOC: %u%%\n", data.soc);
+        printf("SOH: %u%%\n", data.soh);
+        printf("Voltage: %u mV\n", data.voltage_mv);
+        printf("Current: %d mA\n", data.current_ma);
+        return 0;
+    }
+
+    if (strcmp(subcmd, "cache") == 0) {
+        GasgaugeSnapshot snapshot;
+        if (!g_gasgauge_daemon->get_cached_snapshot(snapshot)) {
+            printf("No cached gasgauge data available\n");
+            return 1;
+        }
+
+        const TickType_t now = xTaskGetTickCount();
+        const TickType_t age_ticks = now - snapshot.updated_at;
+        const uint32_t age_ms = static_cast<uint32_t>(age_ticks * portTICK_PERIOD_MS);
+
+        printf("SOC: %u%%\n", snapshot.data.soc);
+        printf("SOH: %u%%\n", snapshot.data.soh);
+        printf("Voltage: %u mV\n", snapshot.data.voltage_mv);
+        printf("Current: %d mA\n", snapshot.data.current_ma);
+        printf("Age: %lu ms\n", static_cast<unsigned long>(age_ms));
+        return 0;
+    }
+
+    printf("Unknown subcommand: %s\n", subcmd);
+    printf("Usage: ggtool <status|peek|block|config|read|cache> [args...]\n");
+    return 1;
 }
 
 // --- Command: get_hw_version ---
@@ -237,15 +407,22 @@ static int help_func(int argc, char **argv)
     printf("disable_otg_output                              Disable OTG output\n");
     printf("enable_charging                                 Enable charging\n");
     printf("disable_charging                                Disable charging\n");
+    printf("ggtool <status|peek|block|config|read|cache>  BQ27441 gasgauge tools\n");
     printf("reboot                                          reboot the device\n");
     return 0;
 }
 
-CliDaemon::CliDaemon(SystemController &system_controller, ChargerDaemon &charger_daemon)
-    : system_controller_(system_controller), charger_daemon_(charger_daemon), task_handle_(nullptr)
+CliDaemon::CliDaemon(SystemController &system_controller,
+                     ChargerDaemon &charger_daemon,
+                     GasgaugeDaemon &gasgauge_daemon)
+    : system_controller_(system_controller),
+      charger_daemon_(charger_daemon),
+      gasgauge_daemon_(gasgauge_daemon),
+      task_handle_(nullptr)
 {
     g_system_controller = &system_controller;
     g_charger_daemon = &charger_daemon;
+    g_gasgauge_daemon = &gasgauge_daemon;
 }
 
 CliDaemon::~CliDaemon()
@@ -323,14 +500,16 @@ void CliDaemon::register_commands()
     ESP_ERROR_CHECK(esp_console_cmd_register(&set_backlight_cmd));
 
     // Register: ggtool
-    const esp_console_cmd_t ggtool = {
+    ggtool_args.subcmd = arg_str1(NULL, NULL, "<subcmd>", "status|peek|block|config|read|cache");
+    ggtool_args.end = arg_end(4);
+    const esp_console_cmd_t ggtool_cmd = {
         .command = "ggtool",
-        .help = "Get Device Battery status",
+        .help = "BQ27441 gasgauge: status, peek, block, config, read, cache",
         .hint = NULL,
         .func = &ggtool_func,
-        .argtable = NULL
+        .argtable = &ggtool_args
     };
-    ESP_ERROR_CHECK(esp_console_cmd_register(&ggtool));
+    ESP_ERROR_CHECK(esp_console_cmd_register(&ggtool_cmd));
 
     // Register: get_uuid
     const esp_console_cmd_t get_uuid_cmd = {
@@ -437,10 +616,11 @@ void CliDaemon::loop()
 {
     register_commands();
     
-    printf("\n"
-           "Welcome to Nixie Clock CLI\n"
-           "Type 'help' to get the list of commands.\n"
-           "\n");
+    // Remove welcome message to not interference debug output
+    // printf("\n"
+    //        "Welcome to Nixie Clock CLI\n"
+    //        "Type 'help' to get the list of commands.\n"
+    //        "\n");
 
     while (true) {
         char *line = linenoise("nixie_clock> ");

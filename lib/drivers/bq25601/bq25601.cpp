@@ -1,4 +1,5 @@
 #include "bq25601.h"
+#include "i2c_bus.h"
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -167,6 +168,7 @@ bool Bq25601::set_vac_ovp_mv(uint16_t ovp_mv)
 
 bool Bq25601::read_reg(uint8_t reg, uint8_t *val)
 {
+    I2cBusLock lock(port_);
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);
@@ -182,6 +184,7 @@ bool Bq25601::read_reg(uint8_t reg, uint8_t *val)
 
 bool Bq25601::write_reg(uint8_t reg, uint8_t val)
 {
+    I2cBusLock lock(port_);
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);

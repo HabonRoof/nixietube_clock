@@ -1,4 +1,5 @@
 #include "ina3221.h"
+#include "i2c_bus.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -158,6 +159,7 @@ bool Ina3221::write_register(uint8_t reg, uint16_t val)
     data[0] = (val >> 8) & 0xFF; // MSB
     data[1] = val & 0xFF;        // LSB
 
+    I2cBusLock lock(port_);
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);
@@ -173,6 +175,7 @@ bool Ina3221::write_register(uint8_t reg, uint16_t val)
 bool Ina3221::read_register(uint8_t reg, uint16_t *val)
 {
     uint8_t data[2];
+    I2cBusLock lock(port_);
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);

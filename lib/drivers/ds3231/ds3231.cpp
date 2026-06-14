@@ -1,4 +1,5 @@
 #include "ds3231.h"
+#include "i2c_bus.h"
 #include "esp_log.h"
 
 static const char *TAG = "DS3231";
@@ -121,6 +122,7 @@ bool Ds3231::write_register(uint8_t reg, uint8_t val)
 
 bool Ds3231::read_registers(uint8_t reg, uint8_t *data, size_t len)
 {
+    I2cBusLock lock(port_);
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);
@@ -139,6 +141,7 @@ bool Ds3231::read_registers(uint8_t reg, uint8_t *data, size_t len)
 
 bool Ds3231::write_registers(uint8_t reg, const uint8_t *data, size_t len)
 {
+    I2cBusLock lock(port_);
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);

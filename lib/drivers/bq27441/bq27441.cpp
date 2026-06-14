@@ -1,342 +1,688 @@
 #include "bq27441.h"
+#include "bq27441_regs.h"
+#include "i2c_bus.h"
+#include "debug_session_log.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 static const char *TAG = "BQ27441";
 
-// Register Definitions
-static constexpr uint8_t kRegControl = 0x00;
-static constexpr uint8_t kRegVoltage = 0x04;
-static constexpr uint8_t kRegFlags = 0x06;
-static constexpr uint8_t kRegAvgCurrent = 0x10;
-static constexpr uint8_t kRegSoc = 0x1C;
-static constexpr uint8_t kRegSoh = 0x20; // StateOfHealth
+using namespace bq27441;
 
-// Extended Data Commands
-static constexpr uint8_t kRegBlockDataControl = 0x61;
-static constexpr uint8_t kRegDataClass = 0x3E;
-static constexpr uint8_t kRegDataBlock = 0x3F;
-static constexpr uint8_t kRegBlockData = 0x40;
-static constexpr uint8_t kRegBlockDataChecksum = 0x60;
+namespace {
 
-// Control Subcommands
-static constexpr uint16_t kSubCmdControlStatus = 0x0000;
-static constexpr uint16_t kSubCmdDeviceType = 0x0001;
-static constexpr uint16_t kSubCmdFwVersion = 0x0002;
-static constexpr uint16_t kSubCmdSetCfgupdate = 0x0013;
-static constexpr uint16_t kSubCmdSoftReset = 0x0042;
-static constexpr uint16_t kSubCmdSealed = 0x0020;
+constexpr int kI2cRetries = 3;
+thread_local esp_err_t g_last_i2c_err = ESP_OK;
 
-// Configuration
-static constexpr uint16_t kDesignCapacityMah = 3600;
+template <typename Fn>
+esp_err_t i2c_retry(Fn fn)
+{
+    esp_err_t last = ESP_FAIL;
+    for (int attempt = 0; attempt < kI2cRetries; ++attempt) {
+        last = fn();
+        g_last_i2c_err = last;
+        if (last == ESP_OK) {
+            return ESP_OK;
+        }
+        if (attempt + 1 < kI2cRetries) {
+            vTaskDelay(pdMS_TO_TICKS(2));
+        }
+    }
+    return last;
+}
+
+} // namespace
 
 Bq27441::Bq27441(i2c_port_t port)
     : port_(port)
 {
 }
 
-bool Bq27441::init()
+bool Bq27441::is_ready() const
 {
-    // Check if device is present by reading Device Type
-    if (!control_command(kSubCmdDeviceType)) {
-        ESP_LOGE(TAG, "Failed to communicate with BQ27441");
-        return false;
-    }
-    
-    uint16_t result;
-    if (!read_word(kRegControl, &result)) {
-        return false;
-    }
-    ESP_LOGI(TAG, "BQ27441 Device Type: 0x%04X", result);
+    return ready_;
+}
 
-    // Check current Design Capacity
-    uint16_t current_capacity;
-    if (get_design_capacity(&current_capacity)) {
-        ESP_LOGI(TAG, "Current Design Capacity: %d mAh", current_capacity);
-        if (current_capacity == kDesignCapacityMah) {
-            ESP_LOGI(TAG, "Battery already configured. Skipping configuration.");
-            return true;
+uint8_t Bq27441::checksum_replace(uint8_t old_csum,
+                                  const uint8_t *old_bytes,
+                                  const uint8_t *new_bytes,
+                                  size_t len)
+{
+    uint16_t temp = static_cast<uint16_t>(255U - old_csum);
+    for (size_t i = 0; i < len; ++i) {
+        temp = (temp + 256U - old_bytes[i]) & 0xFFU;
+    }
+    for (size_t i = 0; i < len; ++i) {
+        temp = (temp + new_bytes[i]) & 0xFFU;
+    }
+    return static_cast<uint8_t>(255U - temp);
+}
+
+esp_err_t Bq27441::i2c_read_byte(uint8_t reg, uint8_t *val)
+{
+    if (!val) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    return i2c_retry([&]() {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write_byte(cmd, reg, true);
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_READ, true);
+        i2c_master_read_byte(cmd, val, I2C_MASTER_NACK);
+        i2c_master_stop(cmd);
+        esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
+        i2c_cmd_link_delete(cmd);
+        return ret;
+    });
+}
+
+esp_err_t Bq27441::i2c_write_byte(uint8_t reg, uint8_t val)
+{
+    return i2c_retry([&]() {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write_byte(cmd, reg, true);
+        i2c_master_write_byte(cmd, val, true);
+        i2c_master_stop(cmd);
+        esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
+        i2c_cmd_link_delete(cmd);
+        return ret;
+    });
+}
+
+esp_err_t Bq27441::i2c_read_word(uint8_t reg, uint16_t *val)
+{
+    if (!val) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    uint8_t data[2];
+    esp_err_t ret = i2c_retry([&]() {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write_byte(cmd, reg, true);
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_READ, true);
+        i2c_master_read(cmd, data, 2, I2C_MASTER_LAST_NACK);
+        i2c_master_stop(cmd);
+        esp_err_t err = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
+        i2c_cmd_link_delete(cmd);
+        return err;
+    });
+
+    if (ret == ESP_OK) {
+        *val = static_cast<uint16_t>((data[1] << 8) | data[0]);
+    }
+    return ret;
+}
+
+esp_err_t Bq27441::i2c_write_word(uint8_t reg, uint16_t val)
+{
+    uint8_t data[2] = {
+        static_cast<uint8_t>(val & 0xFF),
+        static_cast<uint8_t>((val >> 8) & 0xFF),
+    };
+
+    return i2c_retry([&]() {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write_byte(cmd, reg, true);
+        i2c_master_write(cmd, data, 2, true);
+        i2c_master_stop(cmd);
+        esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
+        i2c_cmd_link_delete(cmd);
+        return ret;
+    });
+}
+
+esp_err_t Bq27441::i2c_read_bytes(uint8_t reg, uint8_t *buf, size_t len)
+{
+    if (!buf || len == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    return i2c_retry([&]() {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write_byte(cmd, reg, true);
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_READ, true);
+        if (len > 1) {
+            i2c_master_read(cmd, buf, len - 1, I2C_MASTER_ACK);
         }
-    } else {
-        ESP_LOGW(TAG, "Failed to read current Design Capacity");
-    }
+        i2c_master_read_byte(cmd, buf + len - 1, I2C_MASTER_NACK);
+        i2c_master_stop(cmd);
+        esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
+        i2c_cmd_link_delete(cmd);
+        return ret;
+    });
+}
 
-    // Configure Battery
-    ESP_LOGI(TAG, "Configuring battery to %d mAh...", kDesignCapacityMah);
-    if (!configure_battery(kDesignCapacityMah)) {
-        ESP_LOGE(TAG, "Failed to configure battery");
+bool Bq27441::control_command(uint16_t subcommand)
+{
+    I2cBusLock lock(port_);
+    return i2c_write_word(kRegControl, subcommand) == ESP_OK;
+}
+
+bool Bq27441::control_subcommand_read(uint16_t subcommand, uint16_t *result)
+{
+    if (!result) {
         return false;
     }
 
-    return true;
+    I2cBusLock lock(port_);
+    if (i2c_write_word(kRegControl, subcommand) != ESP_OK) {
+        return false;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(2));
+    return i2c_read_word(kRegControl, result) == ESP_OK;
 }
 
-bool Bq27441::get_data(GasgaugeData &data)
+bool Bq27441::read_control_status(uint16_t *status)
 {
-    uint16_t val;
-
-    // Voltage (mV)
-    if (!read_word(kRegVoltage, &val)) return false;
-    data.voltage_mv = val;
-
-    // Average Current (mA)
-    if (!read_word(kRegAvgCurrent, &val)) return false;
-    data.current_ma = static_cast<int16_t>(val);
-
-    // State of Charge (%)
-    if (!read_word(kRegSoc, &val)) return false;
-    data.soc = static_cast<uint8_t>(val & 0xFF);
-
-    return true;
+    return control_subcommand_read(kSubCmdControlStatus, status);
 }
 
-bool Bq27441::configure_battery(uint16_t capacity_mah)
+bool Bq27441::read_flags(uint16_t *flags)
 {
-    // 1. Unseal
-    if (!unseal()) return false;
+    if (!flags) {
+        return false;
+    }
 
-    // 2. Enter Config Mode
-    if (!enter_config_mode()) return false;
+    I2cBusLock lock(port_);
+    return i2c_read_word(kRegFlags, flags) == ESP_OK;
+}
 
-    // 3. Update Design Capacity
-    if (!set_design_capacity(capacity_mah)) return false;
+bool Bq27441::read_design_capacity(uint16_t *capacity_mah)
+{
+    if (!capacity_mah) {
+        return false;
+    }
 
-    // 4. Exit Config Mode
-    if (!exit_config_mode()) return false;
+    I2cBusLock lock(port_);
+    return i2c_read_word(kRegDesignCapacity, capacity_mah) == ESP_OK;
+}
 
-    // 5. Seal
-    if (!seal()) return false;
-
-    return true;
+bool Bq27441::is_sealed()
+{
+    uint16_t status = 0;
+    if (!read_control_status(&status)) {
+        return true;
+    }
+    return (status & kStatusSealed) != 0;
 }
 
 bool Bq27441::unseal()
 {
-    // Write 0x8000 to Control() twice to unseal
-    if (!control_command(0x8000)) return false;
-    if (!control_command(0x8000)) return false;
+    if (!is_sealed()) {
+        return true;
+    }
+
+    if (!control_command(kUnsealKey)) {
+        ESP_LOGE(TAG, "unseal: first key failed");
+        return false;
+    }
+    if (!control_command(kUnsealKey)) {
+        ESP_LOGE(TAG, "unseal: second key failed");
+        return false;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(5));
+
+    if (is_sealed()) {
+        ESP_LOGE(TAG, "unseal: device still sealed");
+        return false;
+    }
+
     return true;
 }
 
 bool Bq27441::seal()
 {
-    return control_command(kSubCmdSealed);
+    if (!control_command(kSubCmdSealed)) {
+        ESP_LOGE(TAG, "seal: command failed");
+        return false;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(5));
+    return is_sealed();
 }
 
 bool Bq27441::enter_config_mode()
 {
-    if (!control_command(kSubCmdSetCfgupdate)) return false;
+    if (!control_command(kSubCmdSetCfgupdate)) {
+        ESP_LOGE(TAG, "enter_config_mode: SET_CFGUPDATE failed");
+        return false;
+    }
 
-    // Wait for CFGUPMODE bit in Flags
-    int timeout = 100;
-    while (timeout--) {
-        uint16_t flags;
-        if (read_word(kRegFlags, &flags)) {
-            if (flags & 0x0010) { // CFGUPMODE bit 4
-                return true;
-            }
+    for (int timeout = 100; timeout > 0; --timeout) {
+        uint16_t flags = 0;
+        if (read_flags(&flags) && (flags & kFlagCfgUpdate)) {
+            return true;
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     }
-    ESP_LOGE(TAG, "Timeout entering config mode");
+
+    ESP_LOGE(TAG, "enter_config_mode: timeout");
     return false;
 }
 
 bool Bq27441::exit_config_mode()
 {
-    if (!control_command(kSubCmdSoftReset)) return false;
+    if (!control_command(kSubCmdSoftReset)) {
+        ESP_LOGE(TAG, "exit_config_mode: SOFT_RESET failed");
+        return false;
+    }
 
-    // Wait for CFGUPMODE bit to clear
-    int timeout = 100;
-    while (timeout--) {
-        uint16_t flags;
-        if (read_word(kRegFlags, &flags)) {
-            if (!(flags & 0x0010)) {
-                return true;
-            }
+    for (int timeout = 100; timeout > 0; --timeout) {
+        uint16_t flags = 0;
+        if (read_flags(&flags) && !(flags & kFlagCfgUpdate)) {
+            vTaskDelay(pdMS_TO_TICKS(10));
+            return true;
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     }
-    ESP_LOGE(TAG, "Timeout exiting config mode");
+
+    ESP_LOGE(TAG, "exit_config_mode: timeout");
     return false;
 }
 
-bool Bq27441::set_design_capacity(uint16_t capacity_mah)
+bool Bq27441::select_block(uint8_t class_id, uint8_t block_index)
 {
-    // Design Capacity is in State subclass (82), offset 10
-    // Data Class: 82 (0x52)
-    // Offset: 10 (0x0A)
-    // Type: I2 (2 bytes)
-    
-    uint8_t data[2];
-    // Big Endian for Block Data?
-    // BQ27441 uses Big Endian for Block Data Memory
-    data[0] = (capacity_mah >> 8) & 0xFF;
-    data[1] = capacity_mah & 0xFF;
-
-    return write_block_data(82, 10, data, 2);
-}
-
-bool Bq27441::get_design_capacity(uint16_t *capacity_mah)
-{
-    // Design Capacity is in State subclass (82), offset 10
-    // Data Class: 82 (0x52)
-    // Offset: 10 (0x0A)
-    
-    // Must be unsealed to access BlockDataControl
-    if (!unseal()) return false;
-
-    // 1. Enable Block Data Memory Control
-    if (!write_word(kRegBlockDataControl, 0x00)) {
+    I2cBusLock lock(port_);
+    if (i2c_write_byte(kRegBlockDataControl, 0x00) != ESP_OK) {
+        ESP_LOGE(TAG, "select_block: BlockDataControl failed");
+        return false;
+    }
+    if (i2c_write_byte(kRegDataClass, class_id) != ESP_OK) {
+        ESP_LOGE(TAG, "select_block: DataClass failed");
+        return false;
+    }
+    if (i2c_write_byte(kRegDataBlock, block_index) != ESP_OK) {
+        ESP_LOGE(TAG, "select_block: DataBlock failed");
         return false;
     }
 
-    // 2. Write Data Class
-    if (!write_word(kRegDataClass, 82)) {
-        return false;
-    }
-
-    // 3. Write Data Block
-    // Offset 10 is in block 0
-    if (!write_word(kRegDataBlock, 0)) {
-        return false;
-    }
-
-    // 4. Read Block Data
-    uint8_t block_buffer[32];
-    if (!read_block(kRegBlockData, block_buffer, 32)) {
-        return false;
-    }
-
-    // 5. Extract Capacity (Offset 10, 2 bytes, Big Endian)
-    *capacity_mah = (block_buffer[10] << 8) | block_buffer[11];
-    
-    // Re-seal
-    seal();
-    
+    vTaskDelay(pdMS_TO_TICKS(2));
     return true;
 }
 
-bool Bq27441::write_block_data(uint8_t class_id, uint8_t offset, uint8_t *data, uint8_t len)
+bool Bq27441::read_block_buffer(uint8_t out[32], uint8_t *checksum)
 {
-    // 1. Enable Block Data Memory Control
-    if (!write_word(kRegBlockDataControl, 0x00)) return false;
-
-    // 2. Write Data Class
-    // The BlockData() command (0x40...0x5F) is used to access the data.
-    // We need to set the DataClass() (0x3E) and DataBlock() (0x3F).
-    // DataBlock is the 32-byte block index. Offset 10 is in block 0 (0-31).
-    // If offset > 31, we need to adjust block and offset.
-    
-    uint8_t block_index = offset / 32;
-    uint8_t block_offset = offset % 32;
-    
-    if (!write_word(kRegDataClass, class_id)) return false;
-    if (!write_word(kRegDataBlock, block_index)) return false;
-
-    // 3. Read the block to update checksum later?
-    // Actually, we can just write the bytes we want, but we need to calculate checksum for the whole block?
-    // No, we can write specific bytes, but we must update the checksum.
-    // The checksum is the complement of the sum of all bytes in the block (0x40-0x5F).
-    // So we MUST read the whole block first, modify it, then write it back and update checksum.
-    
-    uint8_t block_buffer[32];
-    if (!read_block(kRegBlockData, block_buffer, 32)) return false;
-
-    // Modify data
-    for (int i = 0; i < len; ++i) {
-        block_buffer[block_offset + i] = data[i];
+    if (!out || !checksum) {
+        return false;
     }
 
-    // 4. Write modified data
-    // We can just write the modified bytes to the specific registers?
-    // Yes, but let's write the whole block or just the part?
-    // Writing to 0x40 + block_offset
-    
-    // Let's write just the modified bytes
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (kAddress << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, kRegBlockData + block_offset, true);
-    i2c_master_write(cmd, data, len, true);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-    i2c_cmd_link_delete(cmd);
-    if (ret != ESP_OK) return false;
-
-    // 5. Update Checksum
-    // Calculate new checksum
-    uint8_t new_checksum = 0;
-    for (int i = 0; i < 32; ++i) {
-        new_checksum += block_buffer[i];
+    I2cBusLock lock(port_);
+    if (i2c_read_bytes(kRegBlockData, out, kStateBlockSize) != ESP_OK) {
+        ESP_LOGE(TAG, "read_block_buffer: block read failed");
+        return false;
     }
-    new_checksum = 0xFF - new_checksum;
-
-    if (!write_word(kRegBlockDataChecksum, new_checksum)) return false;
+    if (i2c_read_byte(kRegBlockDataChecksum, checksum) != ESP_OK) {
+        ESP_LOGE(TAG, "read_block_buffer: checksum read failed");
+        return false;
+    }
 
     return true;
 }
 
-bool Bq27441::control_command(uint16_t subcommand)
+bool Bq27441::write_design_capacity_mah(uint16_t old_capacity_mah, uint16_t new_capacity_mah)
 {
-    return write_word(kRegControl, subcommand);
+    I2cBusLock lock(port_);
+
+    if (i2c_write_byte(kRegBlockDataControl, 0x00) != ESP_OK ||
+        i2c_write_byte(kRegDataClass, kStateClassId) != ESP_OK ||
+        i2c_write_byte(kRegDataBlock, 0) != ESP_OK) {
+        ESP_LOGE(TAG, "write_design_capacity: select block failed");
+        return false;
+    }
+    vTaskDelay(pdMS_TO_TICKS(2));
+
+    uint8_t block[kStateBlockSize];
+    uint8_t old_csum = 0;
+    if (i2c_read_bytes(kRegBlockData, block, kStateBlockSize) != ESP_OK) {
+        ESP_LOGE(TAG, "write_design_capacity: block read failed");
+        return false;
+    }
+    if (i2c_read_byte(kRegBlockDataChecksum, &old_csum) != ESP_OK) {
+        ESP_LOGE(TAG, "write_design_capacity: checksum read failed");
+        return false;
+    }
+
+    // #region agent log
+    dbg_session_log("G", "bq27441.cpp:write_design_capacity", "block_bytes_9_13",
+                    static_cast<int32_t>(block[9]),
+                    static_cast<int32_t>(block[10]),
+                    static_cast<int32_t>(block[11]));
+    // #endregion
+
+    const uint8_t old_bytes[4] = {
+        block[kDesignCapacityOffset],
+        block[kDesignCapacityOffset + 1],
+        block[kDesignEnergyOffset],
+        block[kDesignEnergyOffset + 1],
+    };
+
+    const uint16_t old_energy_mwh =
+        static_cast<uint16_t>((old_bytes[2] << 8) | old_bytes[3]);
+    uint16_t new_energy_mwh = old_energy_mwh;
+    if (old_capacity_mah > 0) {
+        new_energy_mwh = static_cast<uint16_t>(
+            (static_cast<uint32_t>(old_energy_mwh) * new_capacity_mah) / old_capacity_mah);
+    }
+
+    const uint8_t new_bytes[4] = {
+        static_cast<uint8_t>((new_capacity_mah >> 8) & 0xFF),
+        static_cast<uint8_t>(new_capacity_mah & 0xFF),
+        static_cast<uint8_t>((new_energy_mwh >> 8) & 0xFF),
+        static_cast<uint8_t>(new_energy_mwh & 0xFF),
+    };
+
+    for (uint8_t i = 0; i < 4; ++i) {
+        const uint8_t reg = static_cast<uint8_t>(kRegBlockData + kDesignCapacityOffset + i);
+        if (i2c_write_byte(reg, new_bytes[i]) != ESP_OK) {
+            ESP_LOGE(TAG, "write_design_capacity: byte write failed at offset %u",
+                     kDesignCapacityOffset + i);
+            return false;
+        }
+    }
+
+    const uint8_t new_csum = checksum_replace(old_csum, old_bytes, new_bytes, 4);
+    if (i2c_write_byte(kRegBlockDataChecksum, new_csum) != ESP_OK) {
+        ESP_LOGE(TAG, "write_design_capacity: checksum write failed");
+        return false;
+    }
+
+    ESP_LOGI(TAG, "State block update: cap %u->%u mAh, energy %u->%u mWh, csum 0x%02X->0x%02X",
+             old_capacity_mah, new_capacity_mah, old_energy_mwh, new_energy_mwh,
+             old_csum, new_csum);
+    return true;
 }
 
-bool Bq27441::read_word(uint8_t reg, uint16_t *val)
+bool Bq27441::probe(GasgaugeDeviceInfo &info)
 {
-    uint8_t data[2];
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (kAddress << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, reg, true);
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (kAddress << 1) | I2C_MASTER_READ, true);
-    i2c_master_read(cmd, data, 2, I2C_MASTER_LAST_NACK);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-    i2c_cmd_link_delete(cmd);
+    info = {};
 
-    if (ret == ESP_OK) {
-        *val = (data[1] << 8) | data[0]; // Little Endian
+    if (!control_subcommand_read(kSubCmdDeviceType, &info.device_type)) {
+        ESP_LOGE(TAG, "probe: device type read failed");
+        ready_ = false;
+        return false;
+    }
+    ESP_LOGI(TAG, "Device Type: 0x%04X", info.device_type);
+
+    if (!control_subcommand_read(kSubCmdFwVersion, &info.fw_version)) {
+        ESP_LOGE(TAG, "probe: firmware version read failed");
+        ready_ = false;
+        return false;
+    }
+    ESP_LOGI(TAG, "FW Version: 0x%04X", info.fw_version);
+
+    if (!read_design_capacity(&info.design_capacity)) {
+        ESP_LOGW(TAG, "probe: design capacity read failed");
+        info.design_capacity = 0;
+    } else {
+        ESP_LOGI(TAG, "Design Capacity: %u mAh", info.design_capacity);
+    }
+
+    if (read_control_status(&info.control_status)) {
+        info.sealed = (info.control_status & kStatusSealed) != 0;
+        ESP_LOGI(TAG, "Control Status: 0x%04X (sealed=%s)",
+                 info.control_status, info.sealed ? "yes" : "no");
+    }
+
+    if (read_flags(&info.flags)) {
+        ESP_LOGI(TAG, "Flags: 0x%04X", info.flags);
+    }
+
+    info.battery_detected = (info.flags & kFlagBatDetect) != 0;
+    info.init_complete = (info.control_status & kStatusInitComp) != 0;
+    info.needs_reconfig = (info.flags & kFlagITPOR) != 0;
+    const bool cfg_update = (info.flags & kFlagCfgUpdate) != 0;
+    const bool sleep = (info.control_status & kStatusSleep) != 0;
+
+    ESP_LOGI(TAG,
+             "Gauge state: BAT_DET=%s INITCOMP=%s ITPOR=%s CFGUPMODE=%s SLEEP=%s",
+             info.battery_detected ? "yes" : "no",
+             info.init_complete ? "yes" : "no",
+             info.needs_reconfig ? "yes" : "no",
+             cfg_update ? "yes" : "no",
+             sleep ? "yes" : "no");
+
+    if (!info.battery_detected) {
+        ESP_LOGW(TAG,
+                 "No battery detected; gauge remains in INITIALIZATION (predictions invalid)");
+    }
+    if (!info.init_complete) {
+        ESP_LOGW(TAG, "Initialization not complete (INITCOMP=0)");
+    }
+    if (info.needs_reconfig) {
+        ESP_LOGW(TAG, "ITPOR set; configuration reload may be required");
+    }
+
+    // #region agent log
+    {
+        uint16_t probe_voltage = 0;
+        const esp_err_t v_err = [&]() {
+            I2cBusLock lock(port_);
+            return i2c_read_word(kRegVoltage, &probe_voltage);
+        }();
+        dbg_session_log("D", "bq27441.cpp:probe", "post_probe_voltage",
+                        static_cast<int32_t>(v_err),
+                        static_cast<int32_t>(probe_voltage),
+                        static_cast<int32_t>(info.flags));
+        uint8_t peek[2] = {};
+        const esp_err_t cap_err = [&]() {
+            I2cBusLock lock(port_);
+            return i2c_read_bytes(kRegDesignCapacity, peek, 2);
+        }();
+        dbg_session_log("F", "bq27441.cpp:probe", "post_probe_reg3C_bytes",
+                        static_cast<int32_t>(cap_err),
+                        static_cast<int32_t>(peek[0]),
+                        static_cast<int32_t>(peek[1]));
+    }
+    // #endregion
+
+    info.probed = true;
+
+    const bool gauging_ready =
+        info.battery_detected &&
+        info.init_complete &&
+        !cfg_update;
+    ready_ = gauging_ready;
+
+    if (!gauging_ready) {
+        ESP_LOGW(TAG, "Gauging not ready; get_data polling deferred");
+    }
+
+    return true;
+}
+
+bool Bq27441::configure(uint16_t capacity_mah, bool force)
+{
+    uint16_t current_capacity = 0;
+    if (!read_design_capacity(&current_capacity)) {
+        ESP_LOGE(TAG, "configure: failed to read current capacity");
+        return false;
+    }
+
+    if (!force && current_capacity == capacity_mah) {
+        ESP_LOGI(TAG, "Design capacity already %u mAh", capacity_mah);
         return true;
     }
+
+    ESP_LOGI(TAG, "Configuring design capacity %u -> %u mAh", current_capacity, capacity_mah);
+
+    const bool was_sealed = is_sealed();
+
+    if (!unseal()) {
+        return false;
+    }
+
+    if (!enter_config_mode()) {
+        if (was_sealed) {
+            seal();
+        }
+        return false;
+    }
+
+    if (!write_design_capacity_mah(current_capacity, capacity_mah)) {
+        exit_config_mode();
+        if (was_sealed) {
+            seal();
+        }
+        return false;
+    }
+
+    if (!exit_config_mode()) {
+        if (was_sealed) {
+            seal();
+        }
+        return false;
+    }
+
+    if (was_sealed && !seal()) {
+        ESP_LOGW(TAG, "configure: failed to re-seal");
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(500));
+
+    uint16_t verified = 0;
+    if (!read_design_capacity(&verified)) {
+        ESP_LOGE(TAG, "configure: verify read failed");
+        return false;
+    }
+
+    ESP_LOGI(TAG, "Verified Design Capacity: %u mAh (expected %u)", verified, capacity_mah);
+    if (verified != capacity_mah) {
+        ESP_LOGE(TAG, "configure: verify mismatch");
+        return false;
+    }
+    return true;
+}
+
+bool Bq27441::get_data(GasgaugeData &data)
+{
+    constexpr int kGetDataRetries = 3;
+
+    for (int attempt = 0; attempt < kGetDataRetries; ++attempt) {
+        uint16_t val;
+        uint16_t flags = 0;
+
+        I2cBusLock lock(port_);
+
+        const esp_err_t v_err = i2c_read_word(kRegVoltage, &val);
+        if (v_err == ESP_OK) {
+            i2c_read_word(kRegFlags, &flags);
+        }
+
+        // #region agent log
+        dbg_session_log("B", "bq27441.cpp:get_data", "voltage_read",
+                        static_cast<int32_t>(v_err),
+                        static_cast<int32_t>(g_last_i2c_err),
+                        static_cast<int32_t>(flags));
+        dbg_session_log("H", "bq27441.cpp:get_data", "attempt",
+                        static_cast<int32_t>(attempt),
+                        static_cast<int32_t>(v_err),
+                        static_cast<int32_t>(kGetDataRetries));
+        // #endregion
+
+        if (v_err != ESP_OK) {
+            if (attempt + 1 < kGetDataRetries) {
+                vTaskDelay(pdMS_TO_TICKS(10));
+                continue;
+            }
+            ESP_LOGW(TAG, "get_data: voltage read failed (err=0x%x last=0x%x flags=0x%04X)",
+                     v_err, g_last_i2c_err, flags);
+            return false;
+        }
+
+        data.voltage_mv = val;
+
+        if (i2c_read_word(kRegAvgCurrent, &val) != ESP_OK) {
+            if (attempt + 1 < kGetDataRetries) {
+                vTaskDelay(pdMS_TO_TICKS(10));
+                continue;
+            }
+            ESP_LOGW(TAG, "get_data: current read failed");
+            return false;
+        }
+        data.current_ma = static_cast<int16_t>(val);
+
+        if (i2c_read_word(kRegSoc, &val) != ESP_OK) {
+            if (attempt + 1 < kGetDataRetries) {
+                vTaskDelay(pdMS_TO_TICKS(10));
+                continue;
+            }
+            ESP_LOGW(TAG, "get_data: SOC read failed");
+            return false;
+        }
+        data.soc = static_cast<uint8_t>(val & 0xFF);
+
+        if (i2c_read_word(kRegSoh, &val) != ESP_OK) {
+            if (attempt + 1 < kGetDataRetries) {
+                vTaskDelay(pdMS_TO_TICKS(10));
+                continue;
+            }
+            ESP_LOGW(TAG, "get_data: SOH read failed");
+            return false;
+        }
+        data.soh = static_cast<uint8_t>(val & 0xFF);
+
+        return true;
+    }
+
     return false;
 }
 
-bool Bq27441::write_word(uint8_t reg, uint16_t val)
+bool Bq27441::peek_registers(uint8_t reg, uint8_t *out, size_t len)
 {
-    uint8_t data[2];
-    data[0] = val & 0xFF;
-    data[1] = (val >> 8) & 0xFF;
+    if (!out || len == 0) {
+        return false;
+    }
 
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (kAddress << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, reg, true);
-    i2c_master_write(cmd, data, 2, true);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-    i2c_cmd_link_delete(cmd);
-
-    return ret == ESP_OK;
+    I2cBusLock lock(port_);
+    return i2c_read_bytes(reg, out, len) == ESP_OK;
 }
 
-bool Bq27441::read_block(uint8_t reg, uint8_t *data, size_t len)
+bool Bq27441::dump_state_block(uint8_t class_id, uint8_t block_index,
+                               uint8_t out[32], uint8_t *checksum)
 {
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (kAddress << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, reg, true);
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (kAddress << 1) | I2C_MASTER_READ, true);
-    if (len > 1) {
-        i2c_master_read(cmd, data, len - 1, I2C_MASTER_ACK);
+    if (!out || !checksum) {
+        return false;
     }
-    i2c_master_read_byte(cmd, data + len - 1, I2C_MASTER_NACK);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-    i2c_cmd_link_delete(cmd);
 
-    return ret == ESP_OK;
+    const bool was_sealed = is_sealed();
+
+    if (!unseal()) {
+        return false;
+    }
+
+    if (!enter_config_mode()) {
+        if (was_sealed) {
+            seal();
+        }
+        return false;
+    }
+
+    bool ok = select_block(class_id, block_index) && read_block_buffer(out, checksum);
+
+    if (!exit_config_mode()) {
+        ESP_LOGW(TAG, "dump_state_block: exit config failed");
+        ok = false;
+    }
+
+    if (was_sealed && !seal()) {
+        ESP_LOGW(TAG, "dump_state_block: re-seal failed");
+    }
+
+    return ok;
 }

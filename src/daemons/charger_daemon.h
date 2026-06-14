@@ -13,6 +13,7 @@ public:
     ~ChargerDaemon();
 
     void start();
+    bool init_driver();
 
     bool read_status_register(uint8_t &status);
     bool read_power_on_config_register(uint8_t &reg01);

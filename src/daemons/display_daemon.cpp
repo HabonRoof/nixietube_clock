@@ -6,9 +6,10 @@
 static const char *TAG = "DisplayDaemon";
 static constexpr float kTwoPi = 6.28318530718f;
 
-DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver)
+DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver, SystemState &system_state)
     : nixie_driver_(nixie_driver),
       led_driver_(led_driver),
+      system_state_(system_state),
       queue_(nullptr),
       task_handle_(nullptr),
       current_mode_(DisplayMode::CLOCK_HHMMSS),
@@ -119,11 +120,6 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
                 current_effect_type_ = LedEffectType::NONE;
             }
             effect_color_phase_ = 0.0f;
-            break;
-        case DisplayCmd::UPDATE_BATTERY:
-            ESP_LOGI(TAG, "Battery Update: %d%%, %d mV, %d mA, SOH: %d%%",
-                     msg.data.battery.soc, msg.data.battery.voltage_mv,
-                     msg.data.battery.current_ma, msg.data.battery.soh);
             break;
         default:
             break;

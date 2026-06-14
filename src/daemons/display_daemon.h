@@ -6,6 +6,7 @@
 #include "message_types.h"
 #include "nixie_driver.h"
 #include "led_driver.h"
+#include "system_state.h"
 
 enum class LedEffectType
 {
@@ -17,7 +18,7 @@ enum class LedEffectType
 class DisplayDaemon
 {
 public:
-    DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver);
+    DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver, SystemState &system_state);
     ~DisplayDaemon();
 
     void start();
@@ -36,6 +37,7 @@ private:
 
     INixieDriver &nixie_driver_;
     ILedDriver &led_driver_;
+    SystemState &system_state_;
     QueueHandle_t queue_;
     TaskHandle_t task_handle_;
 

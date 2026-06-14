@@ -23,6 +23,16 @@ void ChargerDaemon::start()
     xTaskCreate(task_entry, "charger_daemon", 4096, this, 5, &task_handle_);
 }
 
+bool ChargerDaemon::init_driver()
+{
+    if (!driver_.init()) {
+        ESP_LOGE(TAG, "Failed to initialize charger driver");
+        return false;
+    }
+    ESP_LOGW(TAG, "BQ25601 init OK; polling task not started");
+    return true;
+}
+
 
 bool ChargerDaemon::read_status_register(uint8_t &status)
 {

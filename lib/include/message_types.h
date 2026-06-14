@@ -4,7 +4,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "color_model.h"
-#include "gasgauge_driver.h"
 #include "powermonitor_driver.h"
 #include "charger_driver.h"
 
@@ -41,8 +40,7 @@ enum class DisplayCmd : uint8_t
     SET_BACKLIGHT_COLOR,
     SET_BACKLIGHT_BRIGHTNESS,
     SET_EFFECT,
-    ENABLE_EFFECT,
-    UPDATE_BATTERY
+    ENABLE_EFFECT
 };
 
 enum class DisplayMode : uint8_t
@@ -72,7 +70,6 @@ struct DisplayMessage
         HsvColor hsv;
         uint8_t brightness;
         uint8_t effect_id; // 0: None, 1: Breath, 2: Rainbow, etc.
-        GasgaugeData battery;
     } data;
 };
 
@@ -85,7 +82,6 @@ enum class SystemEvent : uint8_t
     WIFI_DISCONNECTED,
     RTC_UPDATE,
     CLI_COMMAND,
-    BATTERY_UPDATE,
     POWER_UPDATE,
     CHARGER_UPDATE
 };
@@ -115,7 +111,6 @@ struct SystemMessage
     {
         uint8_t button_id;
         CliData cli;
-        GasgaugeData battery;
         PowerMonitorData power;
         ChargerData charger;
         // TODO: Add other features
