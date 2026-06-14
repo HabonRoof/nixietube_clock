@@ -2,6 +2,8 @@
 #include "esp_log.h"
 #include <ctime>
 #include "settings_store.h"
+#include "i2c_bus.h"
+#include "i2c_debug_config.h"
 #include "driver/i2c.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
@@ -42,6 +44,7 @@ HardwareHandles SystemController::init_hardware()
     i2c_conf.master.clk_speed = kI2cClockHz;
     ESP_ERROR_CHECK(i2c_param_config(kI2cPort, &i2c_conf));
     ESP_ERROR_CHECK(i2c_driver_install(kI2cPort, i2c_conf.mode, 0, 0, 0));
+    i2c_bus_init(kI2cPort);
     handles.i2c_port = kI2cPort;
     ESP_LOGI(TAG, "I2C Initialized");
 
@@ -133,9 +136,10 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
     
-    if (rtc_.init()) {
+    if (i2c_debug::kDisableDs3231Rtc) {
+        ESP_LOGW(TAG, "DS3231 RTC I2C disabled");
+    } else if (rtc_.init()) {
         ESP_LOGI(TAG, "RTC Initialized");
-        // Optional: Sync system time from RTC here
     } else {
         ESP_LOGE(TAG, "RTC Initialization Failed");
     }
@@ -231,14 +235,6 @@ void SystemController::process_message(const SystemMessage &msg)
                 }
             }
             break;
-        case SystemEvent::BATTERY_UPDATE:
-            {
-                DisplayMessage dmsg;
-                dmsg.command = DisplayCmd::UPDATE_BATTERY;
-                dmsg.data.battery = msg.data.battery;
-                xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
-            }
-            break;
         case SystemEvent::POWER_UPDATE:
             {
                 // Log power data for now, or forward to display if needed
@@ -257,7 +253,7 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
 {
     settings_ = settings;
 
-    if (new_time) {
+    if (new_time && !i2c_debug::kDisableDs3231Rtc) {
         struct tm adjusted = *new_time;
         adjusted.tm_isdst = 0;
         time_t epoch = mktime(&adjusted);
@@ -283,23 +279,29 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
     amsg.param.volume = settings.volume;
     xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
 
-    if (settings.alarm_enabled) {
-        struct tm alarm = {};
-        alarm.tm_hour = settings.alarm_hour;
-        alarm.tm_min = settings.alarm_minute;
-        alarm.tm_sec = settings.alarm_second;
-        alarm.tm_mday = 1;
-        rtc_.set_alarm1(&alarm);
-        rtc_.clear_alarm1_flag();
-        rtc_.enable_alarm1_interrupt(true);
-    } else {
-        rtc_.enable_alarm1_interrupt(false);
-        rtc_.clear_alarm1_flag();
+    if (!i2c_debug::kDisableDs3231Rtc) {
+        if (settings.alarm_enabled) {
+            struct tm alarm = {};
+            alarm.tm_hour = settings.alarm_hour;
+            alarm.tm_min = settings.alarm_minute;
+            alarm.tm_sec = settings.alarm_second;
+            alarm.tm_mday = 1;
+            rtc_.set_alarm1(&alarm);
+            rtc_.clear_alarm1_flag();
+            rtc_.enable_alarm1_interrupt(true);
+        } else {
+            rtc_.enable_alarm1_interrupt(false);
+            rtc_.clear_alarm1_flag();
+        }
     }
 }
 
 void SystemController::update_time()
 {
+    if (i2c_debug::kDisableDs3231Rtc) {
+        return;
+    }
+
     // Get current time from RTC
     struct tm timeinfo;
     if (rtc_.get_time(&timeinfo)) {

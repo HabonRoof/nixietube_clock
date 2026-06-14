@@ -15,19 +15,17 @@
 #include "ina3221/ina3221.h"
 #include "bq25601/bq25601.h"
 #include "system_controller.h"
+#include "system_state.h"
 #include "daemons/cli_daemon.h"
 #include "settings_store.h"
 #include "web_server.h"
 #include "nvs_flash.h"
+#include "i2c_debug_config.h"
 
 static const char *kLogTag = "main";
 
-// Pin Definitions
-// Pins are now managed in SystemController::init_hardware()
-
 extern "C" void app_main(void)
 {
-    // Reduce console noise so CLI interaction is usable on serial monitor.
     esp_log_level_set("*", ESP_LOG_INFO);
 
     ESP_LOGI(kLogTag, "Starting Nixie Clock System...");
@@ -40,75 +38,63 @@ extern "C" void app_main(void)
         ESP_ERROR_CHECK(nvs_err);
     }
 
-    // 0. Initialize Hardware (I2C, UART, GPIO, RMT)
     HardwareHandles hw_handles = SystemController::init_hardware();
 
-    // Initialize Gasgauge early (before nixie scan uses I2C)
     static Bq27441 gasgauge_driver(hw_handles.i2c_port);
-    ESP_LOGI(kLogTag, "Initializing BQ27441 at boot...");
-    if (!gasgauge_driver.init()) {
-        ESP_LOGW(kLogTag, "BQ27441 init failed at boot; gasgauge daemon will retry");
-    } else {
-        ESP_LOGI(kLogTag, "BQ27441 ready at boot");
-    }
-
-    // 1. Initialize Hardware Drivers
+    static SystemState system_state;
 
     static LedDriver led_driver(hw_handles.led_rmt_channel, hw_handles.led_rmt_encoder);
 
     static NixieDriver nixie_driver;
-    nixie_driver.nixie_scan_start(hw_handles.i2c_port);
+    if (i2c_debug::kDisablePca9685I2c) {
+        ESP_LOGW(kLogTag, "PCA9685 I2C disabled (nixie scan not started)");
+    } else {
+        nixie_driver.nixie_scan_start(hw_handles.i2c_port);
+    }
 
     static AudioDriver audio_driver(hw_handles.audio_uart_port);
-
-    // Initialize Power Monitor Driver
     static Ina3221 power_monitor_driver(hw_handles.i2c_port);
-
-    // Initialize Charger Driver
     static Bq25601 charger_driver(hw_handles.i2c_port);
 
-    // 2. Initialize Daemons
-    static DisplayDaemon display_daemon(nixie_driver, led_driver);
+    static DisplayDaemon display_daemon(nixie_driver, led_driver, system_state);
     static AudioDaemon audio_daemon(audio_driver);
-
-    // 3. Initialize System Controller
     static SystemController system_controller(display_daemon, audio_daemon);
-
-    // Initialize Gasgauge Daemon (needs system queue)
-    static GasgaugeDaemon gasgauge_daemon(gasgauge_driver, system_controller.get_queue());
-
-    // Initialize Power Daemon (needs system queue)
+    static GasgaugeDaemon gasgauge_daemon(gasgauge_driver, system_state);
     static PowerDaemon power_daemon(power_monitor_driver, system_controller.get_queue());
-
-    // Initialize Charger Daemon (needs system queue)
     static ChargerDaemon charger_daemon(charger_driver, system_controller.get_queue());
 
-    // 3.1 Load persisted settings and apply
     static SettingsStore settings_store;
     ClockSettings settings;
     if (settings_store.load(&settings)) {
         system_controller.apply_settings(settings, nullptr);
     }
 
-    // 4. Initialize CLI Daemon
-    static CliDaemon cli_daemon(system_controller, charger_daemon);
-
-    // 4.1 Initialize Web Server
+    static CliDaemon cli_daemon(system_controller, charger_daemon, gasgauge_daemon);
     static WebServer web_server(system_controller, settings_store);
 
-    // 5. Start Tasks
     ESP_LOGI(kLogTag, "Starting Daemons...");
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
     gasgauge_daemon.start();
-    power_daemon.start();
-    charger_daemon.start();
+    if (i2c_debug::kDisableIna3221Daemon) {
+        ESP_LOGW(kLogTag, "INA3221 power daemon disabled");
+    } else {
+        power_daemon.start();
+    }
+    vTaskDelay(pdMS_TO_TICKS(100));
+    if (i2c_debug::kDisableChargerPolling) {
+        charger_daemon.init_driver();
+    } else {
+        charger_daemon.start();
+    }
+    vTaskDelay(pdMS_TO_TICKS(100));
     cli_daemon.start();
+    vTaskDelay(pdMS_TO_TICKS(100));
     web_server.start();
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     ESP_LOGI(kLogTag, "System Running.");
-    
-    // Main task can now delete itself or monitor stack usage
+
     vTaskDelete(nullptr);
 }
