@@ -4,7 +4,6 @@
 namespace i2c_debug {
 
 static constexpr bool kDisablePca9685I2c = true;
-static constexpr bool kDisableIna3221Daemon = true;
 static constexpr bool kDisableDs3231Rtc = true;
 static constexpr bool kDisableChargerPolling = true;
 

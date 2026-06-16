@@ -49,14 +49,13 @@ HardwareHandles SystemController::init_hardware()
     ESP_LOGI(TAG, "I2C Initialized");
 
     // 2. Initialize UART
-    uart_config_t uart_config = {
-        .baud_rate = kUartBaudRate,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
-    };
+    uart_config_t uart_config = {};
+    uart_config.baud_rate = kUartBaudRate;
+    uart_config.data_bits = UART_DATA_8_BITS;
+    uart_config.parity = UART_PARITY_DISABLE;
+    uart_config.stop_bits = UART_STOP_BITS_1;
+    uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+    uart_config.source_clk = UART_SCLK_DEFAULT;
     ESP_ERROR_CHECK(uart_param_config(kUartPort, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(kUartPort, kUartTx, kUartRx, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_driver_install(kUartPort, 256, 0, 0, nullptr, 0));
@@ -235,14 +234,7 @@ void SystemController::process_message(const SystemMessage &msg)
                 }
             }
             break;
-        case SystemEvent::POWER_UPDATE:
-            {
-                // Log power data for now, or forward to display if needed
-                // ESP_LOGI(TAG, "Power Update: HV=%dmV %dmA, CHG=%dmV %dmA, LED=%dmV %dmA",
-                //          msg.data.power.hv.voltage_mv, msg.data.power.hv.current_ma,
-                //          msg.data.power.charging.voltage_mv, msg.data.power.charging.current_ma,
-                //          msg.data.power.led.voltage_mv, msg.data.power.led.current_ma);
-            }
+        case SystemEvent::BATTERY_UPDATE:
             break;
         default:
             break;

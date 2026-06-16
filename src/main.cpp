@@ -9,11 +9,11 @@
 #include "daemons/display_daemon.h"
 #include "daemons/audio_daemon.h"
 #include "daemons/gasgauge_daemon.h"
-#include "daemons/power_daemon.h"
 #include "daemons/charger_daemon.h"
 #include "bq27441/bq27441.h"
-#include "ina3221/ina3221.h"
+#include "power_switch/gpio_power_switch.h"
 #include "bq25601/bq25601.h"
+#include "power_controller.h"
 #include "system_controller.h"
 #include "system_state.h"
 #include "daemons/cli_daemon.h"
@@ -44,23 +44,17 @@ extern "C" void app_main(void)
     static SystemState system_state;
 
     static LedDriver led_driver(hw_handles.led_rmt_channel, hw_handles.led_rmt_encoder);
-
     static NixieDriver nixie_driver;
-    if (i2c_debug::kDisablePca9685I2c) {
-        ESP_LOGW(kLogTag, "PCA9685 I2C disabled (nixie scan not started)");
-    } else {
-        nixie_driver.nixie_scan_start(hw_handles.i2c_port);
-    }
 
     static AudioDriver audio_driver(hw_handles.audio_uart_port);
-    static Ina3221 power_monitor_driver(hw_handles.i2c_port);
+    static GpioPowerSwitch power_switch_driver;
     static Bq25601 charger_driver(hw_handles.i2c_port);
 
     static DisplayDaemon display_daemon(nixie_driver, led_driver, system_state);
-    static AudioDaemon audio_daemon(audio_driver);
+    static PowerController power_controller(power_switch_driver);
+    static AudioDaemon audio_daemon(audio_driver, power_controller);
     static SystemController system_controller(display_daemon, audio_daemon);
     static GasgaugeDaemon gasgauge_daemon(gasgauge_driver, system_state);
-    static PowerDaemon power_daemon(power_monitor_driver, system_controller.get_queue());
     static ChargerDaemon charger_daemon(charger_driver, system_controller.get_queue());
 
     static SettingsStore settings_store;
@@ -69,19 +63,24 @@ extern "C" void app_main(void)
         system_controller.apply_settings(settings, nullptr);
     }
 
-    static CliDaemon cli_daemon(system_controller, charger_daemon, gasgauge_daemon);
+    static CliDaemon cli_daemon(system_controller, charger_daemon, gasgauge_daemon, power_controller);
     static WebServer web_server(system_controller, settings_store);
 
     ESP_LOGI(kLogTag, "Starting Daemons...");
+    power_controller.init();
+    power_controller.set_hv_enabled(true);
+    vTaskDelay(pdMS_TO_TICKS(50));
+
+    if (!i2c_debug::kDisablePca9685I2c) {
+        nixie_driver.nixie_scan_start(hw_handles.i2c_port);
+    } else {
+        ESP_LOGW(kLogTag, "PCA9685 I2C disabled (nixie scan not started)");
+    }
+
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
     gasgauge_daemon.start();
-    if (i2c_debug::kDisableIna3221Daemon) {
-        ESP_LOGW(kLogTag, "INA3221 power daemon disabled");
-    } else {
-        power_daemon.start();
-    }
     vTaskDelay(pdMS_TO_TICKS(100));
     if (i2c_debug::kDisableChargerPolling) {
         charger_daemon.init_driver();

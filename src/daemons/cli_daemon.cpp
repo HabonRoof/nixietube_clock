@@ -15,6 +15,7 @@
 static const char *TAG = "CliDaemon";
 static SystemController *g_system_controller = nullptr;
 static ChargerDaemon *g_charger_daemon = nullptr;
+static PowerController *g_power_controller = nullptr;
 static GasgaugeDaemon *g_gasgauge_daemon = nullptr;
 
 #ifndef GIT_COMMIT_HASH
@@ -391,6 +392,54 @@ static int disable_charging_func(int argc, char **argv)
     return ok ? 0 : 1;
 }
 
+// --- Command: enable_hv ---
+static int enable_hv_func(int argc, char **argv)
+{
+    if (!g_power_controller) {
+        printf("power controller not ready\n");
+        return 1;
+    }
+    g_power_controller->set_hv_enabled(true);
+    printf("HV rail enabled\n");
+    return 0;
+}
+
+// --- Command: disable_hv ---
+static int disable_hv_func(int argc, char **argv)
+{
+    if (!g_power_controller) {
+        printf("power controller not ready\n");
+        return 1;
+    }
+    g_power_controller->set_hv_enabled(false);
+    printf("HV rail disabled\n");
+    return 0;
+}
+
+// --- Command: enable_df_power ---
+static int enable_df_power_func(int argc, char **argv)
+{
+    if (!g_power_controller) {
+        printf("power controller not ready\n");
+        return 1;
+    }
+    g_power_controller->set_dfplayer_enabled(true);
+    printf("DFPlayer power enabled\n");
+    return 0;
+}
+
+// --- Command: disable_df_power ---
+static int disable_df_power_func(int argc, char **argv)
+{
+    if (!g_power_controller) {
+        printf("power controller not ready\n");
+        return 1;
+    }
+    g_power_controller->set_dfplayer_enabled(false);
+    printf("DFPlayer power disabled\n");
+    return 0;
+}
+
 // --- Command: help ---
 static int help_func(int argc, char **argv)
 {
@@ -407,6 +456,10 @@ static int help_func(int argc, char **argv)
     printf("disable_otg_output                              Disable OTG output\n");
     printf("enable_charging                                 Enable charging\n");
     printf("disable_charging                                Disable charging\n");
+    printf("enable_hv                                       Enable HV power rail\n");
+    printf("disable_hv                                      Disable HV power rail\n");
+    printf("enable_df_power                                 Enable DFPlayer power rail\n");
+    printf("disable_df_power                                Disable DFPlayer power rail\n");
     printf("ggtool <status|peek|block|config|read|cache>  BQ27441 gasgauge tools\n");
     printf("reboot                                          reboot the device\n");
     return 0;
@@ -414,15 +467,18 @@ static int help_func(int argc, char **argv)
 
 CliDaemon::CliDaemon(SystemController &system_controller,
                      ChargerDaemon &charger_daemon,
-                     GasgaugeDaemon &gasgauge_daemon)
+                     GasgaugeDaemon &gasgauge_daemon,
+                     PowerController &power_controller)
     : system_controller_(system_controller),
       charger_daemon_(charger_daemon),
+      power_controller_(power_controller),
       gasgauge_daemon_(gasgauge_daemon),
       task_handle_(nullptr)
 {
     g_system_controller = &system_controller;
     g_charger_daemon = &charger_daemon;
     g_gasgauge_daemon = &gasgauge_daemon;
+    g_power_controller = &power_controller;
 }
 
 CliDaemon::~CliDaemon()
@@ -445,23 +501,21 @@ void CliDaemon::task_entry(void *param)
 
 void CliDaemon::register_commands()
 {
-    esp_console_config_t console_config = {
-        .max_cmdline_length = 256,
-        .max_cmdline_args = 8,
-        .hint_color = 37,
-        .hint_bold = 0
-    };
+    esp_console_config_t console_config = {};
+    console_config.max_cmdline_length = 256;
+    console_config.max_cmdline_args = 8;
+    console_config.hint_color = 37;
+    console_config.hint_bold = 0;
     ESP_ERROR_CHECK(esp_console_init(&console_config));
 
     // Configure UART
-    uart_config_t uart_config = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_APB,
-    };
+    uart_config_t uart_config = {};
+    uart_config.baud_rate = 115200;
+    uart_config.data_bits = UART_DATA_8_BITS;
+    uart_config.parity = UART_PARITY_DISABLE;
+    uart_config.stop_bits = UART_STOP_BITS_1;
+    uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+    uart_config.source_clk = UART_SCLK_APB;
     uart_param_config(UART_NUM_0, &uart_config);
     uart_driver_install(UART_NUM_0, 256, 0, 0, NULL, 0);
     
@@ -482,7 +536,9 @@ void CliDaemon::register_commands()
         .help = "Set Nixie Tube Number",
         .hint = NULL,
         .func = &set_nixie_func,
-        .argtable = &nixie_args
+        .argtable = &nixie_args,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&set_nixie_cmd));
 
@@ -495,7 +551,9 @@ void CliDaemon::register_commands()
         .help = "Set Backlight Color and Brightness",
         .hint = NULL,
         .func = &set_backlight_func,
-        .argtable = &backlight_args
+        .argtable = &backlight_args,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&set_backlight_cmd));
 
@@ -507,7 +565,9 @@ void CliDaemon::register_commands()
         .help = "BQ27441 gasgauge: status, peek, block, config, read, cache",
         .hint = NULL,
         .func = &ggtool_func,
-        .argtable = &ggtool_args
+        .argtable = &ggtool_args,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&ggtool_cmd));
 
@@ -517,7 +577,9 @@ void CliDaemon::register_commands()
         .help = "Get Device UUID",
         .hint = NULL,
         .func = &get_uuid_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&get_uuid_cmd));
 
@@ -527,7 +589,9 @@ void CliDaemon::register_commands()
         .help = "Get Hardware Version",
         .hint = NULL,
         .func = &get_hw_version_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&get_hw_version_cmd));
 
@@ -537,7 +601,9 @@ void CliDaemon::register_commands()
         .help = "Get Firmware Version",
         .hint = NULL,
         .func = &get_fw_version_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&get_fw_version_cmd));
 
@@ -547,7 +613,9 @@ void CliDaemon::register_commands()
         .help = "Reboot the device",
         .hint = NULL,
         .func = &reboot_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&reboot_cmd));
 
@@ -557,7 +625,9 @@ void CliDaemon::register_commands()
         .help = "Get BQ25601 status register (REG08, REG01 OTG_CONFIG)",
         .hint = NULL,
         .func = &get_bq25601_status_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&get_bq25601_status_cmd));
 
@@ -567,7 +637,9 @@ void CliDaemon::register_commands()
         .help = "Enable OTG output",
         .hint = NULL,
         .func = &enable_otg_output_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&enable_otg_output_cmd));
 
@@ -577,7 +649,9 @@ void CliDaemon::register_commands()
         .help = "Disable OTG output",
         .hint = NULL,
         .func = &disable_otg_output_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&disable_otg_output_cmd));
 
@@ -587,7 +661,9 @@ void CliDaemon::register_commands()
         .help = "Enable charging",
         .hint = NULL,
         .func = &enable_charging_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&enable_charging_cmd));
 
@@ -597,9 +673,59 @@ void CliDaemon::register_commands()
         .help = "Disable charging",
         .hint = NULL,
         .func = &disable_charging_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&disable_charging_cmd));
+
+    // Register: enable_hv
+    const esp_console_cmd_t enable_hv_cmd = {
+        .command = "enable_hv",
+        .help = "Enable HV power rail",
+        .hint = NULL,
+        .func = &enable_hv_func,
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&enable_hv_cmd));
+
+    // Register: disable_hv
+    const esp_console_cmd_t disable_hv_cmd = {
+        .command = "disable_hv",
+        .help = "Disable HV power rail",
+        .hint = NULL,
+        .func = &disable_hv_func,
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&disable_hv_cmd));
+
+    // Register: enable_df_power
+    const esp_console_cmd_t enable_df_power_cmd = {
+        .command = "enable_df_power",
+        .help = "Enable DFPlayer power rail",
+        .hint = NULL,
+        .func = &enable_df_power_func,
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&enable_df_power_cmd));
+
+    // Register: disable_df_power
+    const esp_console_cmd_t disable_df_power_cmd = {
+        .command = "disable_df_power",
+        .help = "Disable DFPlayer power rail",
+        .hint = NULL,
+        .func = &disable_df_power_func,
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&disable_df_power_cmd));
 
     // Register: help
     const esp_console_cmd_t help_cmd = {
@@ -607,7 +733,9 @@ void CliDaemon::register_commands()
         .help = "Print this help information",
         .hint = NULL,
         .func = &help_func,
-        .argtable = NULL
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&help_cmd));
 }

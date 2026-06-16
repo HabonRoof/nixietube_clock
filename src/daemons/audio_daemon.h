@@ -6,10 +6,12 @@
 #include "message_types.h"
 #include "audio_driver.h"
 
+class PowerController;
+
 class AudioDaemon
 {
 public:
-    explicit AudioDaemon(IAudioDriver &driver);
+    AudioDaemon(IAudioDriver &driver, PowerController &power_controller);
     ~AudioDaemon();
 
     void start();
@@ -19,8 +21,11 @@ private:
     static void task_entry(void *param);
     void loop();
     void process_message(const AudioMessage &msg);
+    void ensure_dfplayer_power();
 
     IAudioDriver &driver_;
+    PowerController &power_controller_;
     QueueHandle_t queue_;
     TaskHandle_t task_handle_;
+    bool dfplayer_powered_;
 };

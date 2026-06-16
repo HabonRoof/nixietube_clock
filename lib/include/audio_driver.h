@@ -38,5 +38,8 @@ public:
     esp_err_t play_previous() override;
 
 private:
+    void ensure_initialized();
+
     DfPlayerMini player_;
+    bool initialized_;
 };

@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "color_model.h"
-#include "powermonitor_driver.h"
+#include "gasgauge_driver.h"
 #include "charger_driver.h"
 
 // --- Audio Daemon Messages ---
@@ -82,7 +82,7 @@ enum class SystemEvent : uint8_t
     WIFI_DISCONNECTED,
     RTC_UPDATE,
     CLI_COMMAND,
-    POWER_UPDATE,
+    BATTERY_UPDATE,
     CHARGER_UPDATE
 };
 
@@ -111,7 +111,7 @@ struct SystemMessage
     {
         uint8_t button_id;
         CliData cli;
-        PowerMonitorData power;
+        GasgaugeData battery;
         ChargerData charger;
         // TODO: Add other features
         // Add other event data as needed
