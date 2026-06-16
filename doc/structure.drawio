@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="CP2mIko9s5KVQNNWmQio" name="Page-1">
-        <mxGraphModel dx="2152" dy="749" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1686" dy="437" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -41,7 +41,7 @@
                     <mxGeometry x="-100" y="700" width="80" height="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="45" value="RTC" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="750" width="80" height="40" as="geometry"/>
+                    <mxGeometry x="80" y="700" width="80" height="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="60" value="Button" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="170" y="750" width="80" height="40" as="geometry"/>
@@ -49,7 +49,7 @@
                 <mxCell id="62" value="ALS (OPT3007)" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-280" y="700" width="80" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="63" value="DFPlayer" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="63" value="DFPlayer" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-380" y="700" width="90" height="40" as="geometry"/>
                 </mxCell>
             </root>
