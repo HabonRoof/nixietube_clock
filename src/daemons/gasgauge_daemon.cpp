@@ -84,6 +84,10 @@ bool GasgaugeDaemon::ensure_probed()
 
 void GasgaugeDaemon::loop()
 {
+    if (i2c_debug::kDisableGasgauge) {
+        ESP_LOGI(TAG, "Gasgauge Daemon Disabled");
+        return;
+    }
     ESP_LOGI(TAG, "Gasgauge Daemon Started");
 
     TickType_t last_wake_time = xTaskGetTickCount();

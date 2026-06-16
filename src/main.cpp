@@ -80,7 +80,11 @@ extern "C" void app_main(void)
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
-    gasgauge_daemon.start();
+    if (!i2c_debug::kDisableGasgauge) {
+        gasgauge_daemon.start();
+    } else {
+        ESP_LOGW(kLogTag, "Gasgauge daemon disabled (not started)");
+    }
     vTaskDelay(pdMS_TO_TICKS(100));
     charger_controller.init();
     vTaskDelay(pdMS_TO_TICKS(100));
