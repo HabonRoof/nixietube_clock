@@ -4,7 +4,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "system_controller.h"
-#include "daemons/charger_daemon.h"
+#include "charger_controller.h"
 #include "power_controller.h"
 #include "daemons/gasgauge_daemon.h"
 
@@ -12,7 +12,7 @@ class CliDaemon
 {
 public:
     CliDaemon(SystemController &system_controller,
-              ChargerDaemon &charger_daemon,
+              ChargerController &charger_controller,
               GasgaugeDaemon &gasgauge_daemon,
               PowerController &power_controller);
     ~CliDaemon();
@@ -25,7 +25,7 @@ private:
     void register_commands();
 
     SystemController &system_controller_;
-    ChargerDaemon &charger_daemon_;
+    ChargerController &charger_controller_;
     PowerController &power_controller_;
     GasgaugeDaemon &gasgauge_daemon_;
     TaskHandle_t task_handle_;

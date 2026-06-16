@@ -9,7 +9,7 @@
 #include "daemons/display_daemon.h"
 #include "daemons/audio_daemon.h"
 #include "daemons/gasgauge_daemon.h"
-#include "daemons/charger_daemon.h"
+#include "charger_controller.h"
 #include "bq27441/bq27441.h"
 #include "power_switch/gpio_power_switch.h"
 #include "bq25601/bq25601.h"
@@ -55,7 +55,7 @@ extern "C" void app_main(void)
     static AudioDaemon audio_daemon(audio_driver, power_controller);
     static SystemController system_controller(display_daemon, audio_daemon);
     static GasgaugeDaemon gasgauge_daemon(gasgauge_driver, system_state);
-    static ChargerDaemon charger_daemon(charger_driver, system_controller.get_queue());
+    static ChargerController charger_controller(charger_driver);
 
     static SettingsStore settings_store;
     ClockSettings settings;
@@ -63,7 +63,7 @@ extern "C" void app_main(void)
         system_controller.apply_settings(settings, nullptr);
     }
 
-    static CliDaemon cli_daemon(system_controller, charger_daemon, gasgauge_daemon, power_controller);
+    static CliDaemon cli_daemon(system_controller, charger_controller, gasgauge_daemon, power_controller);
     static WebServer web_server(system_controller, settings_store);
 
     ESP_LOGI(kLogTag, "Starting Daemons...");
@@ -82,11 +82,7 @@ extern "C" void app_main(void)
     system_controller.start();
     gasgauge_daemon.start();
     vTaskDelay(pdMS_TO_TICKS(100));
-    if (i2c_debug::kDisableChargerPolling) {
-        charger_daemon.init_driver();
-    } else {
-        charger_daemon.start();
-    }
+    charger_controller.init();
     vTaskDelay(pdMS_TO_TICKS(100));
     cli_daemon.start();
     vTaskDelay(pdMS_TO_TICKS(100));
