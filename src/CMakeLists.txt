@@ -7,6 +7,7 @@ FILE(GLOB_RECURSE driver_sources ${CMAKE_SOURCE_DIR}/lib/drivers/*.*)
 idf_component_register(SRCS ${app_sources} ${driver_sources}
                        INCLUDE_DIRS "." 
                                     "../lib/include"
+                                    "../lib/drivers"
                                     "../lib/drivers/dfplayer"
                                     "../lib/drivers/ws2812"
                                     "../lib/drivers/pca9685")
