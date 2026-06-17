@@ -1,6 +1,8 @@
 #include "system_controller.h"
 #include "esp_log.h"
 #include <ctime>
+#include <cstdio>
+#include <cstring>
 #include <sys/time.h>
 #include "system_state.h"
 #include "gasgauge_service.h"
@@ -14,7 +16,7 @@ static const char *TAG = "SystemController";
 
 // Timekeeping policy: maintain ESP32 system time (UTC) and periodically
 // resync from the DS3231 (the ±2ppm truth source) to correct drift.
-static constexpr uint32_t kResyncIntervalMs = 3600000; // 1 hour
+static constexpr uint32_t kResyncIntervalMs = 30000; // 1 hour
 static constexpr uint8_t kMaxReadFailures = 5;
 
 // Convert a broken-down UTC time to a Unix epoch without relying on timegm()
@@ -34,6 +36,35 @@ static time_t tm_to_utc_epoch(const struct tm *t)
     int64_t days = static_cast<int64_t>(era) * 146097 + static_cast<int64_t>(doe) - 719468;
 
     return static_cast<time_t>(days * 86400 + t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec);
+}
+
+// Parse the firmware build timestamp (__DATE__ "Jun 17 2026", __TIME__
+// "19:10:00") into a broken-down time. Treated as UTC; this is only a
+// placeholder used to clear the OSF when running without a VBAT battery.
+static void build_time_to_tm(struct tm *out)
+{
+    static const char kMonths[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+    char month_str[4] = {0};
+    int day = 1, year = 2025, hour = 0, min = 0, sec = 0;
+    sscanf(__DATE__, "%3s %d %d", month_str, &day, &year);
+    sscanf(__TIME__, "%d:%d:%d", &hour, &min, &sec);
+
+    int mon = 0;
+    for (int i = 0; i < 12; ++i) {
+        if (strncmp(month_str, kMonths + i * 3, 3) == 0) {
+            mon = i;
+            break;
+        }
+    }
+
+    *out = {};
+    out->tm_year = year - 1900;
+    out->tm_mon = mon;
+    out->tm_mday = day;
+    out->tm_hour = hour;
+    out->tm_min = min;
+    out->tm_sec = sec;
+    out->tm_isdst = 0;
 }
 
 // Hardware Configuration
@@ -244,6 +275,7 @@ void SystemController::loop()
         // Keep clock update at 1Hz while queue is processed at a higher rate.
         if ((int32_t)(now - next_time_update) >= 0) {
             update_time();
+            ESP_LOGI(TAG, "Time Updated: %lld", (long long)now);
             next_time_update += update_interval;
         }
 
@@ -403,6 +435,24 @@ void SystemController::sync_time_from_rtc()
     // to set the time before trusting/displaying it.
     bool osf = false;
     if (rtc_.oscillator_stopped(&osf) && osf) {
+        // Running without a VBAT battery: seed a default time so OSF is cleared
+        // (set_time() clears it) and the clock becomes usable instead of
+        // warning on every resync.
+        if (i2c_debug::kSeedRtcOnOscStop) {
+            struct tm seed_tm;
+            build_time_to_tm(&seed_tm);
+            if (rtc_.set_time(&seed_tm)) { // also clears OSF
+                time_t utc_epoch = tm_to_utc_epoch(&seed_tm);
+                struct timeval tv = { .tv_sec = utc_epoch, .tv_usec = 0 };
+                settimeofday(&tv, nullptr);
+                publish_time_status(true);
+                rtc_read_failures_ = 0;
+                ESP_LOGW(TAG, "RTC OSF set; seeded build time (UTC epoch %lld) and cleared OSF",
+                         (long long)utc_epoch);
+                return;
+            }
+            ESP_LOGW(TAG, "RTC OSF set; failed to seed default time");
+        }
         publish_time_status(false);
         ESP_LOGW(TAG, "RTC oscillator stop flag set; awaiting time set");
         return;
