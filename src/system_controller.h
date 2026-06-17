@@ -67,7 +67,7 @@ private:
     uint8_t rtc_read_failures_;
     uint8_t battery_read_failures_;
     bool gasgauge_ready_;
-    TickType_t next_resync_;
+    TickType_t next_rtc_sync_;
     TickType_t next_battery_poll_;
 
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
