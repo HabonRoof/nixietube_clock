@@ -1,5 +1,6 @@
 #include "web_server.h"
 #include "system_controller.h"
+#include "system_state.h"
 #include "web_page.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -34,7 +35,7 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
     auto *server = static_cast<WebServer *>(req->user_ctx);
     ClockSettings settings;
     if (!server->load_settings(&settings)) {
-        settings = SettingsStore::defaults();
+        settings = SystemState::defaults();
     }
 
     char alarm_time[16];
@@ -184,7 +185,7 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
 
     ClockSettings settings;
     if (!server->load_settings(&settings)) {
-        settings = SettingsStore::defaults();
+        settings = SystemState::defaults();
     }
 
     std::string tz_value = extract_json_value(body, "tz_offset");
@@ -247,8 +248,8 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
 }
 }
 
-WebServer::WebServer(SystemController &system_controller, SettingsStore &store)
-    : system_controller_(system_controller), store_(store), task_handle_(nullptr)
+WebServer::WebServer(SystemController &system_controller, SystemState &system_state)
+    : system_controller_(system_controller), system_state_(system_state), task_handle_(nullptr)
 {
 }
 
@@ -398,15 +399,11 @@ void WebServer::stop_http()
 
 bool WebServer::load_settings(ClockSettings *out_settings)
 {
-    return store_.load(out_settings);
+    return system_state_.get_settings(out_settings);
 }
 
 bool WebServer::apply_settings(const ClockSettings &settings, const struct tm *new_time)
 {
-    if (!store_.save(settings)) {
-        return false;
-    }
-    // Hand off to the SystemController task, which owns rtc_/settings_.
     system_controller_.request_settings_update(settings, new_time);
     return true;
 }

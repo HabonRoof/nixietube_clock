@@ -6,15 +6,17 @@
 #include "system_controller.h"
 #include "charger_controller.h"
 #include "power_controller.h"
-#include "daemons/gasgauge_daemon.h"
+#include "gasgauge_service.h"
+#include "system_state.h"
 
 class CliDaemon
 {
 public:
     CliDaemon(SystemController &system_controller,
               ChargerController &charger_controller,
-              GasgaugeDaemon &gasgauge_daemon,
-              PowerController &power_controller);
+              GasgaugeService &gasgauge_service,
+              PowerController &power_controller,
+              SystemState &system_state);
     ~CliDaemon();
 
     void start();
@@ -27,6 +29,7 @@ private:
     SystemController &system_controller_;
     ChargerController &charger_controller_;
     PowerController &power_controller_;
-    GasgaugeDaemon &gasgauge_daemon_;
+    GasgaugeService &gasgauge_service_;
+    SystemState &system_state_;
     TaskHandle_t task_handle_;
 };

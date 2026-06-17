@@ -5,10 +5,9 @@ namespace i2c_debug {
 
 static constexpr bool kDisablePca9685I2c = false;
 static constexpr bool kDisableDs3231Rtc = false;
-static constexpr bool kDisableGasgauge = true;
+static constexpr bool kDisableGasgauge = false;
 
-// GasgaugeDaemon timing (firmware-only, not BQ27441 hardware registers)
-static constexpr uint32_t kGasgaugePollMs = 5000;
-static constexpr uint32_t kGasgaugeProbeRetryMs = 5000; // was 30000; shorten for debug
+// SystemController battery poll interval (firmware-only)
+static constexpr uint32_t kBatteryPollMs = 60000;
 
 } // namespace i2c_debug

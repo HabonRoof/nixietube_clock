@@ -1,5 +1,5 @@
 #include "daemons/cli_daemon.h"
-#include "daemons/gasgauge_daemon.h"
+#include "gasgauge_service.h"
 #include "bq27441/bq27441_regs.h"
 #include "esp_console.h"
 #include "esp_log.h"
@@ -16,7 +16,8 @@ static const char *TAG = "CliDaemon";
 static SystemController *g_system_controller = nullptr;
 static ChargerController *g_charger_controller = nullptr;
 static PowerController *g_power_controller = nullptr;
-static GasgaugeDaemon *g_gasgauge_daemon = nullptr;
+static GasgaugeService *g_gasgauge_service = nullptr;
+static SystemState *g_system_state = nullptr;
 
 #ifndef GIT_COMMIT_HASH
 #define GIT_COMMIT_HASH "unknown"
@@ -133,8 +134,8 @@ static int ggtool_func(int argc, char **argv)
         return 1;
     }
 
-    if (!g_gasgauge_daemon) {
-        printf("gasgauge daemon not ready\n");
+    if (!g_gasgauge_service) {
+        printf("gasgauge service not ready\n");
         return 1;
     }
 
@@ -159,7 +160,7 @@ static int ggtool_func(int argc, char **argv)
         }
 
         uint8_t buf[32] = {};
-        if (!g_gasgauge_daemon->peek_registers(reg, buf, len)) {
+        if (!g_gasgauge_service->peek_registers(reg, buf, len)) {
             printf("Failed to peek register 0x%02X\n", reg);
             return 1;
         }
@@ -187,7 +188,7 @@ static int ggtool_func(int argc, char **argv)
 
         uint8_t data[32] = {};
         uint8_t checksum = 0;
-        if (!g_gasgauge_daemon->dump_state_block(class_id, block_index, data, &checksum)) {
+        if (!g_gasgauge_service->dump_state_block(class_id, block_index, data, &checksum)) {
             printf("Failed to dump state block (class=%u block=%u)\n", class_id, block_index);
             return 1;
         }
@@ -217,7 +218,7 @@ static int ggtool_func(int argc, char **argv)
 
     if (strcmp(subcmd, "status") == 0) {
         GasgaugeDeviceInfo info;
-        if (!g_gasgauge_daemon->probe_device_info(info)) {
+        if (!g_gasgauge_service->probe_device_info(info)) {
             printf("Failed to probe BQ27441\n");
             return 1;
         }
@@ -240,12 +241,12 @@ static int ggtool_func(int argc, char **argv)
     }
 
     if (strcmp(subcmd, "config") == 0) {
-        uint16_t mah = GasgaugeDaemon::kDefaultCapacityMah;
+        uint16_t mah = GasgaugeService::kDefaultCapacityMah;
         if (argc >= 3) {
             mah = static_cast<uint16_t>(strtoul(argv[2], nullptr, 10));
         }
 
-        const bool ok = g_gasgauge_daemon->configure_capacity(mah, true);
+        const bool ok = g_gasgauge_service->configure_capacity(mah, true);
         if (!ok) {
             printf("Failed to configure design capacity to %u mAh\n", mah);
             return 1;
@@ -256,7 +257,7 @@ static int ggtool_func(int argc, char **argv)
 
     if (strcmp(subcmd, "read") == 0) {
         GasgaugeData data;
-        if (!g_gasgauge_daemon->read_live(data)) {
+        if (!g_gasgauge_service->read_data(data)) {
             printf("Failed to read live gasgauge data\n");
             return 1;
         }
@@ -268,20 +269,25 @@ static int ggtool_func(int argc, char **argv)
     }
 
     if (strcmp(subcmd, "cache") == 0) {
-        GasgaugeSnapshot snapshot;
-        if (!g_gasgauge_daemon->get_cached_snapshot(snapshot)) {
-            printf("No cached gasgauge data available\n");
+        if (!g_system_state) {
+            printf("system state not ready\n");
+            return 1;
+        }
+
+        BatteryStatus battery;
+        if (!g_system_state->get_battery(&battery)) {
+            printf("No cached battery data available\n");
             return 1;
         }
 
         const TickType_t now = xTaskGetTickCount();
-        const TickType_t age_ticks = now - snapshot.updated_at;
+        const TickType_t age_ticks = now - battery.updated_at;
         const uint32_t age_ms = static_cast<uint32_t>(age_ticks * portTICK_PERIOD_MS);
 
-        printf("SOC: %u%%\n", snapshot.data.soc);
-        printf("SOH: %u%%\n", snapshot.data.soh);
-        printf("Voltage: %u mV\n", snapshot.data.voltage_mv);
-        printf("Current: %d mA\n", snapshot.data.current_ma);
+        printf("SOC: %u%%\n", battery.soc);
+        printf("SOH: %u%%\n", battery.soh);
+        printf("Voltage: %u mV\n", battery.battery_voltage_mv);
+        printf("Current: %d mA\n", battery.battery_current_ma);
         printf("Age: %lu ms\n", static_cast<unsigned long>(age_ms));
         return 0;
     }
@@ -438,18 +444,21 @@ static int help_func(int argc, char **argv)
 
 CliDaemon::CliDaemon(SystemController &system_controller,
                      ChargerController &charger_controller,
-                     GasgaugeDaemon &gasgauge_daemon,
-                     PowerController &power_controller)
+                     GasgaugeService &gasgauge_service,
+                     PowerController &power_controller,
+                     SystemState &system_state)
     : system_controller_(system_controller),
       charger_controller_(charger_controller),
       power_controller_(power_controller),
-      gasgauge_daemon_(gasgauge_daemon),
+      gasgauge_service_(gasgauge_service),
+      system_state_(system_state),
       task_handle_(nullptr)
 {
     g_system_controller = &system_controller;
     g_charger_controller = &charger_controller;
-    g_gasgauge_daemon = &gasgauge_daemon;
+    g_gasgauge_service = &gasgauge_service;
     g_power_controller = &power_controller;
+    g_system_state = &system_state;
 }
 
 CliDaemon::~CliDaemon()

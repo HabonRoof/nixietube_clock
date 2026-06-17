@@ -8,7 +8,7 @@
 #include "audio_driver.h"
 #include "daemons/display_daemon.h"
 #include "daemons/audio_daemon.h"
-#include "daemons/gasgauge_daemon.h"
+#include "gasgauge_service.h"
 #include "charger_controller.h"
 #include "bq27441/bq27441.h"
 #include "power_switch/gpio_power_switch.h"
@@ -17,7 +17,6 @@
 #include "system_controller.h"
 #include "system_state.h"
 #include "daemons/cli_daemon.h"
-#include "settings_store.h"
 #include "web_server.h"
 #include "nvs_flash.h"
 #include "i2c_debug_config.h"
@@ -41,6 +40,7 @@ extern "C" void app_main(void)
     HardwareHandles hw_handles = SystemController::init_hardware();
 
     static Bq27441 gasgauge_driver(hw_handles.i2c_port);
+    static GasgaugeService gasgauge_service(gasgauge_driver);
     static SystemState system_state;
 
     static LedDriver led_driver(hw_handles.led_rmt_channel, hw_handles.led_rmt_encoder);
@@ -50,21 +50,40 @@ extern "C" void app_main(void)
     static GpioPowerSwitch power_switch_driver;
     static Bq25601 charger_driver(hw_handles.i2c_port);
 
+    bool gasgauge_ready = false;
+    if (!i2c_debug::kDisableGasgauge) {
+        GasgaugeDeviceInfo info;
+        if (gasgauge_service.probe_device_info(info) && gasgauge_service.is_ready()) {
+            if (gasgauge_service.configure_capacity(GasgaugeService::kDefaultCapacityMah, false)) {
+                gasgauge_ready = true;
+                ESP_LOGI(kLogTag, "Gasgauge probed and capacity configured");
+            } else {
+                ESP_LOGW(kLogTag, "Gasgauge probe OK but capacity configure failed");
+            }
+        } else {
+            ESP_LOGW(kLogTag, "Gasgauge probe failed at boot; SystemController will retry");
+        }
+    } else {
+        ESP_LOGW(kLogTag, "Gasgauge disabled");
+    }
+
     static DisplayDaemon display_daemon(nixie_driver, led_driver, system_state);
     static PowerController power_controller(power_switch_driver);
     static AudioDaemon audio_daemon(audio_driver, power_controller);
-    static SystemController system_controller(display_daemon, audio_daemon);
-    static GasgaugeDaemon gasgauge_daemon(gasgauge_driver, system_state);
+    static SystemController system_controller(display_daemon, audio_daemon, system_state,
+                                              i2c_debug::kDisableGasgauge ? nullptr : &gasgauge_service,
+                                              gasgauge_ready);
     static ChargerController charger_controller(charger_driver);
 
-    static SettingsStore settings_store;
-    ClockSettings settings;
-    if (settings_store.load(&settings)) {
+    if (system_state.load()) {
+        ClockSettings settings;
+        system_state.get_settings(&settings);
         system_controller.apply_settings(settings, nullptr);
     }
 
-    static CliDaemon cli_daemon(system_controller, charger_controller, gasgauge_daemon, power_controller);
-    static WebServer web_server(system_controller, settings_store);
+    static CliDaemon cli_daemon(system_controller, charger_controller, gasgauge_service,
+                                power_controller, system_state);
+    static WebServer web_server(system_controller, system_state);
 
     ESP_LOGI(kLogTag, "Starting Daemons...");
     power_controller.init();
@@ -80,11 +99,6 @@ extern "C" void app_main(void)
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
-    if (!i2c_debug::kDisableGasgauge) {
-        gasgauge_daemon.start();
-    } else {
-        ESP_LOGW(kLogTag, "Gasgauge daemon disabled (not started)");
-    }
     vTaskDelay(pdMS_TO_TICKS(100));
     charger_controller.init();
     vTaskDelay(pdMS_TO_TICKS(100));

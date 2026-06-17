@@ -2,9 +2,10 @@
 #include "esp_log.h"
 #include <ctime>
 #include <sys/time.h>
-#include "settings_store.h"
-#include "i2c_bus.h"
+#include "system_state.h"
+#include "gasgauge_service.h"
 #include "i2c_debug_config.h"
+#include "i2c_bus.h"
 #include "driver/i2c.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
@@ -150,16 +151,22 @@ HardwareHandles SystemController::init_hardware()
     return handles;
 }
 
-SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &audio_daemon)
+SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &audio_daemon,
+                                 SystemState &system_state,
+                                 GasgaugeService *gasgauge_service,
+                                 bool gasgauge_ready_at_boot)
     : display_daemon_(display_daemon),
       audio_daemon_(audio_daemon),
+      system_state_(system_state),
+      gasgauge_service_(gasgauge_service),
       queue_(nullptr),
       task_handle_(nullptr),
       rtc_(kI2cPort),
-      settings_(SettingsStore::defaults()),
-      time_valid_(false),
       rtc_read_failures_(0),
-      next_resync_(0)
+      battery_read_failures_(0),
+      gasgauge_ready_(gasgauge_ready_at_boot),
+      next_rtc_sync_(0),
+      next_battery_poll_(0)
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
     
@@ -208,7 +215,10 @@ void SystemController::loop()
 
     // Initial sync: seed ESP32 system time from the DS3231 (UTC).
     sync_time_from_rtc();
-    next_resync_ = xTaskGetTickCount() + pdMS_TO_TICKS(kResyncIntervalMs);
+    next_rtc_sync_ = xTaskGetTickCount() + pdMS_TO_TICKS(kResyncIntervalMs);
+    if (gasgauge_service_ && !i2c_debug::kDisableGasgauge) {
+        next_battery_poll_ = xTaskGetTickCount() + pdMS_TO_TICKS(i2c_debug::kBatteryPollMs);
+    }
 
     while (true) {
         SystemMessage msg;
@@ -220,9 +230,15 @@ void SystemController::loop()
         TickType_t now = xTaskGetTickCount();
 
         // Periodically correct system-time drift from the DS3231.
-        if ((int32_t)(now - next_resync_) >= 0) {
+        if ((int32_t)(now - next_rtc_sync_) >= 0) {
             sync_time_from_rtc();
-            next_resync_ = now + pdMS_TO_TICKS(kResyncIntervalMs);
+            next_rtc_sync_ = now + pdMS_TO_TICKS(kResyncIntervalMs);
+        }
+
+        if (gasgauge_service_ && !i2c_debug::kDisableGasgauge &&
+            (int32_t)(now - next_battery_poll_) >= 0) {
+            sync_battery_from_gauge();
+            next_battery_poll_ = now + pdMS_TO_TICKS(i2c_debug::kBatteryPollMs);
         }
 
         // Keep clock update at 1Hz while queue is processed at a higher rate.
@@ -276,6 +292,7 @@ void SystemController::process_message(const SystemMessage &msg)
         case SystemEvent::SETTINGS_UPDATE:
             apply_settings(msg.data.apply.settings,
                            msg.data.apply.has_time ? &msg.data.apply.local_time : nullptr);
+            system_state_.save_settings();
             break;
         case SystemEvent::BATTERY_UPDATE:
             break;
@@ -286,7 +303,7 @@ void SystemController::process_message(const SystemMessage &msg)
 
 void SystemController::apply_settings(const ClockSettings &settings, const struct tm *new_time)
 {
-    settings_ = settings;
+    system_state_.set_settings(settings);
 
     if (new_time && !i2c_debug::kDisableDs3231Rtc) {
         // new_time is local wall-clock as entered by the user. Convert to a
@@ -303,7 +320,7 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
             if (rtc_.set_time(&utc_tm)) {
                 struct timeval tv = { .tv_sec = utc_epoch, .tv_usec = 0 };
                 settimeofday(&tv, nullptr);
-                time_valid_ = true;
+                publish_time_status(true);
                 rtc_read_failures_ = 0;
                 ESP_LOGI(TAG, "Time set (UTC epoch %lld, tz %+d)",
                          (long long)utc_epoch, settings.tz_offset_hours);
@@ -348,17 +365,22 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
 
 void SystemController::update_time()
 {
-    // Until the clock has been set (OSF / never synced), don't display a
-    // bogus time. The display resumes once a valid time is established.
-    if (!time_valid_) {
+    TimeStatus time_status;
+    system_state_.get_time(&time_status);
+    if (!time_status.valid) {
         return;
     }
 
-    // Drive the display from ESP32 system time (UTC) converted to local using
-    // the timezone offset. This avoids hitting the shared I2C bus every second.
     time_t now_utc;
     time(&now_utc);
-    time_t local = now_utc + (time_t)settings_.tz_offset_hours * 3600;
+    publish_time_status(true);
+
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+
+    // Drive the display from ESP32 system time (UTC) converted to local using
+    // the timezone offset. This avoids hitting the shared I2C bus every second.
+    time_t local = now_utc + (time_t)settings.tz_offset_hours * 3600;
 
     struct tm local_tm;
     gmtime_r(&local, &local_tm);
@@ -381,7 +403,7 @@ void SystemController::sync_time_from_rtc()
     // to set the time before trusting/displaying it.
     bool osf = false;
     if (rtc_.oscillator_stopped(&osf) && osf) {
-        time_valid_ = false;
+        publish_time_status(false);
         ESP_LOGW(TAG, "RTC oscillator stop flag set; awaiting time set");
         return;
     }
@@ -393,7 +415,7 @@ void SystemController::sync_time_from_rtc()
         time_t utc_epoch = tm_to_utc_epoch(&utc_tm);
         struct timeval tv = { .tv_sec = utc_epoch, .tv_usec = 0 };
         settimeofday(&tv, nullptr);
-        time_valid_ = true;
+        publish_time_status(true);
         ESP_LOGI(TAG, "Synced system time from RTC (UTC epoch %lld)",
                  (long long)utc_epoch);
     } else {
@@ -403,9 +425,70 @@ void SystemController::sync_time_from_rtc()
         ESP_LOGW(TAG, "Failed to read time from RTC (%u/%u)",
                  rtc_read_failures_, kMaxReadFailures);
         if (rtc_read_failures_ >= kMaxReadFailures) {
-            time_valid_ = false;
+            publish_time_status(false);
         }
     }
+}
+
+void SystemController::publish_time_status(bool valid)
+{
+    time_t now_utc = 0;
+    if (valid) {
+        time(&now_utc);
+    }
+    system_state_.update_time(now_utc, valid);
+}
+
+void SystemController::invalidate_battery_status()
+{
+    BatteryStatus status = {};
+    status.valid = false;
+    status.updated_at = 0;
+    system_state_.update_battery(status);
+}
+
+void SystemController::sync_battery_from_gauge()
+{
+    if (!gasgauge_service_ || i2c_debug::kDisableGasgauge) {
+        return;
+    }
+
+    if (!gasgauge_ready_) {
+        GasgaugeDeviceInfo info;
+        if (!gasgauge_service_->probe_device_info(info) || !gasgauge_service_->is_ready()) {
+            invalidate_battery_status();
+            return;
+        }
+        gasgauge_ready_ = true;
+        battery_read_failures_ = 0;
+        ESP_LOGI(TAG, "Gasgauge ready");
+    }
+
+    GasgaugeData data;
+    if (!gasgauge_service_->read_data(data)) {
+        battery_read_failures_++;
+        if (battery_read_failures_ >= kMaxBatteryReadFailures) {
+            ESP_LOGW(TAG, "Gasgauge read failed %u times; will retry probe",
+                     battery_read_failures_);
+            gasgauge_ready_ = false;
+            battery_read_failures_ = 0;
+            invalidate_battery_status();
+        }
+        return;
+    }
+
+    battery_read_failures_ = 0;
+    BatteryStatus status = {
+        .soc = data.soc,
+        .soh = data.soh,
+        .battery_voltage_mv = data.voltage_mv,
+        .battery_current_ma = data.current_ma,
+        .valid = true,
+        .updated_at = xTaskGetTickCount(),
+    };
+    system_state_.update_battery(status);
+    ESP_LOGD(TAG, "Battery: %u%%, %u mV, %d mA, SOH %u%%",
+             data.soc, data.voltage_mv, data.current_ma, data.soh);
 }
 
 void SystemController::request_settings_update(const ClockSettings &settings,
@@ -424,13 +507,19 @@ void SystemController::request_settings_update(const ClockSettings &settings,
 bool SystemController::get_time_status(struct tm *local_out, bool *time_valid,
                                        bool *osf, float *temperature)
 {
+    TimeStatus time_status;
+    system_state_.get_time(&time_status);
     if (time_valid) {
-        *time_valid = time_valid_;
+        *time_valid = time_status.valid;
     }
     if (local_out) {
-        time_t now_utc;
-        time(&now_utc);
-        time_t local = now_utc + (time_t)settings_.tz_offset_hours * 3600;
+        ClockSettings settings;
+        system_state_.get_settings(&settings);
+        time_t now_utc = time_status.valid ? time_status.unix_utc : 0;
+        if (time_status.valid) {
+            time(&now_utc);
+        }
+        time_t local = now_utc + (time_t)settings.tz_offset_hours * 3600;
         gmtime_r(&local, local_out);
     }
     if (osf) {

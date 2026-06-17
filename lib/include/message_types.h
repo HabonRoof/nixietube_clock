@@ -7,7 +7,7 @@
 #include "color_model.h"
 #include "gasgauge_driver.h"
 #include "charger_driver.h"
-#include "settings_store.h"
+#include "system_state.h"
 
 // --- Audio Daemon Messages ---
 enum class AudioCmd : uint8_t

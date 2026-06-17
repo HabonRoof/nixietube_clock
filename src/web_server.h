@@ -3,7 +3,7 @@
 #include <cstdint>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "settings_store.h"
+#include "system_state.h"
 #include <ctime>
 
 class SystemController;
@@ -11,7 +11,7 @@ class SystemController;
 class WebServer
 {
 public:
-    WebServer(SystemController &system_controller, SettingsStore &store);
+    WebServer(SystemController &system_controller, SystemState &system_state);
     ~WebServer();
 
     void start();
@@ -30,6 +30,6 @@ private:
     void stop_http();
 
     SystemController &system_controller_;
-    SettingsStore &store_;
+    SystemState &system_state_;
     TaskHandle_t task_handle_;
 };
