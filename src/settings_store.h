@@ -2,7 +2,12 @@
 
 #include <cstdint>
 
+// Bump whenever the layout/meaning of ClockSettings changes. The store uses
+// this to migrate (rather than discard) older persisted blobs.
+constexpr uint16_t kSettingsVersion = 1;
+
 struct ClockSettings {
+    uint16_t version;
     int8_t tz_offset_hours;
     bool alarm_enabled;
     uint8_t alarm_hour;

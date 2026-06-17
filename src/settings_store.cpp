@@ -1,6 +1,8 @@
 #include "settings_store.h"
 #include "nvs_flash.h"
 #include "nvs.h"
+#include <algorithm>
+#include <cstring>
 
 namespace {
 constexpr const char *kNamespace = "clock_cfg";
@@ -12,6 +14,7 @@ SettingsStore::SettingsStore() = default;
 ClockSettings SettingsStore::defaults()
 {
     return ClockSettings{
+        .version = kSettingsVersion,
         .tz_offset_hours = 8,
         .alarm_enabled = false,
         .alarm_hour = 7,
@@ -43,17 +46,39 @@ bool SettingsStore::load(ClockSettings *out_settings)
         return false;
     }
 
-    size_t required_size = sizeof(ClockSettings);
-    err = nvs_get_blob(handle, kBlobKey, &settings, &required_size);
-    nvs_close(handle);
-
-    if (err == ESP_OK && required_size == sizeof(ClockSettings)) {
-        *out_settings = settings;
+    // Query the actual stored size so we can migrate older/newer layouts
+    // instead of discarding them.
+    size_t stored_size = 0;
+    err = nvs_get_blob(handle, kBlobKey, nullptr, &stored_size);
+    if (err == ESP_ERR_NVS_NOT_FOUND || stored_size == 0) {
+        nvs_close(handle);
+        *out_settings = defaults();
         return true;
     }
+    if (err != ESP_OK) {
+        nvs_close(handle);
+        return false;
+    }
 
-    *out_settings = defaults();
-    return false;
+    uint8_t buffer[64];
+    if (stored_size > sizeof(buffer)) {
+        stored_size = sizeof(buffer);
+    }
+    err = nvs_get_blob(handle, kBlobKey, buffer, &stored_size);
+    nvs_close(handle);
+    if (err != ESP_OK) {
+        return false;
+    }
+
+    // Overlay the persisted prefix onto a defaults base (layout is
+    // append-only), then stamp the current version. Any newly added fields
+    // keep their default values.
+    size_t copy_len = std::min(stored_size, sizeof(ClockSettings));
+    std::memcpy(&settings, buffer, copy_len);
+    settings.version = kSettingsVersion;
+
+    *out_settings = settings;
+    return true;
 }
 
 bool SettingsStore::save(const ClockSettings &settings)

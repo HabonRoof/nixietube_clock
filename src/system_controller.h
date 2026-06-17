@@ -29,13 +29,24 @@ public:
 
     void start();
     QueueHandle_t get_queue() const;
+
+    // Direct apply (used only at boot, before the task is running).
     void apply_settings(const ClockSettings &settings, const struct tm *new_time);
+
+    // Thread-safe entry point for other tasks (web/CLI): enqueues the change
+    // so the SystemController task remains the sole owner of rtc_/settings_.
+    void request_settings_update(const ClockSettings &settings, const struct tm *local_time);
+
+    // Snapshot of current time state for status endpoints (thread-safe read of
+    // system time + a cached RTC read).
+    bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature);
 
 private:
     static void task_entry(void *param);
     void loop();
     void process_message(const SystemMessage &msg);
     void update_time();
+    void sync_time_from_rtc();
 
     DisplayDaemon &display_daemon_;
     AudioDaemon &audio_daemon_;
@@ -45,4 +56,7 @@ private:
     // State
     Ds3231 rtc_;
     ClockSettings settings_;
+    bool time_valid_;
+    uint8_t rtc_read_failures_;
+    TickType_t next_resync_;
 };

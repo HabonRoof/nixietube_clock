@@ -19,6 +19,7 @@ public:
 
     bool load_settings(ClockSettings *out_settings);
     bool apply_settings(const ClockSettings &settings, const struct tm *new_time);
+    bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature);
 
 private:
     static void task_entry(void *param);

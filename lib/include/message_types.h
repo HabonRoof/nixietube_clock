@@ -1,11 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <ctime>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "color_model.h"
 #include "gasgauge_driver.h"
 #include "charger_driver.h"
+#include "settings_store.h"
 
 // --- Audio Daemon Messages ---
 enum class AudioCmd : uint8_t
@@ -81,9 +83,20 @@ enum class SystemEvent : uint8_t
     WIFI_CONNECTED,
     WIFI_DISCONNECTED,
     RTC_UPDATE,
+    SETTINGS_UPDATE,
     CLI_COMMAND,
     BATTERY_UPDATE,
     CHARGER_UPDATE
+};
+
+// Carries a settings change (and optionally a new wall-clock time) from the
+// web/CLI tasks to the SystemController task, which is the sole owner of the
+// RTC and the active settings.
+struct SettingsUpdate
+{
+    ClockSettings settings;
+    struct tm local_time; // user-entered local wall-clock time
+    bool has_time;
 };
 
 enum class CliCommandType : uint8_t
@@ -113,6 +126,7 @@ struct SystemMessage
         CliData cli;
         GasgaugeData battery;
         ChargerData charger;
+        SettingsUpdate apply;
         // TODO: Add other features
         // Add other event data as needed
     } data;

@@ -1,6 +1,7 @@
 #include "system_controller.h"
 #include "esp_log.h"
 #include <ctime>
+#include <sys/time.h>
 #include "settings_store.h"
 #include "i2c_bus.h"
 #include "i2c_debug_config.h"
@@ -9,6 +10,30 @@
 #include "driver/gpio.h"
 
 static const char *TAG = "SystemController";
+
+// Timekeeping policy: maintain ESP32 system time (UTC) and periodically
+// resync from the DS3231 (the ±2ppm truth source) to correct drift.
+static constexpr uint32_t kResyncIntervalMs = 3600000; // 1 hour
+static constexpr uint8_t kMaxReadFailures = 5;
+
+// Convert a broken-down UTC time to a Unix epoch without relying on timegm()
+// (not exposed by the default ESP-IDF newlib config). Days-from-civil per
+// Howard Hinnant's algorithm.
+static time_t tm_to_utc_epoch(const struct tm *t)
+{
+    int year = t->tm_year + 1900;
+    unsigned month = static_cast<unsigned>(t->tm_mon + 1);
+    unsigned day = static_cast<unsigned>(t->tm_mday);
+
+    year -= (month <= 2);
+    int era = (year >= 0 ? year : year - 399) / 400;
+    unsigned yoe = static_cast<unsigned>(year - era * 400);
+    unsigned doy = (153 * (month + (month > 2 ? -3 : 9)) + 2) / 5 + day - 1;
+    unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    int64_t days = static_cast<int64_t>(era) * 146097 + static_cast<int64_t>(doe) - 719468;
+
+    return static_cast<time_t>(days * 86400 + t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec);
+}
 
 // Hardware Configuration
 constexpr i2c_port_t kI2cPort = I2C_NUM_0;
@@ -131,7 +156,10 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       queue_(nullptr),
       task_handle_(nullptr),
       rtc_(kI2cPort),
-      settings_(SettingsStore::defaults())
+      settings_(SettingsStore::defaults()),
+      time_valid_(false),
+      rtc_read_failures_(0),
+      next_resync_(0)
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
     
@@ -178,6 +206,10 @@ void SystemController::loop()
     const TickType_t update_interval = pdMS_TO_TICKS(1000); // Update time every second
     TickType_t next_time_update = xTaskGetTickCount() + update_interval;
 
+    // Initial sync: seed ESP32 system time from the DS3231 (UTC).
+    sync_time_from_rtc();
+    next_resync_ = xTaskGetTickCount() + pdMS_TO_TICKS(kResyncIntervalMs);
+
     while (true) {
         SystemMessage msg;
         // Drain all pending messages so producers won't overflow the queue.
@@ -185,8 +217,15 @@ void SystemController::loop()
             process_message(msg);
         }
 
-        // Keep clock update at 1Hz while queue is processed at a higher rate.
         TickType_t now = xTaskGetTickCount();
+
+        // Periodically correct system-time drift from the DS3231.
+        if ((int32_t)(now - next_resync_) >= 0) {
+            sync_time_from_rtc();
+            next_resync_ = now + pdMS_TO_TICKS(kResyncIntervalMs);
+        }
+
+        // Keep clock update at 1Hz while queue is processed at a higher rate.
         if ((int32_t)(now - next_time_update) >= 0) {
             update_time();
             next_time_update += update_interval;
@@ -234,6 +273,10 @@ void SystemController::process_message(const SystemMessage &msg)
                 }
             }
             break;
+        case SystemEvent::SETTINGS_UPDATE:
+            apply_settings(msg.data.apply.settings,
+                           msg.data.apply.has_time ? &msg.data.apply.local_time : nullptr);
+            break;
         case SystemEvent::BATTERY_UPDATE:
             break;
         default:
@@ -246,13 +289,28 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
     settings_ = settings;
 
     if (new_time && !i2c_debug::kDisableDs3231Rtc) {
-        struct tm adjusted = *new_time;
-        adjusted.tm_isdst = 0;
-        time_t epoch = mktime(&adjusted);
-        if (epoch != -1) {
-            localtime_r(&epoch, &adjusted);
+        // new_time is local wall-clock as entered by the user. Convert to a
+        // UTC epoch using the timezone offset, then dual-write: DS3231 stores
+        // UTC and the ESP32 system clock is set to the same UTC instant.
+        struct tm wall = *new_time;
+        wall.tm_isdst = 0;
+        time_t local_as_utc = tm_to_utc_epoch(&wall); // treat fields as UTC
+        {
+            time_t utc_epoch = local_as_utc - (time_t)settings.tz_offset_hours * 3600;
+
+            struct tm utc_tm;
+            gmtime_r(&utc_epoch, &utc_tm);
+            if (rtc_.set_time(&utc_tm)) {
+                struct timeval tv = { .tv_sec = utc_epoch, .tv_usec = 0 };
+                settimeofday(&tv, nullptr);
+                time_valid_ = true;
+                rtc_read_failures_ = 0;
+                ESP_LOGI(TAG, "Time set (UTC epoch %lld, tz %+d)",
+                         (long long)utc_epoch, settings.tz_offset_hours);
+            } else {
+                ESP_LOGW(TAG, "Failed to write time to RTC");
+            }
         }
-        rtc_.set_time(&adjusted);
     }
 
     DisplayMessage dmsg = {};
@@ -290,30 +348,103 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
 
 void SystemController::update_time()
 {
+    // Until the clock has been set (OSF / never synced), don't display a
+    // bogus time. The display resumes once a valid time is established.
+    if (!time_valid_) {
+        return;
+    }
+
+    // Drive the display from ESP32 system time (UTC) converted to local using
+    // the timezone offset. This avoids hitting the shared I2C bus every second.
+    time_t now_utc;
+    time(&now_utc);
+    time_t local = now_utc + (time_t)settings_.tz_offset_hours * 3600;
+
+    struct tm local_tm;
+    gmtime_r(&local, &local_tm);
+
+    DisplayMessage msg;
+    msg.command = DisplayCmd::UPDATE_TIME;
+    msg.data.time.h = local_tm.tm_hour;
+    msg.data.time.m = local_tm.tm_min;
+    msg.data.time.s = local_tm.tm_sec;
+    xQueueSend(display_daemon_.get_queue(), &msg, 0);
+}
+
+void SystemController::sync_time_from_rtc()
+{
     if (i2c_debug::kDisableDs3231Rtc) {
         return;
     }
 
-    // Get current time from RTC
-    struct tm timeinfo;
-    if (rtc_.get_time(&timeinfo)) {
-        // Send time update to Display Daemon
-        DisplayMessage msg;
-        msg.command = DisplayCmd::UPDATE_TIME;
-        msg.data.time.h = timeinfo.tm_hour;
-        msg.data.time.m = timeinfo.tm_min;
-        msg.data.time.s = timeinfo.tm_sec;
-        
-        xQueueSend(display_daemon_.get_queue(), &msg, 0);
-    } else {
-        ESP_LOGW(TAG, "Failed to read time from RTC");
+    // If the oscillator stopped, the stored time is garbage; wait for the user
+    // to set the time before trusting/displaying it.
+    bool osf = false;
+    if (rtc_.oscillator_stopped(&osf) && osf) {
+        time_valid_ = false;
+        ESP_LOGW(TAG, "RTC oscillator stop flag set; awaiting time set");
+        return;
     }
-    
-    /*
-    // Fallback or original logic if needed
-    time_t now;
-    time(&now);
-    struct tm timeinfo_sys;
-    localtime_r(&now, &timeinfo_sys);
-    */
+
+    struct tm utc_tm;
+    if (rtc_.get_time(&utc_tm)) {
+        rtc_read_failures_ = 0;
+        utc_tm.tm_isdst = 0;
+        time_t utc_epoch = tm_to_utc_epoch(&utc_tm);
+        struct timeval tv = { .tv_sec = utc_epoch, .tv_usec = 0 };
+        settimeofday(&tv, nullptr);
+        time_valid_ = true;
+        ESP_LOGI(TAG, "Synced system time from RTC (UTC epoch %lld)",
+                 (long long)utc_epoch);
+    } else {
+        if (rtc_read_failures_ < kMaxReadFailures) {
+            rtc_read_failures_++;
+        }
+        ESP_LOGW(TAG, "Failed to read time from RTC (%u/%u)",
+                 rtc_read_failures_, kMaxReadFailures);
+        if (rtc_read_failures_ >= kMaxReadFailures) {
+            time_valid_ = false;
+        }
+    }
+}
+
+void SystemController::request_settings_update(const ClockSettings &settings,
+                                               const struct tm *local_time)
+{
+    SystemMessage msg = {};
+    msg.event = SystemEvent::SETTINGS_UPDATE;
+    msg.data.apply.settings = settings;
+    msg.data.apply.has_time = (local_time != nullptr);
+    if (local_time) {
+        msg.data.apply.local_time = *local_time;
+    }
+    xQueueSend(queue_, &msg, 0);
+}
+
+bool SystemController::get_time_status(struct tm *local_out, bool *time_valid,
+                                       bool *osf, float *temperature)
+{
+    if (time_valid) {
+        *time_valid = time_valid_;
+    }
+    if (local_out) {
+        time_t now_utc;
+        time(&now_utc);
+        time_t local = now_utc + (time_t)settings_.tz_offset_hours * 3600;
+        gmtime_r(&local, local_out);
+    }
+    if (osf) {
+        bool stopped = false;
+        if (!i2c_debug::kDisableDs3231Rtc) {
+            rtc_.oscillator_stopped(&stopped);
+        }
+        *osf = stopped;
+    }
+    if (temperature) {
+        *temperature = 0.0f;
+        if (!i2c_debug::kDisableDs3231Rtc) {
+            rtc_.get_temperature(temperature);
+        }
+    }
+    return true;
 }

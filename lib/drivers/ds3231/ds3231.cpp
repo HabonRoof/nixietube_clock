@@ -29,7 +29,21 @@ bool Ds3231::get_time(struct tm *timeinfo)
 
     timeinfo->tm_sec = bcd2dec(data[0]);
     timeinfo->tm_min = bcd2dec(data[1]);
-    timeinfo->tm_hour = bcd2dec(data[2] & 0x3F); // 24-hour mode assumed
+
+    uint8_t hour_reg = data[2];
+    if (hour_reg & 0x40) {
+        // 12-hour mode: bits 0-4 hold the hour (1-12), bit5 is PM.
+        uint8_t hour12 = bcd2dec(hour_reg & 0x1F);
+        bool pm = (hour_reg & 0x20) != 0;
+        if (hour12 == 12) {
+            hour12 = 0; // 12 AM -> 0, 12 PM -> 12 (handled by pm below)
+        }
+        timeinfo->tm_hour = pm ? hour12 + 12 : hour12;
+    } else {
+        // 24-hour mode.
+        timeinfo->tm_hour = bcd2dec(hour_reg & 0x3F);
+    }
+
     timeinfo->tm_wday = data[3] - 1; // 1-7 -> 0-6
     timeinfo->tm_mday = bcd2dec(data[4]);
     timeinfo->tm_mon = bcd2dec(data[5] & 0x1F) - 1; // 1-12 -> 0-11
@@ -43,13 +57,42 @@ bool Ds3231::set_time(const struct tm *timeinfo)
     uint8_t data[7];
     data[0] = dec2bcd(timeinfo->tm_sec);
     data[1] = dec2bcd(timeinfo->tm_min);
-    data[2] = dec2bcd(timeinfo->tm_hour);
+    data[2] = dec2bcd(timeinfo->tm_hour); // bit6 = 0 forces 24-hour mode
     data[3] = timeinfo->tm_wday + 1;
     data[4] = dec2bcd(timeinfo->tm_mday);
     data[5] = dec2bcd(timeinfo->tm_mon + 1);
     data[6] = dec2bcd(timeinfo->tm_year % 100);
 
-    return write_registers(0x00, data, 7);
+    if (!write_registers(0x00, data, 7)) {
+        return false;
+    }
+
+    // Time is now valid; clear the oscillator stop flag.
+    clear_osf();
+    return true;
+}
+
+bool Ds3231::oscillator_stopped(bool *stopped)
+{
+    if (!stopped) {
+        return false;
+    }
+    uint8_t status;
+    if (!read_register(0x0F, &status)) {
+        return false;
+    }
+    *stopped = (status & 0x80) != 0;
+    return true;
+}
+
+bool Ds3231::clear_osf()
+{
+    uint8_t status;
+    if (!read_register(0x0F, &status)) {
+        return false;
+    }
+    status &= ~0x80; // Clear OSF
+    return write_register(0x0F, status);
 }
 
 bool Ds3231::get_temperature(float *temp)

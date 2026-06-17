@@ -14,6 +14,12 @@ public:
     bool get_time(struct tm *timeinfo);
     bool set_time(const struct tm *timeinfo);
     bool get_temperature(float *temp);
+
+    // Oscillator Stop Flag (status reg 0x0F bit7): set when the oscillator
+    // has stopped (battery removed, first power-up, VBAT failure). When set,
+    // the stored time is invalid and must not be trusted.
+    bool oscillator_stopped(bool *stopped);
+    bool clear_osf();
     
     // Alarm functions
     // Alarm 1 support

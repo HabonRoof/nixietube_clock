@@ -58,6 +58,33 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
     return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
 }
 
+static esp_err_t time_get_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+
+    struct tm local_tm = {};
+    bool time_valid = false;
+    bool osf = false;
+    float temperature = 0.0f;
+    server->get_time_status(&local_tm, &time_valid, &osf, &temperature);
+
+    char local_str[80];
+    snprintf(local_str, sizeof(local_str), "%04d-%02d-%02d %02d:%02d:%02d",
+             local_tm.tm_year + 1900, local_tm.tm_mon + 1, local_tm.tm_mday,
+             local_tm.tm_hour, local_tm.tm_min, local_tm.tm_sec);
+
+    char response[224];
+    snprintf(response, sizeof(response),
+             "{\"local_time\":\"%s\",\"time_valid\":%s,\"osf\":%s,\"temperature\":%.2f}",
+             local_str,
+             time_valid ? "true" : "false",
+             osf ? "true" : "false",
+             temperature);
+
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+}
+
 static bool parse_time(const char *text, struct tm *out_tm)
 {
     if (!text || !out_tm) {
@@ -347,9 +374,17 @@ bool WebServer::start_http()
         .user_ctx = this,
     };
 
+    httpd_uri_t time_get = {
+        .uri = "/api/time",
+        .method = HTTP_GET,
+        .handler = time_get_handler,
+        .user_ctx = this,
+    };
+
     httpd_register_uri_handler(g_http, &index_uri);
     httpd_register_uri_handler(g_http, &settings_get);
     httpd_register_uri_handler(g_http, &settings_post);
+    httpd_register_uri_handler(g_http, &time_get);
     return true;
 }
 
@@ -371,6 +406,13 @@ bool WebServer::apply_settings(const ClockSettings &settings, const struct tm *n
     if (!store_.save(settings)) {
         return false;
     }
-    system_controller_.apply_settings(settings, new_time);
+    // Hand off to the SystemController task, which owns rtc_/settings_.
+    system_controller_.request_settings_update(settings, new_time);
     return true;
+}
+
+bool WebServer::get_time_status(struct tm *local_out, bool *time_valid, bool *osf,
+                                float *temperature)
+{
+    return system_controller_.get_time_status(local_out, time_valid, osf, temperature);
 }
