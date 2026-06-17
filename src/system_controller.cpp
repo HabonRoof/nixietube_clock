@@ -16,7 +16,7 @@ static const char *TAG = "SystemController";
 
 // Timekeeping policy: maintain ESP32 system time (UTC) and periodically
 // resync from the DS3231 (the ±2ppm truth source) to correct drift.
-static constexpr uint32_t kResyncIntervalMs = 30000; // 1 hour
+static constexpr uint32_t kResyncIntervalMs = 3600000; // 1 hour
 static constexpr uint8_t kMaxReadFailures = 5;
 
 // Convert a broken-down UTC time to a Unix epoch without relying on timegm()
@@ -275,7 +275,6 @@ void SystemController::loop()
         // Keep clock update at 1Hz while queue is processed at a higher rate.
         if ((int32_t)(now - next_time_update) >= 0) {
             update_time();
-            ESP_LOGI(TAG, "Time Updated: %lld", (long long)now);
             next_time_update += update_interval;
         }
 
