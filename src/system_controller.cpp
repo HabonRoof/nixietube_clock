@@ -16,7 +16,7 @@ static const char *TAG = "SystemController";
 
 // Timekeeping policy: maintain ESP32 system time (UTC) and periodically
 // resync from the DS3231 (the ±2ppm truth source) to correct drift.
-static constexpr uint32_t kResyncIntervalMs = 3600000; // 1 hour
+static constexpr uint32_t kResyncIntervalMs = 30000; // 1 hour
 static constexpr uint8_t kMaxReadFailures = 5;
 
 // Convert a broken-down UTC time to a Unix epoch without relying on timegm()
@@ -558,20 +558,24 @@ void SystemController::request_settings_update(const ClockSettings &settings,
 }
 
 bool SystemController::get_time_status(struct tm *local_out, bool *time_valid,
-                                       bool *osf, float *temperature)
+                                       bool *osf, float *temperature,
+                                       time_t *unix_utc)
 {
     TimeStatus time_status;
     system_state_.get_time(&time_status);
     if (time_valid) {
         *time_valid = time_status.valid;
     }
+    time_t now_utc = time_status.valid ? time_status.unix_utc : 0;
+    if (time_status.valid) {
+        time(&now_utc);
+    }
+    if (unix_utc) {
+        *unix_utc = now_utc;
+    }
     if (local_out) {
         ClockSettings settings;
         system_state_.get_settings(&settings);
-        time_t now_utc = time_status.valid ? time_status.unix_utc : 0;
-        if (time_status.valid) {
-            time(&now_utc);
-        }
         time_t local = now_utc + (time_t)settings.tz_offset_hours * 3600;
         gmtime_r(&local, local_out);
     }

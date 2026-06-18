@@ -44,7 +44,8 @@ public:
 
     // Snapshot of current time state for status endpoints (thread-safe read of
     // system time + a cached RTC read).
-    bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature);
+    bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
+                         time_t *unix_utc = nullptr);
 
 private:
     static void task_entry(void *param);

@@ -68,17 +68,25 @@ static esp_err_t time_get_handler(httpd_req_t *req)
     bool time_valid = false;
     bool osf = false;
     float temperature = 0.0f;
-    server->get_time_status(&local_tm, &time_valid, &osf, &temperature);
+    time_t unix_utc = 0;
+    server->get_time_status(&local_tm, &time_valid, &osf, &temperature, &unix_utc);
+
+    ClockSettings settings;
+    if (!server->load_settings(&settings)) {
+        settings = SystemState::defaults();
+    }
 
     char local_str[80];
     snprintf(local_str, sizeof(local_str), "%04d-%02d-%02d %02d:%02d:%02d",
              local_tm.tm_year + 1900, local_tm.tm_mon + 1, local_tm.tm_mday,
              local_tm.tm_hour, local_tm.tm_min, local_tm.tm_sec);
 
-    char response[224];
+    char response[288];
     snprintf(response, sizeof(response),
-             "{\"local_time\":\"%s\",\"time_valid\":%s,\"osf\":%s,\"temperature\":%.2f}",
+             "{\"local_time\":\"%s\",\"unix_utc\":%lld,\"tz_offset\":%d,\"time_valid\":%s,\"osf\":%s,\"temperature\":%.2f}",
              local_str,
+             (long long)unix_utc,
+             settings.tz_offset_hours,
              time_valid ? "true" : "false",
              osf ? "true" : "false",
              temperature);
@@ -418,7 +426,7 @@ bool WebServer::apply_settings(const ClockSettings &settings, const struct tm *n
 }
 
 bool WebServer::get_time_status(struct tm *local_out, bool *time_valid, bool *osf,
-                                float *temperature)
+                                float *temperature, time_t *unix_utc)
 {
-    return system_controller_.get_time_status(local_out, time_valid, osf, temperature);
+    return system_controller_.get_time_status(local_out, time_valid, osf, temperature, unix_utc);
 }
