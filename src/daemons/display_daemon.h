@@ -51,4 +51,5 @@ private:
     float effect_speed_;
     uint8_t effect_max_brightness_;
     BackLightState base_backlight_;
+    uint8_t ambient_scale_;
 };

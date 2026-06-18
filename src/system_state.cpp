@@ -13,12 +13,16 @@ SystemState::SystemState()
       settings_(defaults()),
       battery_{},
       time_{},
+      ambient_{},
       reserved_{}
 {
     battery_.valid = false;
     battery_.updated_at = 0;
     time_.unix_utc = 0;
     time_.valid = false;
+    ambient_.lux = 0.0f;
+    ambient_.scale = 255;
+    ambient_.valid = false;
     std::memset(reserved_, 0, sizeof(reserved_));
 }
 
@@ -36,6 +40,8 @@ ClockSettings SystemState::defaults()
         .backlight_b = 255,
         .backlight_brightness = 128,
         .volume = 20,
+        .auto_brightness_enabled = true,
+        .nixie_brightness = 128,
     };
 }
 
@@ -81,6 +87,12 @@ bool SystemState::load()
 
     size_t copy_len = std::min(stored_size, sizeof(ClockSettings));
     std::memcpy(&settings, buffer, copy_len);
+
+    const uint16_t stored_version = settings.version;
+    if (stored_version < 2) {
+        settings.auto_brightness_enabled = true;
+        settings.nixie_brightness = 128;
+    }
     settings.version = kSettingsVersion;
 
     portENTER_CRITICAL(&mux_);
@@ -169,6 +181,25 @@ bool SystemState::get_time(TimeStatus *out) const
     return true;
 }
 
+void SystemState::update_ambient(const AmbientLightStatus &status)
+{
+    portENTER_CRITICAL(&mux_);
+    ambient_ = status;
+    portEXIT_CRITICAL(&mux_);
+}
+
+bool SystemState::get_ambient(AmbientLightStatus *out) const
+{
+    if (!out) {
+        return false;
+    }
+
+    portENTER_CRITICAL(&mux_);
+    *out = ambient_;
+    portEXIT_CRITICAL(&mux_);
+    return out->valid;
+}
+
 void SystemState::get_snapshot(SystemSnapshot *out) const
 {
     if (!out) {
@@ -179,5 +210,6 @@ void SystemState::get_snapshot(SystemSnapshot *out) const
     out->settings = settings_;
     out->battery = battery_;
     out->time = time_;
+    out->ambient = ambient_;
     portEXIT_CRITICAL(&mux_);
 }

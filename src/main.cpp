@@ -20,6 +20,9 @@
 #include "web_server.h"
 #include "nvs_flash.h"
 #include "i2c_debug_config.h"
+#include "driver/i2c.h"
+#include "ltr303/ltr303.h"
+#include "daemons/als_daemon.h"
 
 static const char *kLogTag = "main";
 
@@ -85,6 +88,15 @@ extern "C" void app_main(void)
                                 power_controller, system_state);
     static WebServer web_server(system_controller, system_state);
 
+    static Ltr303 *ltr303 = nullptr;
+    static AlsDaemon *als_daemon = nullptr;
+    if (!i2c_debug::kDisableALS && hw_handles.i2c1_port < I2C_NUM_MAX) {
+        static Ltr303 ltr303_instance(hw_handles.i2c1_port);
+        ltr303 = &ltr303_instance;
+        static AlsDaemon als_daemon_instance(*ltr303, display_daemon, nixie_driver, system_state);
+        als_daemon = &als_daemon_instance;
+    }
+
     ESP_LOGI(kLogTag, "Starting Daemons...");
     power_controller.init();
     power_controller.set_hv_enabled(true);
@@ -99,6 +111,15 @@ extern "C" void app_main(void)
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
+    if (ltr303 != nullptr && als_daemon != nullptr) {
+        if (ltr303->init()) {
+            als_daemon->start();
+        } else {
+            ESP_LOGW(kLogTag, "LTR-303 probe failed; ALS daemon not started");
+        }
+    } else if (i2c_debug::kDisableALS) {
+        ESP_LOGW(kLogTag, "ALS disabled");
+    }
     vTaskDelay(pdMS_TO_TICKS(100));
     charger_controller.init();
     vTaskDelay(pdMS_TO_TICKS(100));

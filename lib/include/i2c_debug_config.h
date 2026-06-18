@@ -6,6 +6,7 @@ namespace i2c_debug {
 static constexpr bool kDisablePca9685I2c = false;
 static constexpr bool kDisableDs3231Rtc = false;
 static constexpr bool kDisableGasgauge = false;
+static constexpr bool kDisableALS = false;
 
 // Dev convenience: when running without a VBAT battery, the DS3231 oscillator
 // stops on every power-down, so the OSF (oscillator stop flag) is set at every

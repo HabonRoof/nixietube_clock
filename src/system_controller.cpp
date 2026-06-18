@@ -73,9 +73,13 @@ constexpr gpio_num_t kI2cSda = static_cast<gpio_num_t>(6);
 constexpr gpio_num_t kI2cScl = static_cast<gpio_num_t>(5);
 constexpr uint32_t kI2cClockHz = 400000;
 
+constexpr i2c_port_t kI2c1Port = I2C_NUM_1;
+constexpr gpio_num_t kI2c1Sda = static_cast<gpio_num_t>(18);
+constexpr gpio_num_t kI2c1Scl = static_cast<gpio_num_t>(17);
+
 constexpr uart_port_t kUartPort = UART_NUM_1;
-constexpr gpio_num_t kUartTx = static_cast<gpio_num_t>(18);
-constexpr gpio_num_t kUartRx = static_cast<gpio_num_t>(17);
+constexpr gpio_num_t kUartTx = static_cast<gpio_num_t>(41);
+constexpr gpio_num_t kUartRx = static_cast<gpio_num_t>(42);
 constexpr int kUartBaudRate = 9600;
 
 constexpr gpio_num_t kRtcIntPin = static_cast<gpio_num_t>(8);
@@ -103,7 +107,25 @@ HardwareHandles SystemController::init_hardware()
     ESP_ERROR_CHECK(i2c_driver_install(kI2cPort, i2c_conf.mode, 0, 0, 0));
     i2c_bus_init(kI2cPort);
     handles.i2c_port = kI2cPort;
-    ESP_LOGI(TAG, "I2C Initialized");
+    ESP_LOGI(TAG, "I2C0 Initialized");
+
+    if (!i2c_debug::kDisableALS) {
+        i2c_config_t i2c1_conf = {};
+        i2c1_conf.mode = I2C_MODE_MASTER;
+        i2c1_conf.sda_io_num = kI2c1Sda;
+        i2c1_conf.scl_io_num = kI2c1Scl;
+        i2c1_conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+        i2c1_conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+        i2c1_conf.master.clk_speed = kI2cClockHz;
+        ESP_ERROR_CHECK(i2c_param_config(kI2c1Port, &i2c1_conf));
+        ESP_ERROR_CHECK(i2c_driver_install(kI2c1Port, i2c1_conf.mode, 0, 0, 0));
+        i2c_bus_init(kI2c1Port);
+        handles.i2c1_port = kI2c1Port;
+        ESP_LOGI(TAG, "I2C1 Initialized");
+    } else {
+        handles.i2c1_port = I2C_NUM_MAX;
+        ESP_LOGW(TAG, "I2C1 disabled (ALS)");
+    }
 
     // 2. Initialize UART
     uart_config_t uart_config = {};

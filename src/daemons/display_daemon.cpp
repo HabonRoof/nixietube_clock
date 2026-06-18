@@ -18,7 +18,8 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver,
       effect_color_phase_(0.0f),
       effect_speed_(0.35f),
       effect_max_brightness_(255),
-      base_backlight_{{0, 255, 255}, 255} // Default Cyan
+      base_backlight_{{0, 255, 255}, 255}, // Default Cyan
+      ambient_scale_(255)
 {
     queue_ = xQueueCreate(10, sizeof(DisplayMessage));
 }
@@ -109,6 +110,9 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
         case DisplayCmd::SET_BACKLIGHT_BRIGHTNESS:
             base_backlight_.brightness = msg.data.brightness;
             break;
+        case DisplayCmd::SET_AMBIENT_SCALE:
+            ambient_scale_ = msg.data.brightness;
+            break;
         case DisplayCmd::SET_EFFECT:
             if (msg.data.effect_id == 1) {
                 current_effect_type_ = LedEffectType::BREATH;
@@ -144,7 +148,9 @@ void DisplayDaemon::update_effects(uint32_t dt_ms)
 void DisplayDaemon::apply_backlight_to_all(const BackLightState &state)
 {
     HsvColor adjusted = state.color;
-    uint16_t scaled_value = static_cast<uint16_t>(adjusted.value) * state.brightness / 255;
+    const uint16_t effective_brightness =
+        static_cast<uint16_t>(state.brightness) * ambient_scale_ / 255;
+    uint16_t scaled_value = static_cast<uint16_t>(adjusted.value) * effective_brightness / 255;
     adjusted.value = static_cast<uint8_t>(std::min<uint16_t>(scaled_value, 255));
     
     RgbColor rgb = hsv_to_rgb(adjusted);
@@ -168,7 +174,9 @@ void DisplayDaemon::run_breath_effect(uint32_t dt_ms)
     float normalized = (std::sin(effect_color_phase_) + 1.0f) * 0.5f;
     
     BackLightState current_state = base_backlight_;
-    current_state.brightness = static_cast<uint8_t>(std::round(normalized * effect_max_brightness_));
+    const uint16_t effective_max =
+        static_cast<uint16_t>(effect_max_brightness_) * ambient_scale_ / 255;
+    current_state.brightness = static_cast<uint8_t>(std::round(normalized * effective_max));
 
     apply_backlight_to_all(current_state);
 }

@@ -6,7 +6,7 @@
 
 // Bump whenever the layout/meaning of ClockSettings changes. NVS load uses
 // this to migrate (rather than discard) older persisted blobs.
-constexpr uint16_t kSettingsVersion = 1;
+constexpr uint16_t kSettingsVersion = 2;
 
 struct ClockSettings {
     uint16_t version;
@@ -20,6 +20,8 @@ struct ClockSettings {
     uint8_t backlight_b;
     uint8_t backlight_brightness;
     uint8_t volume;
+    bool auto_brightness_enabled;
+    uint8_t nixie_brightness;
 };
 
 struct BatteryStatus {
@@ -36,10 +38,17 @@ struct TimeStatus {
     bool valid;
 };
 
+struct AmbientLightStatus {
+    float lux;
+    uint8_t scale;
+    bool valid;
+};
+
 struct SystemSnapshot {
     ClockSettings settings;
     BatteryStatus battery;
     TimeStatus time;
+    AmbientLightStatus ambient;
 };
 
 class SystemState
@@ -61,6 +70,9 @@ public:
     void update_time(time_t unix_utc, bool valid);
     bool get_time(TimeStatus *out) const;
 
+    void update_ambient(const AmbientLightStatus &status);
+    bool get_ambient(AmbientLightStatus *out) const;
+
     void get_snapshot(SystemSnapshot *out) const;
 
 private:
@@ -68,5 +80,6 @@ private:
     ClockSettings settings_;
     BatteryStatus battery_;
     TimeStatus time_;
-    uint8_t reserved_[16];
+    AmbientLightStatus ambient_;
+    uint8_t reserved_[8];
 };

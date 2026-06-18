@@ -16,6 +16,7 @@ class GasgaugeService;
 
 struct HardwareHandles {
     i2c_port_t i2c_port;
+    i2c_port_t i2c1_port;
     rmt_channel_handle_t led_rmt_channel;
     rmt_encoder_handle_t led_rmt_encoder;
     uart_port_t audio_uart_port;
