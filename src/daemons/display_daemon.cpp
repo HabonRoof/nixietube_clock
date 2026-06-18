@@ -17,7 +17,6 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver,
       current_effect_type_(LedEffectType::BREATH),
       effect_color_phase_(0.0f),
       effect_speed_(0.35f),
-      effect_max_brightness_(255),
       base_backlight_{{0, 255, 255}, 255} // Default Cyan
 {
     queue_ = xQueueCreate(10, sizeof(DisplayMessage));
@@ -183,7 +182,7 @@ void DisplayDaemon::run_breath_effect(uint32_t dt_ms)
     float normalized = (std::sin(effect_color_phase_) + 1.0f) * 0.5f;
     
     BackLightState current_state = base_backlight_;
-    current_state.brightness = static_cast<uint8_t>(std::round(normalized * effect_max_brightness_));
+    current_state.brightness = static_cast<uint8_t>(std::round(normalized * base_backlight_.brightness));
 
     apply_backlight_to_all(current_state);
 }

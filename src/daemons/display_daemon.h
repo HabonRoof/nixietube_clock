@@ -51,6 +51,5 @@ private:
     // Effect parameters
     float effect_color_phase_;
     float effect_speed_;
-    uint8_t effect_max_brightness_;
     BackLightState base_backlight_;
 };
