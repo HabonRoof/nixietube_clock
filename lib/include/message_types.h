@@ -71,7 +71,7 @@ struct DisplayMessage
         } color;
         HsvColor hsv;
         uint8_t brightness;
-        uint8_t effect_id; // 0: None, 1: Breath, 2: Rainbow, etc.
+        uint8_t effect_id; // 0: static, 1: breath, 2: rainbow, 3: off
     } data;
 };
 

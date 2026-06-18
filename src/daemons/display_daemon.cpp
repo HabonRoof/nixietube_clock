@@ -116,6 +116,8 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             } else if (msg.data.effect_id == 2) {
                 current_effect_type_ = LedEffectType::RAINBOW;
                 effect_speed_ = 60.0f;
+            } else if (msg.data.effect_id == 3) {
+                current_effect_type_ = LedEffectType::OFF;
             } else {
                 current_effect_type_ = LedEffectType::NONE;
             }
@@ -136,8 +138,21 @@ void DisplayDaemon::update_effects(uint32_t dt_ms)
             run_rainbow_effect(dt_ms);
             break;
         case LedEffectType::NONE:
+            apply_backlight_to_all(base_backlight_);
+            break;
+        case LedEffectType::OFF:
+            turn_off_backlight();
+            break;
         default:
             break;
+    }
+}
+
+void DisplayDaemon::turn_off_backlight()
+{
+    const size_t led_count = led_driver_.get_led_count();
+    for (size_t led_index = 0; led_index < led_count; ++led_index) {
+        led_driver_.set_pixel(led_index, 0, 0, 0);
     }
 }
 

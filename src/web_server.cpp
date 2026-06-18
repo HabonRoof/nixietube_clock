@@ -45,14 +45,15 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
     char rgb[16];
     snprintf(rgb, sizeof(rgb), "%u,%u,%u", settings.backlight_r, settings.backlight_g, settings.backlight_b);
 
-    char response[256];
+    char response[288];
     snprintf(response, sizeof(response),
-             "{\"tz_offset\":%d,\"alarm_enabled\":%s,\"alarm_time\":\"%s\",\"backlight_rgb\":\"%s\",\"backlight_brightness\":%u,\"volume\":%u}",
+             "{\"tz_offset\":%d,\"alarm_enabled\":%s,\"alarm_time\":\"%s\",\"backlight_rgb\":\"%s\",\"backlight_brightness\":%u,\"backlight_effect\":%u,\"volume\":%u}",
              settings.tz_offset_hours,
              settings.alarm_enabled ? "true" : "false",
              alarm_time,
              rgb,
              settings.backlight_brightness,
+             settings.backlight_effect,
              settings.volume);
 
     httpd_resp_set_type(req, "application/json");
@@ -223,6 +224,14 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         int value = std::stoi(brightness);
         if (value >= 0 && value <= 255) {
             settings.backlight_brightness = static_cast<uint8_t>(value);
+        }
+    }
+
+    std::string effect = extract_json_value(body, "backlight_effect");
+    if (!effect.empty()) {
+        int value = std::stoi(effect);
+        if (value >= 0 && value <= 3) {
+            settings.backlight_effect = static_cast<uint8_t>(value);
         }
     }
 

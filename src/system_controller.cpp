@@ -372,6 +372,10 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
     dmsg.data.brightness = settings.backlight_brightness;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
+    dmsg.command = DisplayCmd::SET_EFFECT;
+    dmsg.data.effect_id = settings.backlight_effect;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
     AudioMessage amsg = {};
     amsg.command = AudioCmd::SET_VOLUME;
     amsg.param.volume = settings.volume;

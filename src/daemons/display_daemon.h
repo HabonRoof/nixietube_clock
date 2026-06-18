@@ -12,7 +12,8 @@ enum class LedEffectType
 {
     NONE,
     BREATH,
-    RAINBOW
+    RAINBOW,
+    OFF
 };
 
 class DisplayDaemon
@@ -33,6 +34,7 @@ private:
     // Effect implementations
     void run_breath_effect(uint32_t dt_ms);
     void run_rainbow_effect(uint32_t dt_ms);
+    void turn_off_backlight();
     void apply_backlight_to_all(const BackLightState &state);
 
     INixieDriver &nixie_driver_;

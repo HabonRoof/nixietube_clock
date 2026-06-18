@@ -1,11 +1,14 @@
 #include "system_state.h"
 #include "nvs.h"
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 
 namespace {
 constexpr const char *kNamespace = "clock_cfg";
 constexpr const char *kBlobKey = "settings";
+// Size of persisted ClockSettings before backlight_effect was added (v1).
+constexpr size_t kSettingsV1Size = offsetof(ClockSettings, backlight_effect);
 }
 
 SystemState::SystemState()
@@ -31,10 +34,11 @@ ClockSettings SystemState::defaults()
         .alarm_hour = 7,
         .alarm_minute = 0,
         .alarm_second = 0,
-        .backlight_r = 0,
-        .backlight_g = 255,
-        .backlight_b = 255,
+        .backlight_r = 128,
+        .backlight_g = 128,
+        .backlight_b = 128,
         .backlight_brightness = 128,
+        .backlight_effect = 1,
         .volume = 20,
     };
 }
@@ -81,6 +85,10 @@ bool SystemState::load()
 
     size_t copy_len = std::min(stored_size, sizeof(ClockSettings));
     std::memcpy(&settings, buffer, copy_len);
+    if (stored_size < sizeof(ClockSettings) && stored_size >= kSettingsV1Size) {
+        settings.volume = buffer[kSettingsV1Size - 1];
+        settings.backlight_effect = 1;
+    }
     settings.version = kSettingsVersion;
 
     portENTER_CRITICAL(&mux_);
