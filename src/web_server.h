@@ -7,11 +7,12 @@
 #include <ctime>
 
 class SystemController;
+class AudioDaemon;
 
 class WebServer
 {
 public:
-    WebServer(SystemController &system_controller, SystemState &system_state);
+    WebServer(SystemController &system_controller, SystemState &system_state, AudioDaemon &audio_daemon);
     ~WebServer();
 
     void start();
@@ -21,6 +22,8 @@ public:
     bool apply_settings(const ClockSettings &settings, const struct tm *new_time);
     bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
                          time_t *unix_utc = nullptr);
+
+    AudioDaemon &audio_daemon();
 
 private:
     static void task_entry(void *param);
@@ -32,5 +35,6 @@ private:
 
     SystemController &system_controller_;
     SystemState &system_state_;
+    AudioDaemon &audio_daemon_;
     TaskHandle_t task_handle_;
 };

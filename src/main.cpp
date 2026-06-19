@@ -69,13 +69,18 @@ extern "C" void app_main(void)
 
     static DisplayDaemon display_daemon(nixie_driver, led_driver, system_state);
     static PowerController power_controller(power_switch_driver);
-    static AudioDaemon audio_daemon(audio_driver, power_controller);
+
+    system_state.load();
+    ClockSettings boot_settings = SystemState::defaults();
+    system_state.get_settings(&boot_settings);
+
+    static AudioDaemon audio_daemon(audio_driver, power_controller, boot_settings.volume);
     static SystemController system_controller(display_daemon, audio_daemon, system_state,
                                               i2c_debug::kDisableGasgauge ? nullptr : &gasgauge_service,
                                               gasgauge_ready);
     static ChargerController charger_controller(charger_driver);
 
-    if (system_state.load()) {
+    {
         ClockSettings settings;
         system_state.get_settings(&settings);
         system_controller.apply_settings(settings, nullptr);
@@ -83,7 +88,7 @@ extern "C" void app_main(void)
 
     static CliDaemon cli_daemon(system_controller, charger_controller, gasgauge_service,
                                 power_controller, system_state);
-    static WebServer web_server(system_controller, system_state);
+    static WebServer web_server(system_controller, system_state, audio_daemon);
 
     ESP_LOGI(kLogTag, "Starting Daemons...");
     power_controller.init();

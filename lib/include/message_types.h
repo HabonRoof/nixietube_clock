@@ -20,7 +20,38 @@ enum class AudioCmd : uint8_t
     VOLUME_UP,
     VOLUME_DOWN,
     NEXT,
-    PREVIOUS
+    PREVIOUS,
+    QUERY_TRACK_COUNT,
+    TOGGLE_TRACK,
+    GET_STATUS,
+    BOOT_CHIME_PLAY,
+    BOOT_CHIME_STOP,
+};
+
+enum class AudioPlaybackUiState : uint8_t
+{
+    STOPPED = 0,
+    PLAYING = 1,
+    PAUSED = 2,
+};
+
+struct AudioDaemonStatus
+{
+    uint16_t track_count;
+    uint16_t current_track;
+    AudioPlaybackUiState state;
+    bool track_count_valid;
+    bool dfplayer_init_ok;
+    bool sd_card_online;
+    uint8_t device_mask;
+};
+
+// Heap-owned RPC context; survives until daemon completes or caller times out.
+struct AudioRpcContext
+{
+    SemaphoreHandle_t sem;
+    bool ok;
+    volatile bool abandoned;
 };
 
 struct AudioMessage
@@ -31,6 +62,9 @@ struct AudioMessage
         uint16_t track_number;
         uint8_t volume;
     } param;
+    AudioRpcContext *rpc_ctx;
+    AudioDaemonStatus *response_status;
+    uint16_t *response_count;
 };
 
 // --- Display Daemon Messages ---

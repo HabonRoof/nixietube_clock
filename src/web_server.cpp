@@ -2,6 +2,7 @@
 #include "system_controller.h"
 #include "system_state.h"
 #include "web_page.h"
+#include "daemons/audio_daemon.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
@@ -181,6 +182,125 @@ static std::string extract_json_value(const std::string &json, const char *key)
     return json.substr(start, end - start);
 }
 
+static const char *audio_state_string(AudioPlaybackUiState state)
+{
+    switch (state) {
+        case AudioPlaybackUiState::PLAYING:
+            return "playing";
+        case AudioPlaybackUiState::PAUSED:
+            return "paused";
+        default:
+            return "stopped";
+    }
+}
+
+static esp_err_t audio_tracks_get_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+    uint16_t count = 0;
+    if (!server->audio_daemon().rpc_query_tracks(&count)) {
+        AudioDaemonStatus st = {};
+        server->audio_daemon().snapshot_status(&st);
+
+        char response[192];
+        const char *err = "query_failed";
+        if (!st.dfplayer_init_ok) {
+            err = "init_failed";
+        } else if (!st.sd_card_online) {
+            err = "sd_not_online";
+        }
+
+        snprintf(response, sizeof(response),
+                 "{\"count\":0,\"tracks\":[],\"error\":\"%s\",\"dfplayer_init\":%s,"
+                 "\"sd_online\":%s,\"device_mask\":%u}",
+                 err,
+                 st.dfplayer_init_ok ? "true" : "false",
+                 st.sd_card_online ? "true" : "false",
+                 st.device_mask);
+
+        httpd_resp_set_type(req, "application/json");
+        return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+    }
+
+    std::string response = "{\"count\":" + std::to_string(count) + ",\"tracks\":[";
+    for (uint16_t i = 1; i <= count; ++i) {
+        if (i > 1) {
+            response += ',';
+        }
+        char name[16];
+        snprintf(name, sizeof(name), "%04u.mp3", i);
+        response += "{\"id\":" + std::to_string(i) + ",\"name\":\"" + name + "\"}";
+    }
+    response += "]}";
+
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_send(req, response.c_str(), response.size());
+}
+
+static esp_err_t audio_status_get_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+    AudioDaemonStatus status = {};
+    if (!server->audio_daemon().rpc_get_status(&status)) {
+        httpd_resp_set_type(req, "application/json");
+        return httpd_resp_send(req, "{\"track\":0,\"state\":\"stopped\",\"error\":\"status_failed\"}",
+                               HTTPD_RESP_USE_STRLEN);
+    }
+
+    char response[160];
+    snprintf(response, sizeof(response),
+             "{\"track\":%u,\"state\":\"%s\",\"count\":%u,"
+             "\"dfplayer_init\":%s,\"sd_online\":%s,\"device_mask\":%u}",
+             status.current_track,
+             audio_state_string(status.state),
+             status.track_count,
+             status.dfplayer_init_ok ? "true" : "false",
+             status.sd_card_online ? "true" : "false",
+             status.device_mask);
+
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+}
+
+static esp_err_t audio_play_post_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+    std::string body;
+    body.resize(req->content_len);
+    int received = httpd_req_recv(req, body.data(), body.size());
+    if (received <= 0) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read body");
+        return ESP_FAIL;
+    }
+
+    std::string track_value = extract_json_value(body, "track");
+    if (track_value.empty()) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Missing track");
+        return ESP_FAIL;
+    }
+
+    int track = std::stoi(track_value);
+    if (track < 1 || track > 9999) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid track");
+        return ESP_FAIL;
+    }
+
+    AudioDaemonStatus status = {};
+    if (!server->audio_daemon().rpc_toggle_track(static_cast<uint16_t>(track), &status)) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Toggle failed");
+        return ESP_FAIL;
+    }
+
+    char response[96];
+    snprintf(response, sizeof(response),
+             "{\"track\":%u,\"state\":\"%s\"}",
+             status.current_track,
+             audio_state_string(status.state));
+
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+}
+
 static esp_err_t settings_post_handler(httpd_req_t *req)
 {
     auto *server = static_cast<WebServer *>(req->user_ctx);
@@ -265,8 +385,12 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
 }
 }
 
-WebServer::WebServer(SystemController &system_controller, SystemState &system_state)
-    : system_controller_(system_controller), system_state_(system_state), task_handle_(nullptr)
+WebServer::WebServer(SystemController &system_controller, SystemState &system_state,
+                     AudioDaemon &audio_daemon)
+    : system_controller_(system_controller),
+      system_state_(system_state),
+      audio_daemon_(audio_daemon),
+      task_handle_(nullptr)
 {
 }
 
@@ -363,7 +487,7 @@ bool WebServer::start_http()
     }
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 8;
+    config.max_uri_handlers = 10;
     config.stack_size = 8192;
 
     if (httpd_start(&g_http, &config) != ESP_OK) {
@@ -399,10 +523,34 @@ bool WebServer::start_http()
         .user_ctx = this,
     };
 
+    httpd_uri_t audio_tracks_get = {
+        .uri = "/api/audio/tracks",
+        .method = HTTP_GET,
+        .handler = audio_tracks_get_handler,
+        .user_ctx = this,
+    };
+
+    httpd_uri_t audio_status_get = {
+        .uri = "/api/audio/status",
+        .method = HTTP_GET,
+        .handler = audio_status_get_handler,
+        .user_ctx = this,
+    };
+
+    httpd_uri_t audio_play_post = {
+        .uri = "/api/audio/play",
+        .method = HTTP_POST,
+        .handler = audio_play_post_handler,
+        .user_ctx = this,
+    };
+
     httpd_register_uri_handler(g_http, &index_uri);
     httpd_register_uri_handler(g_http, &settings_get);
     httpd_register_uri_handler(g_http, &settings_post);
     httpd_register_uri_handler(g_http, &time_get);
+    httpd_register_uri_handler(g_http, &audio_tracks_get);
+    httpd_register_uri_handler(g_http, &audio_status_get);
+    httpd_register_uri_handler(g_http, &audio_play_post);
     return true;
 }
 
@@ -429,4 +577,9 @@ bool WebServer::get_time_status(struct tm *local_out, bool *time_valid, bool *os
                                 float *temperature, time_t *unix_utc)
 {
     return system_controller_.get_time_status(local_out, time_valid, osf, temperature, unix_utc);
+}
+
+AudioDaemon &WebServer::audio_daemon()
+{
+    return audio_daemon_;
 }

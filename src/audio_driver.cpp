@@ -67,3 +67,32 @@ esp_err_t AudioDriver::play_previous()
     ensure_initialized();
     return player_.play_previous();
 }
+
+esp_err_t AudioDriver::query_sd_track_count(uint16_t *out_count, uint32_t timeout_ms)
+{
+    ensure_initialized();
+    return player_.query_sd_track_count(out_count, timeout_ms);
+}
+
+esp_err_t AudioDriver::query_playback_status(DfPlayerPlaybackStatus *out_status, uint16_t *out_track,
+                                             uint32_t timeout_ms)
+{
+    ensure_initialized();
+    return player_.query_playback_status(out_status, out_track, timeout_ms);
+}
+
+AudioPlaybackState AudioDriver::state() const
+{
+    return player_.state();
+}
+
+esp_err_t AudioDriver::wait_for_init(uint8_t *device_mask_out, uint32_t timeout_ms)
+{
+    ensure_initialized();
+    return player_.wait_for_init(device_mask_out, timeout_ms);
+}
+
+DfPlayerInitInfo AudioDriver::init_info() const
+{
+    return player_.init_info();
+}

@@ -74,8 +74,8 @@ constexpr gpio_num_t kI2cScl = static_cast<gpio_num_t>(5);
 constexpr uint32_t kI2cClockHz = 400000;
 
 constexpr uart_port_t kUartPort = UART_NUM_1;
-constexpr gpio_num_t kUartTx = static_cast<gpio_num_t>(18);
-constexpr gpio_num_t kUartRx = static_cast<gpio_num_t>(17);
+constexpr gpio_num_t kUartTx = static_cast<gpio_num_t>(41);
+constexpr gpio_num_t kUartRx = static_cast<gpio_num_t>(42);
 constexpr int kUartBaudRate = 9600;
 
 constexpr gpio_num_t kRtcIntPin = static_cast<gpio_num_t>(8);
