@@ -21,8 +21,6 @@ public:
     virtual esp_err_t query_sd_track_count(uint16_t *out_count, uint32_t timeout_ms = 800) = 0;
     virtual esp_err_t query_playback_status(DfPlayerPlaybackStatus *out_status, uint16_t *out_track,
                                             uint32_t timeout_ms = 500) = 0;
-    virtual esp_err_t wait_for_init(uint8_t *device_mask_out, uint32_t timeout_ms = 2000) = 0;
-    virtual DfPlayerInitInfo init_info() const = 0;
     virtual AudioPlaybackState state() const = 0;
 };
 
@@ -45,8 +43,6 @@ public:
     esp_err_t query_sd_track_count(uint16_t *out_count, uint32_t timeout_ms = 800) override;
     esp_err_t query_playback_status(DfPlayerPlaybackStatus *out_status, uint16_t *out_track,
                                     uint32_t timeout_ms = 500) override;
-    esp_err_t wait_for_init(uint8_t *device_mask_out, uint32_t timeout_ms = 2000) override;
-    DfPlayerInitInfo init_info() const override;
     AudioPlaybackState state() const override;
 
 private:

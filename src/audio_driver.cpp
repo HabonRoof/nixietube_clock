@@ -86,13 +86,3 @@ AudioPlaybackState AudioDriver::state() const
     return player_.state();
 }
 
-esp_err_t AudioDriver::wait_for_init(uint8_t *device_mask_out, uint32_t timeout_ms)
-{
-    ensure_initialized();
-    return player_.wait_for_init(device_mask_out, timeout_ms);
-}
-
-DfPlayerInitInfo AudioDriver::init_info() const
-{
-    return player_.init_info();
-}

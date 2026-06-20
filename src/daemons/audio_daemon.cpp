@@ -14,9 +14,6 @@ AudioDaemon::AudioDaemon(IAudioDriver &driver, PowerController &power_controller
       boot_stop_timer_(nullptr),
       dfplayer_powered_(false),
       boot_chime_active_(false),
-      dfplayer_init_ok_(false),
-      sd_card_online_(false),
-      device_mask_(0),
       track_count_(0),
       track_count_valid_(false),
       current_track_(0),
@@ -120,25 +117,7 @@ void AudioDaemon::ensure_dfplayer_power()
     if (!dfplayer_powered_) {
         power_controller_.set_dfplayer_enabled(true);
         dfplayer_powered_ = true;
-        wait_dfplayer_init();
     }
-}
-
-bool AudioDaemon::wait_dfplayer_init()
-{
-    uint8_t mask = 0;
-    esp_err_t err = driver_.wait_for_init(&mask, 2000);
-    dfplayer_init_ok_ = (err == ESP_OK);
-    device_mask_ = mask;
-    sd_card_online_ = dfplayer_init_ok_ && ((mask & kDfPlayerDeviceTfCard) != 0);
-
-    if (dfplayer_init_ok_) {
-        ESP_LOGI(TAG, "DFPlayer init OK, mask=0x%02X, SD=%s",
-                 mask, sd_card_online_ ? "online" : "missing");
-    } else {
-        ESP_LOGW(TAG, "DFPlayer init 0x3F not received within 2s");
-    }
-    return dfplayer_init_ok_;
 }
 
 void AudioDaemon::fill_status(AudioDaemonStatus *out) const
@@ -150,9 +129,6 @@ void AudioDaemon::fill_status(AudioDaemonStatus *out) const
     out->current_track = current_track_;
     out->state = playback_state_;
     out->track_count_valid = track_count_valid_;
-    out->dfplayer_init_ok = dfplayer_init_ok_;
-    out->sd_card_online = sd_card_online_;
-    out->device_mask = device_mask_;
 }
 
 bool AudioDaemon::send_rpc(AudioMessage *msg, uint32_t timeout_ms)
@@ -360,29 +336,16 @@ void AudioDaemon::process_message(const AudioMessage &msg)
             break;
         case AudioCmd::QUERY_TRACK_COUNT: {
             ensure_dfplayer_power();
-            if (!dfplayer_init_ok_) {
-                complete_rpc(msg, false);
-                break;
+            const uint16_t count = kKnownSdTrackCount;
+            track_count_ = count;
+            track_count_valid_ = true;
+            if (msg.response_count) {
+                *msg.response_count = count;
             }
-            if (!sd_card_online_) {
-                ESP_LOGW(TAG, "SD card not reported in init mask 0x%02X", device_mask_);
-                complete_rpc(msg, false);
-                break;
-            }
-            uint16_t count = 0;
-            bool ok = (driver_.query_sd_track_count(&count, 1000) == ESP_OK);
-            if (ok) {
-                track_count_ = count;
-                track_count_valid_ = true;
-                if (msg.response_count) {
-                    *msg.response_count = count;
-                }
-            }
-            complete_rpc(msg, ok);
+            complete_rpc(msg, true);
             break;
         }
         case AudioCmd::GET_STATUS: {
-            // Use cached daemon state; avoid UART query during playback (slow/unreliable).
             if (msg.response_status) {
                 fill_status(msg.response_status);
             }

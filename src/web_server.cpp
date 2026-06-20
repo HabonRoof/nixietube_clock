@@ -199,27 +199,9 @@ static esp_err_t audio_tracks_get_handler(httpd_req_t *req)
     auto *server = static_cast<WebServer *>(req->user_ctx);
     uint16_t count = 0;
     if (!server->audio_daemon().rpc_query_tracks(&count)) {
-        AudioDaemonStatus st = {};
-        server->audio_daemon().snapshot_status(&st);
-
-        char response[192];
-        const char *err = "query_failed";
-        if (!st.dfplayer_init_ok) {
-            err = "init_failed";
-        } else if (!st.sd_card_online) {
-            err = "sd_not_online";
-        }
-
-        snprintf(response, sizeof(response),
-                 "{\"count\":0,\"tracks\":[],\"error\":\"%s\",\"dfplayer_init\":%s,"
-                 "\"sd_online\":%s,\"device_mask\":%u}",
-                 err,
-                 st.dfplayer_init_ok ? "true" : "false",
-                 st.sd_card_online ? "true" : "false",
-                 st.device_mask);
-
         httpd_resp_set_type(req, "application/json");
-        return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+        return httpd_resp_send(req, "{\"count\":0,\"tracks\":[],\"error\":\"query_failed\"}",
+                               HTTPD_RESP_USE_STRLEN);
     }
 
     std::string response = "{\"count\":" + std::to_string(count) + ",\"tracks\":[";
@@ -247,16 +229,12 @@ static esp_err_t audio_status_get_handler(httpd_req_t *req)
                                HTTPD_RESP_USE_STRLEN);
     }
 
-    char response[160];
+    char response[96];
     snprintf(response, sizeof(response),
-             "{\"track\":%u,\"state\":\"%s\",\"count\":%u,"
-             "\"dfplayer_init\":%s,\"sd_online\":%s,\"device_mask\":%u}",
+             "{\"track\":%u,\"state\":\"%s\",\"count\":%u}",
              status.current_track,
              audio_state_string(status.state),
-             status.track_count,
-             status.dfplayer_init_ok ? "true" : "false",
-             status.sd_card_online ? "true" : "false",
-             status.device_mask);
+             status.track_count);
 
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);

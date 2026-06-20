@@ -31,7 +31,6 @@ private:
     void loop();
     void process_message(const AudioMessage &msg);
     void ensure_dfplayer_power();
-    bool wait_dfplayer_init();
     void schedule_boot_chime();
     void cancel_boot_chime();
     void stop_boot_chime_timers();
@@ -43,6 +42,7 @@ private:
     static constexpr uint16_t kBootChimeTrack = 3;
     static constexpr uint32_t kBootPlayDelayMs = 3000;
     static constexpr uint32_t kBootPlayDurationMs = 10000;
+    static constexpr uint16_t kKnownSdTrackCount = 10;
 
     IAudioDriver &driver_;
     PowerController &power_controller_;
@@ -52,9 +52,6 @@ private:
     esp_timer_handle_t boot_stop_timer_;
     bool dfplayer_powered_;
     bool boot_chime_active_;
-    bool dfplayer_init_ok_;
-    bool sd_card_online_;
-    uint8_t device_mask_;
     uint16_t track_count_;
     bool track_count_valid_;
     uint16_t current_track_;

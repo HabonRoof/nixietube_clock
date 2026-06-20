@@ -31,8 +31,10 @@ constexpr uint8_t kCmdLoopThisTrack = 0x19;
 // Query commands (datasheet: Query System Parameters)
 constexpr uint8_t kCmdQueryStatus = 0x42;
 constexpr uint8_t kCmdQuerySdFileCount = 0x47;
+constexpr uint8_t kCmdQueryUdiskFileCount = 0x48;
+constexpr uint8_t kCmdQueryFlashFileCount = 0x49;
 constexpr uint8_t kCmdQuerySdCurrentTrack = 0x4B;
-constexpr uint8_t kRspInitOnline = 0x3F;
+constexpr uint8_t kCmdQueryUdiskCurrentTrack = 0x4C;
 constexpr uint8_t kRspFeedbackBase = 0x48;
 
 constexpr TickType_t kInterCommandDelayMs = 80;
@@ -53,7 +55,6 @@ DfPlayerMini::DfPlayerMini(uart_port_t uart_num)
              .track_count = 0,
              .track_count_valid = false,
              .playback_status = DfPlayerPlaybackStatus::kStopped,
-             .init_info = {.received = false, .device_mask = 0},
              .looping = false,
              .low_power = false,
              .paused = false},
@@ -154,20 +155,6 @@ esp_err_t DfPlayerMini::read_response_frame(ResponseFrame *out, uint32_t timeout
     return ESP_ERR_TIMEOUT;
 }
 
-void DfPlayerMini::apply_init_frame(uint16_t parameter)
-{
-    const uint8_t mask = static_cast<uint8_t>(parameter & 0xFF);
-    if (mutex_)
-    {
-        xSemaphoreTake(mutex_, portMAX_DELAY);
-        state_.init_info.received = true;
-        state_.init_info.device_mask = mask;
-        xSemaphoreGive(mutex_);
-    }
-    ESP_LOGI(kLogTag, "Init 0x3F received, device mask=0x%02X (SD=%s)",
-             mask, (mask & kDfPlayerDeviceTfCard) ? "yes" : "no");
-}
-
 bool DfPlayerMini::is_query_response(uint8_t query_command, uint8_t response_command) const
 {
     if (response_command == query_command)
@@ -180,49 +167,6 @@ bool DfPlayerMini::is_query_response(uint8_t query_command, uint8_t response_com
         return true;
     }
     return false;
-}
-
-esp_err_t DfPlayerMini::wait_for_init(uint8_t *device_mask_out, uint32_t timeout_ms)
-{
-    if (!initialized_)
-    {
-        return ESP_ERR_INVALID_STATE;
-    }
-
-    const TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(timeout_ms);
-    while (xTaskGetTickCount() <= deadline)
-    {
-        ResponseFrame frame = {};
-        const uint32_t remaining = static_cast<uint32_t>(
-            (deadline - xTaskGetTickCount()) * portTICK_PERIOD_MS);
-        const uint32_t slice = remaining > 50 ? 50 : (remaining > 0 ? remaining : 1);
-
-        esp_err_t err = read_response_frame(&frame, slice);
-        if (err != ESP_OK)
-        {
-            continue;
-        }
-
-        if (frame.command == kRspInitOnline)
-        {
-            apply_init_frame(frame.parameter);
-            if (device_mask_out)
-            {
-                *device_mask_out = static_cast<uint8_t>(frame.parameter & 0xFF);
-            }
-            return ESP_OK;
-        }
-
-        ESP_LOGD(kLogTag, "Ignoring frame 0x%02X while waiting for init", frame.command);
-    }
-
-    ESP_LOGW(kLogTag, "Init 0x3F not received within %u ms", timeout_ms);
-    return ESP_ERR_TIMEOUT;
-}
-
-DfPlayerInitInfo DfPlayerMini::init_info() const
-{
-    return state().init_info;
 }
 
 esp_err_t DfPlayerMini::send_query(uint8_t command, uint16_t *out_parameter, uint32_t timeout_ms)
@@ -254,12 +198,6 @@ esp_err_t DfPlayerMini::send_query(uint8_t command, uint16_t *out_parameter, uin
             continue;
         }
 
-        if (response.command == kRspInitOnline)
-        {
-            apply_init_frame(response.parameter);
-            continue;
-        }
-
         if (is_query_response(command, response.command))
         {
             *out_parameter = response.parameter;
@@ -285,7 +223,7 @@ esp_err_t DfPlayerMini::query_sd_track_count(uint16_t *out_count, uint32_t timeo
     }
 
     uint16_t count = 0;
-    esp_err_t err = send_query(kCmdQuerySdFileCount, &count, timeout_ms);
+    esp_err_t err = send_query(kCmdQueryFlashFileCount, &count, timeout_ms);
     if (err != ESP_OK)
     {
         return err;
@@ -542,7 +480,6 @@ esp_err_t DfPlayerMini::reset()
                                     .track_count = 0,
                                     .track_count_valid = false,
                                     .playback_status = DfPlayerPlaybackStatus::kStopped,
-                                    .init_info = {.received = false, .device_mask = 0},
                                     .looping = false,
                                     .low_power = false,
                                     .paused = false};

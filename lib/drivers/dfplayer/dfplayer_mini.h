@@ -27,18 +27,6 @@ enum class DfPlayerPlaybackStatus : uint8_t
     kPaused = 2,
 };
 
-// Datasheet: 0x3F init frame device mask (low parameter byte, OR-combined).
-constexpr uint8_t kDfPlayerDeviceUsb = 0x01;
-constexpr uint8_t kDfPlayerDeviceTfCard = 0x02;
-constexpr uint8_t kDfPlayerDevicePc = 0x04;
-constexpr uint8_t kDfPlayerDeviceFlash = 0x08;
-
-struct DfPlayerInitInfo
-{
-    bool received;
-    uint8_t device_mask;
-};
-
 struct AudioPlaybackState
 {
     uint8_t volume;
@@ -46,7 +34,6 @@ struct AudioPlaybackState
     uint16_t track_count;
     bool track_count_valid;
     DfPlayerPlaybackStatus playback_status;
-    DfPlayerInitInfo init_info;
     bool looping;
     bool low_power;
     bool paused;
@@ -75,10 +62,6 @@ public:
     esp_err_t set_eq(DfPlayerEqPreset eq);
     esp_err_t reset();
 
-    // Wait for post-power-on 0x3F init frame (datasheet: online device report).
-    esp_err_t wait_for_init(uint8_t *device_mask_out, uint32_t timeout_ms = 2000);
-    DfPlayerInitInfo init_info() const;
-
     esp_err_t query_sd_track_count(uint16_t *out_count, uint32_t timeout_ms = 800);
     esp_err_t query_current_track(uint16_t *out_track, uint32_t timeout_ms = 500);
     esp_err_t query_playback_status(DfPlayerPlaybackStatus *out_status, uint16_t *out_track,
@@ -98,7 +81,6 @@ private:
     esp_err_t send_simple_command(uint8_t command, uint16_t parameter = 0, bool request_feedback = false);
     esp_err_t send_query(uint8_t command, uint16_t *out_parameter, uint32_t timeout_ms);
     esp_err_t read_response_frame(ResponseFrame *out, uint32_t timeout_ms);
-    void apply_init_frame(uint16_t parameter);
     bool is_query_response(uint8_t query_command, uint8_t response_command) const;
     void drain_uart();
     static uint16_t calculate_checksum(uint8_t command, uint16_t parameter, bool request_feedback);

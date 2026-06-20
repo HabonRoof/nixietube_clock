@@ -41,9 +41,6 @@ struct AudioDaemonStatus
     uint16_t current_track;
     AudioPlaybackUiState state;
     bool track_count_valid;
-    bool dfplayer_init_ok;
-    bool sd_card_online;
-    uint8_t device_mask;
 };
 
 // Heap-owned RPC context; survives until daemon completes or caller times out.
