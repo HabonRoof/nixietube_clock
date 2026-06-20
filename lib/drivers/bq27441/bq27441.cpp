@@ -1,7 +1,6 @@
 #include "bq27441.h"
 #include "bq27441_regs.h"
 #include "i2c_bus.h"
-#include "debug_session_log.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -358,13 +357,6 @@ bool Bq27441::write_design_capacity_mah(uint16_t old_capacity_mah, uint16_t new_
         return false;
     }
 
-    // #region agent log
-    dbg_session_log("G", "bq27441.cpp:write_design_capacity", "block_bytes_9_13",
-                    static_cast<int32_t>(block[9]),
-                    static_cast<int32_t>(block[10]),
-                    static_cast<int32_t>(block[11]));
-    // #endregion
-
     const uint8_t old_bytes[4] = {
         block[kDesignCapacityOffset],
         block[kDesignCapacityOffset + 1],
@@ -468,29 +460,6 @@ bool Bq27441::probe(GasgaugeDeviceInfo &info)
         ESP_LOGW(TAG, "ITPOR set; configuration reload may be required");
     }
 
-    // #region agent log
-    {
-        uint16_t probe_voltage = 0;
-        const esp_err_t v_err = [&]() {
-            I2cBusLock lock(port_);
-            return i2c_read_word(kRegVoltage, &probe_voltage);
-        }();
-        dbg_session_log("D", "bq27441.cpp:probe", "post_probe_voltage",
-                        static_cast<int32_t>(v_err),
-                        static_cast<int32_t>(probe_voltage),
-                        static_cast<int32_t>(info.flags));
-        uint8_t peek[2] = {};
-        const esp_err_t cap_err = [&]() {
-            I2cBusLock lock(port_);
-            return i2c_read_bytes(kRegDesignCapacity, peek, 2);
-        }();
-        dbg_session_log("F", "bq27441.cpp:probe", "post_probe_reg3C_bytes",
-                        static_cast<int32_t>(cap_err),
-                        static_cast<int32_t>(peek[0]),
-                        static_cast<int32_t>(peek[1]));
-    }
-    // #endregion
-
     info.probed = true;
 
     const bool gauging_ready =
@@ -583,17 +552,6 @@ bool Bq27441::get_data(GasgaugeData &data)
         if (v_err == ESP_OK) {
             i2c_read_word(kRegFlags, &flags);
         }
-
-        // #region agent log
-        dbg_session_log("B", "bq27441.cpp:get_data", "voltage_read",
-                        static_cast<int32_t>(v_err),
-                        static_cast<int32_t>(g_last_i2c_err),
-                        static_cast<int32_t>(flags));
-        dbg_session_log("H", "bq27441.cpp:get_data", "attempt",
-                        static_cast<int32_t>(attempt),
-                        static_cast<int32_t>(v_err),
-                        static_cast<int32_t>(kGetDataRetries));
-        // #endregion
 
         if (v_err != ESP_OK) {
             if (attempt + 1 < kGetDataRetries) {
