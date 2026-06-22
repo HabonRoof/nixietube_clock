@@ -49,29 +49,14 @@ void init_default_mapping()
     if (kMapInitialized) {
         return;
     }
-    for (uint8_t d = 0; d < 10; ++d) {
-        kTubeMap[0][d] = {0, d};
-    }
-    for (uint8_t d = 0; d < 6; ++d) {
-        kTubeMap[1][d] = {0, static_cast<uint8_t>(10 + d)};
-    }
-    for (uint8_t d = 6; d < 10; ++d) {
-        kTubeMap[1][d] = {1, static_cast<uint8_t>(d - 6)};
-    }
-    for (uint8_t d = 0; d < 10; ++d) {
-        kTubeMap[2][d] = {1, static_cast<uint8_t>(4 + d)};
-    }
-    for (uint8_t d = 0; d < 10; ++d) {
-        kTubeMap[3][d] = {2, d};
-    }
-    for (uint8_t d = 0; d < 6; ++d) {
-        kTubeMap[4][d] = {2, static_cast<uint8_t>(10 + d)};
-    }
-    for (uint8_t d = 6; d < 10; ++d) {
-        kTubeMap[4][d] = {3, static_cast<uint8_t>(d - 6)};
-    }
-    for (uint8_t d = 0; d < 10; ++d) {
-        kTubeMap[5][d] = {3, static_cast<uint8_t>(4 + d)};
+    // 60 cathodes (6 tubes x 10 digits) are packed sequentially across 4 PCA9685
+    // chips (16 channels each): global_index = tube * 10 + digit.
+    for (uint8_t tube = 0; tube < 6; ++tube) {
+        for (uint8_t digit = 0; digit < 10; ++digit) {
+            const uint8_t global = static_cast<uint8_t>(tube * 10 + digit);
+            kTubeMap[tube][digit] = {static_cast<uint8_t>(global / 16),
+                                     static_cast<uint8_t>(global % 16)};
+        }
     }
 
     kMapInitialized = true;
