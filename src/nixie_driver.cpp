@@ -112,7 +112,7 @@ void anode_timer_callback(void *arg)
 static const char *kTag = "NixieDriver";
 
 NixieDriver::NixieDriver()
-    : brightness_(128)
+    : brightness_(255)
 {
     for (size_t i = 0; i < digit_cache_.size(); ++i) {
         digit_cache_[i] = 0;
