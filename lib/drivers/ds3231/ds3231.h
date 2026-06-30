@@ -25,6 +25,7 @@ public:
     // Alarm 1 support
     bool set_alarm1(const struct tm *timeinfo);
     bool clear_alarm1_flag();
+    bool alarm1_triggered(bool *triggered);
     bool enable_alarm1_interrupt(bool enable);
 
 private:

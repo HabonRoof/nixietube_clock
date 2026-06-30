@@ -6,7 +6,7 @@
 
 // Bump whenever the layout/meaning of ClockSettings changes. NVS load uses
 // this to migrate (rather than discard) older persisted blobs.
-constexpr uint16_t kSettingsVersion = 3;
+constexpr uint16_t kSettingsVersion = 4;
 
 struct ClockSettings {
     uint16_t version;
@@ -15,6 +15,7 @@ struct ClockSettings {
     uint8_t alarm_hour;
     uint8_t alarm_minute;
     uint8_t alarm_second;
+    uint16_t alarm_track;
     uint8_t backlight_r;
     uint8_t backlight_g;
     uint8_t backlight_b;

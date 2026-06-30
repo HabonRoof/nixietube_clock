@@ -34,6 +34,7 @@ ClockSettings SystemState::defaults()
         .alarm_hour = 7,
         .alarm_minute = 0,
         .alarm_second = 0,
+        .alarm_track = 1,
         .backlight_r = 128,
         .backlight_g = 128,
         .backlight_b = 128,
@@ -92,6 +93,9 @@ bool SystemState::load()
     }
     if (stored_size < sizeof(ClockSettings)) {
         settings.rtc_calibrated = false;
+    }
+    if (stored_size < offsetof(ClockSettings, alarm_track)) {
+        settings.alarm_track = 1;
     }
     settings.version = kSettingsVersion;
 

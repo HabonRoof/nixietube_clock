@@ -56,6 +56,7 @@ private:
     void publish_time_status(bool valid);
     void sync_battery_from_gauge();
     void invalidate_battery_status();
+    void check_alarm();
 
     DisplayDaemon &display_daemon_;
     AudioDaemon &audio_daemon_;

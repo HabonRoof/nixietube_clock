@@ -108,13 +108,12 @@ bool Ds3231::get_temperature(float *temp)
 
 bool Ds3231::set_alarm1(const struct tm *timeinfo)
 {
-    // Set Alarm 1 to match seconds, minutes, hours, and day/date
-    // A1M1=0, A1M2=0, A1M3=0, A1M4=0 (Match second, minute, hour, and day/date)
+    // Daily alarm: match second/minute/hour; ignore day/date (A1M4=1).
     uint8_t data[4];
     data[0] = dec2bcd(timeinfo->tm_sec);
     data[1] = dec2bcd(timeinfo->tm_min);
     data[2] = dec2bcd(timeinfo->tm_hour);
-    data[3] = dec2bcd(timeinfo->tm_mday); // Match date (day of month)
+    data[3] = 0x80; // A1M4=1 -> repeat every day
 
     return write_registers(0x07, data, 4);
 }
@@ -127,6 +126,19 @@ bool Ds3231::clear_alarm1_flag()
     }
     status &= ~0x01; // Clear A1F
     return write_register(0x0F, status);
+}
+
+bool Ds3231::alarm1_triggered(bool *triggered)
+{
+    if (!triggered) {
+        return false;
+    }
+    uint8_t status;
+    if (!read_register(0x0F, &status)) {
+        return false;
+    }
+    *triggered = (status & 0x01) != 0;
+    return true;
 }
 
 bool Ds3231::enable_alarm1_interrupt(bool enable)

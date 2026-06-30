@@ -46,12 +46,15 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
     char rgb[16];
     snprintf(rgb, sizeof(rgb), "%u,%u,%u", settings.backlight_r, settings.backlight_g, settings.backlight_b);
 
-    char response[320];
+    char response[384];
     snprintf(response, sizeof(response),
-             "{\"tz_offset\":%d,\"alarm_enabled\":%s,\"alarm_time\":\"%s\",\"backlight_rgb\":\"%s\",\"backlight_brightness\":%u,\"backlight_effect\":%u,\"volume\":%u,\"rtc_calibrated\":%s}",
+             "{\"tz_offset\":%d,\"alarm_enabled\":%s,\"alarm_time\":\"%s\",\"alarm_track\":%u,"
+             "\"backlight_rgb\":\"%s\",\"backlight_brightness\":%u,\"backlight_effect\":%u,\"volume\":%u,"
+             "\"rtc_calibrated\":%s}",
              settings.tz_offset_hours,
              settings.alarm_enabled ? "true" : "false",
              alarm_time,
+             settings.alarm_track,
              rgb,
              settings.backlight_brightness,
              settings.backlight_effect,
@@ -314,6 +317,14 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
             settings.alarm_hour = h;
             settings.alarm_minute = m;
             settings.alarm_second = s;
+        }
+    }
+
+    std::string alarm_track = extract_json_value(body, "alarm_track");
+    if (!alarm_track.empty()) {
+        int value = std::stoi(alarm_track);
+        if (value >= 1 && value <= 9999) {
+            settings.alarm_track = static_cast<uint16_t>(value);
         }
     }
 

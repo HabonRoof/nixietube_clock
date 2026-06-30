@@ -278,6 +278,8 @@ void SystemController::loop()
             next_time_update += update_interval;
         }
 
+        check_alarm();
+
         vTaskDelay(poll_interval);
     }
 }
@@ -383,19 +385,64 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
 
     if (!i2c_debug::kDisableDs3231Rtc) {
         if (settings.alarm_enabled) {
-            struct tm alarm = {};
-            alarm.tm_hour = settings.alarm_hour;
-            alarm.tm_min = settings.alarm_minute;
-            alarm.tm_sec = settings.alarm_second;
-            alarm.tm_mday = 1;
-            rtc_.set_alarm1(&alarm);
+            // User alarm time is local wall-clock; RTC runs UTC.
+            struct tm alarm_local = {};
+            alarm_local.tm_hour = settings.alarm_hour;
+            alarm_local.tm_min = settings.alarm_minute;
+            alarm_local.tm_sec = settings.alarm_second;
+            alarm_local.tm_isdst = 0;
+            time_t local_as_utc = tm_to_utc_epoch(&alarm_local);
+            time_t utc_epoch = local_as_utc - (time_t)settings.tz_offset_hours * 3600;
+            struct tm alarm_utc;
+            gmtime_r(&utc_epoch, &alarm_utc);
+            rtc_.set_alarm1(&alarm_utc);
             rtc_.clear_alarm1_flag();
             rtc_.enable_alarm1_interrupt(true);
+            ESP_LOGI(TAG, "Alarm set: local %02u:%02u:%02u (UTC %02u:%02u:%02u, tz %+d)",
+                     settings.alarm_hour, settings.alarm_minute, settings.alarm_second,
+                     alarm_utc.tm_hour, alarm_utc.tm_min, alarm_utc.tm_sec,
+                     settings.tz_offset_hours);
         } else {
             rtc_.enable_alarm1_interrupt(false);
             rtc_.clear_alarm1_flag();
         }
     }
+}
+
+void SystemController::check_alarm()
+{
+    if (i2c_debug::kDisableDs3231Rtc) {
+        return;
+    }
+
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+    if (!settings.alarm_enabled) {
+        return;
+    }
+
+    bool triggered = false;
+    if (!rtc_.alarm1_triggered(&triggered) || !triggered) {
+        return;
+    }
+
+    rtc_.clear_alarm1_flag();
+
+    uint16_t track = settings.alarm_track;
+    if (track == 0) {
+        track = 1;
+    }
+
+    AudioMessage vol_msg = {};
+    vol_msg.command = AudioCmd::SET_VOLUME;
+    vol_msg.param.volume = settings.volume;
+    xQueueSend(audio_daemon_.get_queue(), &vol_msg, 0);
+
+    AudioMessage amsg = {};
+    amsg.command = AudioCmd::PLAY_TRACK;
+    amsg.param.track_number = track;
+    xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
+    ESP_LOGI(TAG, "Alarm triggered, playing track %u", track);
 }
 
 void SystemController::update_time()
