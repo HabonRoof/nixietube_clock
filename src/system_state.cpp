@@ -40,6 +40,7 @@ ClockSettings SystemState::defaults()
         .backlight_brightness = 128,
         .backlight_effect = 1,
         .volume = 20,
+        .rtc_calibrated = false,
     };
 }
 
@@ -88,6 +89,9 @@ bool SystemState::load()
     if (stored_size < sizeof(ClockSettings) && stored_size >= kSettingsV1Size) {
         settings.volume = buffer[kSettingsV1Size - 1];
         settings.backlight_effect = 1;
+    }
+    if (stored_size < sizeof(ClockSettings)) {
+        settings.rtc_calibrated = false;
     }
     settings.version = kSettingsVersion;
 
