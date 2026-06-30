@@ -46,16 +46,17 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
     char rgb[16];
     snprintf(rgb, sizeof(rgb), "%u,%u,%u", settings.backlight_r, settings.backlight_g, settings.backlight_b);
 
-    char response[288];
+    char response[320];
     snprintf(response, sizeof(response),
-             "{\"tz_offset\":%d,\"alarm_enabled\":%s,\"alarm_time\":\"%s\",\"backlight_rgb\":\"%s\",\"backlight_brightness\":%u,\"backlight_effect\":%u,\"volume\":%u}",
+             "{\"tz_offset\":%d,\"alarm_enabled\":%s,\"alarm_time\":\"%s\",\"backlight_rgb\":\"%s\",\"backlight_brightness\":%u,\"backlight_effect\":%u,\"volume\":%u,\"rtc_calibrated\":%s}",
              settings.tz_offset_hours,
              settings.alarm_enabled ? "true" : "false",
              alarm_time,
              rgb,
              settings.backlight_brightness,
              settings.backlight_effect,
-             settings.volume);
+             settings.volume,
+             settings.rtc_calibrated ? "true" : "false");
 
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
@@ -82,14 +83,15 @@ static esp_err_t time_get_handler(httpd_req_t *req)
              local_tm.tm_year + 1900, local_tm.tm_mon + 1, local_tm.tm_mday,
              local_tm.tm_hour, local_tm.tm_min, local_tm.tm_sec);
 
-    char response[288];
+    char response[320];
     snprintf(response, sizeof(response),
-             "{\"local_time\":\"%s\",\"unix_utc\":%lld,\"tz_offset\":%d,\"time_valid\":%s,\"osf\":%s,\"temperature\":%.2f}",
+             "{\"local_time\":\"%s\",\"unix_utc\":%lld,\"tz_offset\":%d,\"time_valid\":%s,\"osf\":%s,\"rtc_calibrated\":%s,\"temperature\":%.2f}",
              local_str,
              (long long)unix_utc,
              settings.tz_offset_hours,
              time_valid ? "true" : "false",
              osf ? "true" : "false",
+             settings.rtc_calibrated ? "true" : "false",
              temperature);
 
     httpd_resp_set_type(req, "application/json");
@@ -352,6 +354,9 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
     std::string time_value = extract_json_value(body, "time");
     struct tm timeinfo = {};
     bool has_time = parse_time(time_value.c_str(), &timeinfo);
+    if (has_time) {
+        settings.rtc_calibrated = true;
+    }
 
     if (!server->apply_settings(settings, has_time ? &timeinfo : nullptr)) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to apply settings");
