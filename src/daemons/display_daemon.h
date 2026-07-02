@@ -16,6 +16,27 @@ enum class LedEffectType
     OFF
 };
 
+enum class DivergencePhase
+{
+    JUMPING,
+    FROZEN,
+};
+
+struct DivergenceMeterState
+{
+    DivergencePhase phase = DivergencePhase::JUMPING;
+    uint32_t elapsed_ms = 0;
+    uint32_t since_jump_ms = 0;
+    uint32_t final_value = 0;
+};
+
+struct CathodePoisoningState
+{
+    uint8_t start_digit = 0;
+    uint8_t step = 0;
+    uint32_t step_elapsed_ms = 0;
+};
+
 class DisplayDaemon
 {
 public:
@@ -23,6 +44,7 @@ public:
     ~DisplayDaemon();
 
     void start();
+    void set_system_queue(QueueHandle_t queue);
     QueueHandle_t get_queue() const;
 
 private:
@@ -30,26 +52,38 @@ private:
     void loop();
     void process_message(const DisplayMessage &msg);
     void update_effects(uint32_t dt_ms);
+    void update_divergence_meter(uint32_t dt_ms);
+    void update_cathode_poisoning(uint32_t dt_ms);
+    void reset_divergence_meter();
+    void reset_cathode_poisoning();
+    void request_auto_return_clock();
 
-    // Effect implementations
     void run_breath_effect(uint32_t dt_ms);
     void run_rainbow_effect(uint32_t dt_ms);
     void turn_off_backlight();
     void apply_backlight_to_all(const BackLightState &state);
 
+    static constexpr uint32_t kDivergenceJumpMs = 3000;
+    static constexpr uint32_t kDivergenceFrozenMs = 60000;
+    static constexpr uint32_t kDivergenceTotalMs = kDivergenceJumpMs + kDivergenceFrozenMs;
+    static constexpr uint32_t kDivergenceStepMs = 100;
+    static constexpr uint32_t kCathodeStepMs = 1000;
+    static constexpr uint8_t kCathodeSteps = 15;
+
     INixieDriver &nixie_driver_;
     ILedDriver &led_driver_;
     SystemState &system_state_;
     QueueHandle_t queue_;
+    QueueHandle_t system_queue_;
     TaskHandle_t task_handle_;
 
-    // State
     DisplayMode current_mode_;
     uint32_t manual_number_;
     LedEffectType current_effect_type_;
-    
-    // Effect parameters
     float effect_color_phase_;
     float effect_speed_;
     BackLightState base_backlight_;
+    DivergenceMeterState divergence_;
+    CathodePoisoningState cathode_;
+    bool auto_return_requested_;
 };

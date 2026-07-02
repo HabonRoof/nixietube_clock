@@ -73,13 +73,17 @@ enum class DisplayCmd : uint8_t
     SET_BACKLIGHT_COLOR,
     SET_BACKLIGHT_BRIGHTNESS,
     SET_EFFECT,
-    ENABLE_EFFECT
+    ENABLE_EFFECT,
+    DIVERGENCE_RESTART,
+    SET_NIXIE_BRIGHTNESS,
 };
 
 enum class DisplayMode : uint8_t
 {
     CLOCK_HHMMSS,
     DATE_YYMMDD,
+    DIVERGENCE_METER,
+    CATHODE_POISONING,
     SETTING_MODE,
     MANUAL_DISPLAY,
     OFF
@@ -92,6 +96,7 @@ struct DisplayMessage
     {
         struct
         {
+            uint8_t yy, mm, dd;
             uint8_t h, m, s;
         } time;
         DisplayMode mode;
@@ -117,7 +122,9 @@ enum class SystemEvent : uint8_t
     SETTINGS_UPDATE,
     CLI_COMMAND,
     BATTERY_UPDATE,
-    CHARGER_UPDATE
+    CHARGER_UPDATE,
+    AUTO_RETURN_CLOCK,
+    ALS_UPDATE,
 };
 
 // Carries a settings change (and optionally a new wall-clock time) from the

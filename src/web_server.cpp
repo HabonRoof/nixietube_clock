@@ -46,23 +46,37 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
     char rgb[16];
     snprintf(rgb, sizeof(rgb), "%u,%u,%u", settings.backlight_r, settings.backlight_g, settings.backlight_b);
 
-    char response[384];
-    snprintf(response, sizeof(response),
-             "{\"tz_offset\":%d,\"alarm_enabled\":%s,\"alarm_time\":\"%s\",\"alarm_track\":%u,"
-             "\"backlight_rgb\":\"%s\",\"backlight_brightness\":%u,\"backlight_effect\":%u,\"volume\":%u,"
-             "\"rtc_calibrated\":%s}",
-             settings.tz_offset_hours,
-             settings.alarm_enabled ? "true" : "false",
-             alarm_time,
-             settings.alarm_track,
-             rgb,
-             settings.backlight_brightness,
-             settings.backlight_effect,
-             settings.volume,
-             settings.rtc_calibrated ? "true" : "false");
+    const uint8_t active = settings.active_profile_index % kBacklightProfileCount;
+    const uint8_t nixie_brightness = settings.profiles[active].nixie_brightness;
+
+    std::string response = "{\"tz_offset\":" + std::to_string(settings.tz_offset_hours) +
+                           ",\"alarm_enabled\":" + (settings.alarm_enabled ? "true" : "false") +
+                           ",\"alarm_time\":\"" + alarm_time + "\"" +
+                           ",\"alarm_track\":" + std::to_string(settings.alarm_track) +
+                           ",\"backlight_rgb\":\"" + rgb + "\"" +
+                           ",\"backlight_brightness\":" + std::to_string(settings.backlight_brightness) +
+                           ",\"backlight_effect\":" + std::to_string(settings.backlight_effect) +
+                           ",\"volume\":" + std::to_string(settings.volume) +
+                           ",\"rtc_calibrated\":" + (settings.rtc_calibrated ? "true" : "false") +
+                           ",\"active_profile_index\":" + std::to_string(settings.active_profile_index) +
+                           ",\"nixie_brightness\":" + std::to_string(nixie_brightness) +
+                           ",\"profiles\":[";
+    for (uint8_t i = 0; i < kBacklightProfileCount; ++i) {
+        if (i > 0) {
+            response += ',';
+        }
+        const BacklightProfile &p = settings.profiles[i];
+        response += "{\"r\":" + std::to_string(p.r) +
+                    ",\"g\":" + std::to_string(p.g) +
+                    ",\"b\":" + std::to_string(p.b) +
+                    ",\"backlight_brightness\":" + std::to_string(p.backlight_brightness) +
+                    ",\"backlight_effect\":" + std::to_string(p.backlight_effect) +
+                    ",\"nixie_brightness\":" + std::to_string(p.nixie_brightness) + "}";
+    }
+    response += "]}";
 
     httpd_resp_set_type(req, "application/json");
-    return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+    return httpd_resp_send(req, response.c_str(), response.size());
 }
 
 static esp_err_t time_get_handler(httpd_req_t *req)
@@ -352,6 +366,33 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         if (value >= 0 && value <= 3) {
             settings.backlight_effect = static_cast<uint8_t>(value);
         }
+    }
+
+    std::string nixie_brightness = extract_json_value(body, "nixie_brightness");
+    uint8_t nixie_value = settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness;
+    if (!nixie_brightness.empty()) {
+        int value = std::stoi(nixie_brightness);
+        if (value >= 0 && value <= 255) {
+            nixie_value = static_cast<uint8_t>(value);
+        }
+    }
+
+    std::string save_profile = extract_json_value(body, "save_profile_index");
+    if (!save_profile.empty()) {
+        int profile_index = std::stoi(save_profile);
+        if (profile_index >= 0 && profile_index < kBacklightProfileCount) {
+            settings.profiles[profile_index] = BacklightProfile{
+                .r = settings.backlight_r,
+                .g = settings.backlight_g,
+                .b = settings.backlight_b,
+                .backlight_brightness = settings.backlight_brightness,
+                .backlight_effect = settings.backlight_effect,
+                .nixie_brightness = nixie_value,
+            };
+            settings.active_profile_index = static_cast<uint8_t>(profile_index);
+        }
+    } else if (!nixie_brightness.empty()) {
+        settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness = nixie_value;
     }
 
     std::string volume = extract_json_value(body, "volume");

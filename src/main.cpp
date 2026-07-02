@@ -17,6 +17,7 @@
 #include "system_controller.h"
 #include "system_state.h"
 #include "daemons/cli_daemon.h"
+#include "daemons/input_daemon.h"
 #include "web_server.h"
 #include "nvs_flash.h"
 #include "i2c_debug_config.h"
@@ -78,6 +79,8 @@ extern "C" void app_main(void)
     static SystemController system_controller(display_daemon, audio_daemon, system_state,
                                               i2c_debug::kDisableGasgauge ? nullptr : &gasgauge_service,
                                               gasgauge_ready);
+    display_daemon.set_system_queue(system_controller.get_queue());
+    static InputDaemon input_daemon(system_controller);
     static ChargerController charger_controller(charger_driver);
 
     {
@@ -104,6 +107,7 @@ extern "C" void app_main(void)
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
+    input_daemon.start();
     vTaskDelay(pdMS_TO_TICKS(100));
     charger_controller.init();
     vTaskDelay(pdMS_TO_TICKS(100));

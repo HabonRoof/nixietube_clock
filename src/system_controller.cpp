@@ -1,4 +1,5 @@
 #include "system_controller.h"
+#include "button_config.h"
 #include "esp_log.h"
 #include <ctime>
 #include <cstdio>
@@ -78,7 +79,7 @@ constexpr gpio_num_t kUartTx = static_cast<gpio_num_t>(42);
 constexpr gpio_num_t kUartRx = static_cast<gpio_num_t>(41);
 constexpr int kUartBaudRate = 9600;
 
-constexpr gpio_num_t kRtcIntPin = static_cast<gpio_num_t>(8);
+constexpr gpio_num_t kRtcIntPin = static_cast<gpio_num_t>(2);
 constexpr gpio_num_t kPca9685OePin = static_cast<gpio_num_t>(4);
 constexpr gpio_num_t kAnodeA0 = static_cast<gpio_num_t>(9);
 constexpr gpio_num_t kAnodeA1 = static_cast<gpio_num_t>(10);
@@ -196,6 +197,8 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       rtc_read_failures_(0),
       battery_read_failures_(0),
       gasgauge_ready_(gasgauge_ready_at_boot),
+      alarm_audio_active_(false),
+      current_display_mode_(DisplayMode::CLOCK_HHMMSS),
       next_rtc_sync_(0),
       next_battery_poll_(0)
 {
@@ -288,12 +291,10 @@ void SystemController::process_message(const SystemMessage &msg)
 {
     switch (msg.event) {
         case SystemEvent::BUTTON_PRESSED:
-            ESP_LOGI(TAG, "Button pressed: %d", msg.data.button_id);
-            // Example: Toggle effect on button press
-            // DisplayMessage dmsg;
-            // dmsg.command = DisplayCmd::SET_EFFECT;
-            // ...
-            // xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+            handle_button_press(msg.data.button_id);
+            break;
+        case SystemEvent::AUTO_RETURN_CLOCK:
+            return_to_clock_mode();
             break;
         case SystemEvent::CLI_COMMAND:
             if (msg.data.cli.type == CliCommandType::SET_NIXIE) {
@@ -378,6 +379,11 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
     dmsg.data.effect_id = settings.backlight_effect;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
+    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+    dmsg.data.brightness =
+        settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
     AudioMessage amsg = {};
     amsg.command = AudioCmd::SET_VOLUME;
     amsg.param.volume = settings.volume;
@@ -442,6 +448,7 @@ void SystemController::check_alarm()
     amsg.command = AudioCmd::PLAY_TRACK;
     amsg.param.track_number = track;
     xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
+    alarm_audio_active_ = true;
     ESP_LOGI(TAG, "Alarm triggered, playing track %u", track);
 }
 
@@ -469,9 +476,12 @@ void SystemController::update_time()
 
     DisplayMessage msg;
     msg.command = DisplayCmd::UPDATE_TIME;
-    msg.data.time.h = local_tm.tm_hour;
-    msg.data.time.m = local_tm.tm_min;
-    msg.data.time.s = local_tm.tm_sec;
+    msg.data.time.yy = static_cast<uint8_t>((local_tm.tm_year + 1900) % 100);
+    msg.data.time.mm = static_cast<uint8_t>(local_tm.tm_mon + 1);
+    msg.data.time.dd = static_cast<uint8_t>(local_tm.tm_mday);
+    msg.data.time.h = static_cast<uint8_t>(local_tm.tm_hour);
+    msg.data.time.m = static_cast<uint8_t>(local_tm.tm_min);
+    msg.data.time.s = static_cast<uint8_t>(local_tm.tm_sec);
     xQueueSend(display_daemon_.get_queue(), &msg, 0);
 }
 
@@ -640,4 +650,120 @@ bool SystemController::get_time_status(struct tm *local_out, bool *time_valid,
         }
     }
     return true;
+}
+
+DisplayMode SystemController::next_display_mode(DisplayMode mode)
+{
+    switch (mode) {
+        case DisplayMode::CLOCK_HHMMSS:
+            return DisplayMode::DATE_YYMMDD;
+        case DisplayMode::DATE_YYMMDD:
+            return DisplayMode::DIVERGENCE_METER;
+        case DisplayMode::DIVERGENCE_METER:
+            return DisplayMode::CATHODE_POISONING;
+        case DisplayMode::CATHODE_POISONING:
+        default:
+            return DisplayMode::CLOCK_HHMMSS;
+    }
+}
+
+bool SystemController::is_alarm_audio_active() const
+{
+    return alarm_audio_active_;
+}
+
+void SystemController::apply_profile_to_display(const BacklightProfile &profile)
+{
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
+    dmsg.data.color.r = profile.r;
+    dmsg.data.color.g = profile.g;
+    dmsg.data.color.b = profile.b;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_BACKLIGHT_BRIGHTNESS;
+    dmsg.data.brightness = profile.backlight_brightness;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_EFFECT;
+    dmsg.data.effect_id = profile.backlight_effect;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+    dmsg.data.brightness = profile.nixie_brightness;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+}
+
+void SystemController::return_to_clock_mode()
+{
+    current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_MODE;
+    dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    ESP_LOGI(TAG, "Auto-return to clock mode");
+}
+
+void SystemController::cycle_display_mode()
+{
+    current_display_mode_ = next_display_mode(current_display_mode_);
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_MODE;
+    dmsg.data.mode = current_display_mode_;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    ESP_LOGI(TAG, "Display mode cycled to %u", static_cast<unsigned>(current_display_mode_));
+}
+
+void SystemController::cycle_profile()
+{
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+    settings.active_profile_index =
+        static_cast<uint8_t>((settings.active_profile_index + 1) % kBacklightProfileCount);
+    system_state_.set_settings(settings);
+
+    const BacklightProfile &profile = settings.profiles[settings.active_profile_index];
+    settings.backlight_r = profile.r;
+    settings.backlight_g = profile.g;
+    settings.backlight_b = profile.b;
+    settings.backlight_brightness = profile.backlight_brightness;
+    settings.backlight_effect = profile.backlight_effect;
+    system_state_.set_settings(settings);
+    system_state_.save_settings();
+
+    apply_profile_to_display(profile);
+    ESP_LOGI(TAG, "Active profile: %u", settings.active_profile_index);
+}
+
+void SystemController::handle_button_press(uint8_t button_id)
+{
+    ESP_LOGI(TAG, "Button pressed: %u", button_id);
+
+    if (button_id == kButtonAlarmStop) {
+        if (is_alarm_audio_active()) {
+            AudioMessage amsg = {};
+            amsg.command = AudioCmd::STOP;
+            xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
+            alarm_audio_active_ = false;
+            ESP_LOGI(TAG, "Alarm audio stopped");
+            return;
+        }
+
+        if (current_display_mode_ == DisplayMode::DIVERGENCE_METER) {
+            DisplayMessage dmsg = {};
+            dmsg.command = DisplayCmd::DIVERGENCE_RESTART;
+            xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+            ESP_LOGI(TAG, "Divergence meter restarted");
+        }
+        return;
+    }
+
+    if (button_id == kButtonModeCycle) {
+        cycle_display_mode();
+        return;
+    }
+
+    if (button_id == kButtonProfileCycle) {
+        cycle_profile();
+    }
 }

@@ -9,6 +9,22 @@ constexpr const char *kNamespace = "clock_cfg";
 constexpr const char *kBlobKey = "settings";
 // Size of persisted ClockSettings before backlight_effect was added (v1).
 constexpr size_t kSettingsV1Size = offsetof(ClockSettings, backlight_effect);
+constexpr size_t kSettingsV4Size = offsetof(ClockSettings, profiles);
+
+void init_profiles_from_backlight(ClockSettings *settings)
+{
+    for (uint8_t i = 0; i < kBacklightProfileCount; ++i) {
+        settings->profiles[i] = BacklightProfile{
+            .r = settings->backlight_r,
+            .g = settings->backlight_g,
+            .b = settings->backlight_b,
+            .backlight_brightness = settings->backlight_brightness,
+            .backlight_effect = settings->backlight_effect,
+            .nixie_brightness = 255,
+        };
+    }
+    settings->active_profile_index = 0;
+}
 }
 
 SystemState::SystemState()
@@ -27,7 +43,7 @@ SystemState::SystemState()
 
 ClockSettings SystemState::defaults()
 {
-    return ClockSettings{
+    ClockSettings settings = {
         .version = kSettingsVersion,
         .tz_offset_hours = 8,
         .alarm_enabled = false,
@@ -42,7 +58,11 @@ ClockSettings SystemState::defaults()
         .backlight_effect = 1,
         .volume = 20,
         .rtc_calibrated = false,
+        .profiles = {},
+        .active_profile_index = 0,
     };
+    init_profiles_from_backlight(&settings);
+    return settings;
 }
 
 bool SystemState::load()
@@ -75,7 +95,7 @@ bool SystemState::load()
         return false;
     }
 
-    uint8_t buffer[64];
+    uint8_t buffer[128];
     if (stored_size > sizeof(buffer)) {
         stored_size = sizeof(buffer);
     }
@@ -96,6 +116,9 @@ bool SystemState::load()
     }
     if (stored_size < offsetof(ClockSettings, alarm_track)) {
         settings.alarm_track = 1;
+    }
+    if (stored_size < kSettingsV4Size) {
+        init_profiles_from_backlight(&settings);
     }
     settings.version = kSettingsVersion;
 

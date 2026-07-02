@@ -128,6 +128,27 @@ void NixieDriver::display_time(uint8_t h, uint8_t m, uint8_t s)
     }
 }
 
+void NixieDriver::display_date(uint8_t yy, uint8_t mm, uint8_t dd)
+{
+    if (tubes_.size() < 6) {
+        return;
+    }
+
+    portENTER_CRITICAL(&mux_);
+    digit_cache_[0] = yy / 10;
+    digit_cache_[1] = yy % 10;
+    digit_cache_[2] = mm / 10;
+    digit_cache_[3] = mm % 10;
+    digit_cache_[4] = dd / 10;
+    digit_cache_[5] = dd % 10;
+    pwm_dirty_ = true;
+    portEXIT_CRITICAL(&mux_);
+
+    for (size_t i = 0; i < tubes_.size(); ++i) {
+        tubes_[i].set_numeral(digit_cache_[i]);
+    }
+}
+
 void NixieDriver::display_number(uint32_t number)
 {
     portENTER_CRITICAL(&mux_);

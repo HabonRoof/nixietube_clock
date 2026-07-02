@@ -14,6 +14,7 @@ class INixieDriver
 public:
     virtual ~INixieDriver() = default;
     virtual void display_time(uint8_t h, uint8_t m, uint8_t s) = 0;
+    virtual void display_date(uint8_t yy, uint8_t mm, uint8_t dd) = 0;
     virtual void display_number(uint32_t number) = 0;
     virtual void set_brightness(uint8_t brightness) = 0;
     virtual void set_digits(const std::array<uint8_t, 6> &digits) = 0;
@@ -30,6 +31,7 @@ public:
     ~NixieDriver() override = default;
 
     void display_time(uint8_t h, uint8_t m, uint8_t s) override;
+    void display_date(uint8_t yy, uint8_t mm, uint8_t dd) override;
     void display_number(uint32_t number) override;
     void set_brightness(uint8_t brightness) override;
     void set_digits(const std::array<uint8_t, 6> &digits) override;

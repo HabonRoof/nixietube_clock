@@ -57,6 +57,13 @@ private:
     void sync_battery_from_gauge();
     void invalidate_battery_status();
     void check_alarm();
+    void handle_button_press(uint8_t button_id);
+    void return_to_clock_mode();
+    void cycle_display_mode();
+    void cycle_profile();
+    void apply_profile_to_display(const BacklightProfile &profile);
+    bool is_alarm_audio_active() const;
+    static DisplayMode next_display_mode(DisplayMode mode);
 
     DisplayDaemon &display_daemon_;
     AudioDaemon &audio_daemon_;
@@ -69,6 +76,8 @@ private:
     uint8_t rtc_read_failures_;
     uint8_t battery_read_failures_;
     bool gasgauge_ready_;
+    bool alarm_audio_active_;
+    DisplayMode current_display_mode_;
     TickType_t next_rtc_sync_;
     TickType_t next_battery_poll_;
 

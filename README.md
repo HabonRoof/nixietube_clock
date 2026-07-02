@@ -24,7 +24,10 @@ Pin assignments are defined in `src/system_controller.cpp` and `lib/drivers/powe
 | | SCL | GPIO 5 | I2C clock (400 kHz) |
 | **UART** | TX | GPIO 18 | Audio TX → DFPlayer RX |
 | | RX | GPIO 17 | Audio RX ← DFPlayer TX |
-| **GPIO** | RTC_INT | GPIO 8 | DS3231 interrupt (active low) |
+| **GPIO** | RTC_INT | GPIO 2 | DS3231 interrupt (active low) |
+| | BTN_0 | GPIO 8 | Alarm stop / divergence re-trigger |
+| | BTN_1 | GPIO 12 | Display mode cycle |
+| | BTN_2 | GPIO 13 | Backlight profile cycle |
 | | PCA_OE | GPIO 4 | PCA9685 output enable (active low) |
 | | ANODE_A0–A2 | GPIO 9–11 | 74HC238 anode mux address lines |
 | | HV_PWR | GPIO 15 | HV power rail enable (via `GpioPowerSwitch`) |
