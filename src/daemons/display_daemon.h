@@ -66,8 +66,8 @@ private:
     static constexpr uint32_t kDivergenceJumpMs = 3000;
     static constexpr uint32_t kDivergenceFrozenMs = 60000;
     static constexpr uint32_t kDivergenceTotalMs = kDivergenceJumpMs + kDivergenceFrozenMs;
-    static constexpr uint32_t kDivergenceStepMs = 100;
-    static constexpr uint32_t kCathodeStepMs = 1000;
+    static constexpr uint32_t kDivergenceStepMs = 50;
+    static constexpr uint32_t kCathodeStepMs = 300;
     static constexpr uint8_t kCathodeSteps = 15;
 
     INixieDriver &nixie_driver_;
