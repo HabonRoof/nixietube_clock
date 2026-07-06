@@ -69,7 +69,7 @@ void DisplayDaemon::reset_tube_transitions()
     }
 }
 
-void DisplayDaemon::request_auto_return_clock()
+void DisplayDaemon::auto_return_clock()
 {
     if (auto_return_requested_ || !system_queue_) {
         return;
@@ -212,7 +212,7 @@ void DisplayDaemon::update_divergence_meter(uint32_t dt_ms)
     divergence_.elapsed_ms += dt_ms;
 
     if (divergence_.elapsed_ms >= kDivergenceTotalMs) {
-        request_auto_return_clock();
+        auto_return_clock();
         return;
     }
 
@@ -243,8 +243,8 @@ void DisplayDaemon::update_cathode_poisoning(uint32_t dt_ms)
     cathode_.step_elapsed_ms = 0;
     cathode_.step++;
 
-    if (cathode_.step >= kCathodeSteps) {
-        request_auto_return_clock();
+    if (cathode_.step >= kCathodePoisonCtr) {
+        auto_return_clock();
         return;
     }
 

@@ -78,7 +78,7 @@ private:
     void reset_divergence_meter();
     void reset_cathode_poisoning();
     void reset_tube_transitions();
-    void request_auto_return_clock();
+    void auto_return_clock();
     void handle_time_update(const DisplayMessage &msg);
     std::array<uint8_t, 6> digits_from_time(const DisplayMessage &msg) const;
 
@@ -92,7 +92,7 @@ private:
     static constexpr uint32_t kDivergenceTotalMs = kDivergenceJumpMs + kDivergenceFrozenMs;
     static constexpr uint32_t kDivergenceStepMs = 50;
     static constexpr uint32_t kCathodeStepMs = 300;
-    static constexpr uint8_t kCathodeSteps = 15;
+    static constexpr uint8_t kCathodePoisonCtr = 15;
     static constexpr uint8_t kFadeStep = 51;
 
     INixieDriver &nixie_driver_;
