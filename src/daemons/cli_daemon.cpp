@@ -1,4 +1,6 @@
 #include "daemons/cli_daemon.h"
+#include "daemons/audio_daemon.h"
+#include "message_types.h"
 #include "gasgauge_service.h"
 #include "bq27441/bq27441_regs.h"
 #include "esp_console.h"
@@ -11,6 +13,7 @@
 #include "esp_mac.h"
 #include <cstring>
 #include <cstdio>
+#include <ctime>
 
 static const char *TAG = "CliDaemon";
 static SystemController *g_system_controller = nullptr;
@@ -18,6 +21,7 @@ static ChargerController *g_charger_controller = nullptr;
 static PowerController *g_power_controller = nullptr;
 static GasgaugeService *g_gasgauge_service = nullptr;
 static SystemState *g_system_state = nullptr;
+static AudioDaemon *g_audio_daemon = nullptr;
 
 #ifndef GIT_COMMIT_HASH
 #define GIT_COMMIT_HASH "unknown"
@@ -297,6 +301,449 @@ static int ggtool_func(int argc, char **argv)
     return 1;
 }
 
+// --- DFPlayer helpers ---
+static const char *df_audio_state_string(AudioPlaybackUiState state)
+{
+    switch (state) {
+        case AudioPlaybackUiState::PLAYING:
+            return "playing";
+        case AudioPlaybackUiState::PAUSED:
+            return "paused";
+        default:
+            return "stopped";
+    }
+}
+
+static bool df_send_audio_cmd(AudioCmd cmd, uint16_t param = 0)
+{
+    if (!g_audio_daemon) {
+        printf("audio daemon not ready\n");
+        return false;
+    }
+
+    AudioMessage msg = {};
+    msg.command = cmd;
+    if (cmd == AudioCmd::SET_VOLUME) {
+        msg.param.volume = static_cast<uint8_t>(param);
+    } else {
+        msg.param.track_number = param;
+    }
+
+    if (xQueueSend(g_audio_daemon->get_queue(), &msg, pdMS_TO_TICKS(100)) != pdTRUE) {
+        printf("audio command queue full\n");
+        return false;
+    }
+    return true;
+}
+
+static void df_print_track_name(uint16_t track)
+{
+    char name[16];
+    snprintf(name, sizeof(name), "%04u.mp3", track);
+    printf("  %u: %s\n", track, name);
+}
+
+// --- Command: dftool ---
+struct dftool_args {
+    struct arg_str *subcmd;
+    struct arg_end *end;
+};
+
+static struct dftool_args dftool_args;
+
+static int dftool_func(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&dftool_args);
+    if (nerrors > 0) {
+        arg_print_errors(stdout, dftool_args.end, "dftool");
+        return 1;
+    }
+
+    if (!g_audio_daemon) {
+        printf("audio daemon not ready\n");
+        return 1;
+    }
+
+    if (dftool_args.subcmd->count == 0) {
+        printf("Usage: dftool <list|status|play|toggle|pause|resume|stop|next|prev|volume|vol_up|vol_down> [args...]\n");
+        return 1;
+    }
+
+    const char *subcmd = dftool_args.subcmd->sval[0];
+
+    if (strcmp(subcmd, "list") == 0) {
+        uint16_t count = 0;
+        if (!g_audio_daemon->rpc_query_tracks(&count)) {
+            printf("Failed to query SD track count\n");
+            return 1;
+        }
+        printf("SD tracks: %u\n", count);
+        for (uint16_t i = 1; i <= count; ++i) {
+            df_print_track_name(i);
+        }
+        return 0;
+    }
+
+    if (strcmp(subcmd, "status") == 0) {
+        AudioDaemonStatus status = {};
+        if (!g_audio_daemon->rpc_get_status(&status)) {
+            printf("Failed to read playback status\n");
+            return 1;
+        }
+        printf("Track: %u\n", status.current_track);
+        printf("State: %s\n", df_audio_state_string(status.state));
+        printf("Track count: %u\n", status.track_count);
+        return 0;
+    }
+
+    if (strcmp(subcmd, "play") == 0) {
+        if (argc < 3) {
+            printf("Usage: dftool play <track> [--loop]\n");
+            return 1;
+        }
+
+        int track = atoi(argv[2]);
+        if (track < 1 || track > 9999) {
+            printf("Invalid track number (1-9999)\n");
+            return 1;
+        }
+
+        bool loop = false;
+        for (int i = 3; i < argc; ++i) {
+            if (strcmp(argv[i], "--loop") == 0) {
+                loop = true;
+            }
+        }
+
+        AudioCmd cmd = loop ? AudioCmd::PLAY_TRACK_LOOP : AudioCmd::PLAY_TRACK;
+        if (!df_send_audio_cmd(cmd, static_cast<uint16_t>(track))) {
+            return 1;
+        }
+        printf("Playing track %d%s\n", track, loop ? " (loop)" : "");
+        return 0;
+    }
+
+    if (strcmp(subcmd, "toggle") == 0) {
+        if (argc < 3) {
+            printf("Usage: dftool toggle <track>\n");
+            return 1;
+        }
+
+        int track = atoi(argv[2]);
+        if (track < 1 || track > 9999) {
+            printf("Invalid track number (1-9999)\n");
+            return 1;
+        }
+
+        AudioDaemonStatus status = {};
+        if (!g_audio_daemon->rpc_toggle_track(static_cast<uint16_t>(track), &status)) {
+            printf("Toggle failed\n");
+            return 1;
+        }
+        printf("Track %u: %s\n", status.current_track, df_audio_state_string(status.state));
+        return 0;
+    }
+
+    if (strcmp(subcmd, "pause") == 0) {
+        if (!df_send_audio_cmd(AudioCmd::PAUSE)) {
+            return 1;
+        }
+        printf("Playback paused\n");
+        return 0;
+    }
+
+    if (strcmp(subcmd, "resume") == 0) {
+        if (!df_send_audio_cmd(AudioCmd::RESUME)) {
+            return 1;
+        }
+        printf("Playback resumed\n");
+        return 0;
+    }
+
+    if (strcmp(subcmd, "stop") == 0) {
+        if (!df_send_audio_cmd(AudioCmd::STOP)) {
+            return 1;
+        }
+        printf("Playback stopped\n");
+        return 0;
+    }
+
+    if (strcmp(subcmd, "next") == 0) {
+        if (!df_send_audio_cmd(AudioCmd::NEXT)) {
+            return 1;
+        }
+        printf("Playing next track\n");
+        return 0;
+    }
+
+    if (strcmp(subcmd, "prev") == 0 || strcmp(subcmd, "previous") == 0) {
+        if (!df_send_audio_cmd(AudioCmd::PREVIOUS)) {
+            return 1;
+        }
+        printf("Playing previous track\n");
+        return 0;
+    }
+
+    if (strcmp(subcmd, "volume") == 0) {
+        if (argc < 3) {
+            printf("Usage: dftool volume <0-30>\n");
+            return 1;
+        }
+
+        int volume = atoi(argv[2]);
+        if (volume < 0 || volume > 30) {
+            printf("Invalid volume (0-30)\n");
+            return 1;
+        }
+
+        if (!df_send_audio_cmd(AudioCmd::SET_VOLUME, static_cast<uint16_t>(volume))) {
+            return 1;
+        }
+        printf("Volume set to %d\n", volume);
+        return 0;
+    }
+
+    if (strcmp(subcmd, "vol_up") == 0 || strcmp(subcmd, "volume_up") == 0) {
+        if (!df_send_audio_cmd(AudioCmd::VOLUME_UP)) {
+            return 1;
+        }
+        printf("Volume increased\n");
+        return 0;
+    }
+
+    if (strcmp(subcmd, "vol_down") == 0 || strcmp(subcmd, "volume_down") == 0) {
+        if (!df_send_audio_cmd(AudioCmd::VOLUME_DOWN)) {
+            return 1;
+        }
+        printf("Volume decreased\n");
+        return 0;
+    }
+
+    printf("Unknown subcommand: %s\n", subcmd);
+    printf("Usage: dftool <list|status|play|toggle|pause|resume|stop|next|prev|volume|vol_up|vol_down> [args...]\n");
+    return 1;
+}
+
+// --- RTC parse helpers (same formats as web UI) ---
+static bool rtc_parse_time(const char *text, struct tm *out_tm)
+{
+    if (!text || !out_tm) {
+        return false;
+    }
+
+    int year, month, day, hour, minute, second;
+    if (sscanf(text, "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &minute, &second) != 6) {
+        return false;
+    }
+    if (year < 2000 || year > 2099 || month < 1 || month > 12 || day < 1 || day > 31 ||
+        hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
+        return false;
+    }
+
+    memset(out_tm, 0, sizeof(*out_tm));
+    out_tm->tm_year = year - 1900;
+    out_tm->tm_mon = month - 1;
+    out_tm->tm_mday = day;
+    out_tm->tm_hour = hour;
+    out_tm->tm_min = minute;
+    out_tm->tm_sec = second;
+    out_tm->tm_isdst = 0;
+    return true;
+}
+
+static bool rtc_parse_alarm(const char *text, uint8_t *h, uint8_t *m, uint8_t *s)
+{
+    if (!text || !h || !m || !s) {
+        return false;
+    }
+    int hour, minute, second;
+    if (sscanf(text, "%d:%d:%d", &hour, &minute, &second) != 3) {
+        return false;
+    }
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
+        return false;
+    }
+    *h = static_cast<uint8_t>(hour);
+    *m = static_cast<uint8_t>(minute);
+    *s = static_cast<uint8_t>(second);
+    return true;
+}
+
+static ClockSettings rtc_load_settings()
+{
+    ClockSettings settings = SystemState::defaults();
+    if (g_system_state) {
+        g_system_state->get_settings(&settings);
+    }
+    return settings;
+}
+
+// --- Command: rtctool ---
+struct rtctool_args {
+    struct arg_str *subcmd;
+    struct arg_end *end;
+};
+
+static struct rtctool_args rtctool_args;
+
+static int rtctool_func(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&rtctool_args);
+    if (nerrors > 0) {
+        arg_print_errors(stdout, rtctool_args.end, "rtctool");
+        return 1;
+    }
+
+    if (!g_system_controller) {
+        printf("system controller not ready\n");
+        return 1;
+    }
+
+    if (rtctool_args.subcmd->count == 0) {
+        printf("Usage: rtctool <read|set_time|set_alarm|set_tz> [args...]\n");
+        return 1;
+    }
+
+    const char *subcmd = rtctool_args.subcmd->sval[0];
+
+    if (strcmp(subcmd, "read") == 0) {
+        struct tm local_tm = {};
+        bool time_valid = false;
+        bool osf = false;
+        float temperature = 0.0f;
+        time_t unix_utc = 0;
+        g_system_controller->get_time_status(&local_tm, &time_valid, &osf, &temperature, &unix_utc);
+
+        ClockSettings settings = rtc_load_settings();
+
+        printf("Local time: %04d-%02d-%02d %02d:%02d:%02d\n",
+               local_tm.tm_year + 1900, local_tm.tm_mon + 1, local_tm.tm_mday,
+               local_tm.tm_hour, local_tm.tm_min, local_tm.tm_sec);
+        printf("UTC epoch: %lld\n", static_cast<long long>(unix_utc));
+        printf("Timezone offset: %+d h\n", settings.tz_offset_hours);
+        printf("Time valid: %s\n", time_valid ? "yes" : "no");
+        printf("RTC calibrated: %s\n", settings.rtc_calibrated ? "yes" : "no");
+        printf("OSF (backup lost): %s\n", osf ? "yes" : "no");
+        printf("Temperature: %.2f C\n", temperature);
+        printf("Alarm enabled: %s\n", settings.alarm_enabled ? "yes" : "no");
+        printf("Alarm time: %02u:%02u:%02u\n",
+               settings.alarm_hour, settings.alarm_minute, settings.alarm_second);
+        printf("Alarm track: %u\n", settings.alarm_track);
+        return 0;
+    }
+
+    if (strcmp(subcmd, "set_time") == 0) {
+        char datetime[48] = {};
+        if (argc >= 4) {
+            snprintf(datetime, sizeof(datetime), "%s %s", argv[2], argv[3]);
+        } else if (argc >= 3) {
+            snprintf(datetime, sizeof(datetime), "%s", argv[2]);
+        } else {
+            printf("Usage: rtctool set_time <YYYY-MM-DD HH:MM:SS>\n");
+            printf("Example: rtctool set_time 2026-07-06 16:30:00\n");
+            return 1;
+        }
+
+        struct tm timeinfo = {};
+        if (!rtc_parse_time(datetime, &timeinfo)) {
+            printf("Invalid datetime. Use YYYY-MM-DD HH:MM:SS (local wall clock)\n");
+            return 1;
+        }
+
+        ClockSettings settings = rtc_load_settings();
+        settings.rtc_calibrated = true;
+        g_system_controller->request_settings_update(settings, &timeinfo);
+        printf("RTC calibration requested: %s (tz %+d)\n", datetime, settings.tz_offset_hours);
+        return 0;
+    }
+
+    if (strcmp(subcmd, "set_alarm") == 0) {
+        if (argc < 3) {
+            printf("Usage: rtctool set_alarm <HH:MM:SS> [--enable|--disable] [--track <n>]\n");
+            return 1;
+        }
+
+        uint8_t hour = 0;
+        uint8_t minute = 0;
+        uint8_t second = 0;
+        if (!rtc_parse_alarm(argv[2], &hour, &minute, &second)) {
+            printf("Invalid alarm time. Use HH:MM:SS\n");
+            return 1;
+        }
+
+        ClockSettings settings = rtc_load_settings();
+        settings.alarm_hour = hour;
+        settings.alarm_minute = minute;
+        settings.alarm_second = second;
+
+        bool enable_set = false;
+        bool disable_set = false;
+        for (int i = 3; i < argc; ++i) {
+            if (strcmp(argv[i], "--enable") == 0) {
+                enable_set = true;
+            } else if (strcmp(argv[i], "--disable") == 0) {
+                disable_set = true;
+            } else if (strcmp(argv[i], "--track") == 0) {
+                if (i + 1 >= argc) {
+                    printf("--track requires a value (1..9999)\n");
+                    return 1;
+                }
+                const int track = atoi(argv[++i]);
+                if (track < 1 || track > 9999) {
+                    printf("Track must be 1..9999\n");
+                    return 1;
+                }
+                settings.alarm_track = static_cast<uint16_t>(track);
+            } else {
+                printf("Unknown option: %s\n", argv[i]);
+                return 1;
+            }
+        }
+
+        if (disable_set && enable_set) {
+            printf("Use only one of --enable or --disable\n");
+            return 1;
+        }
+        if (disable_set) {
+            settings.alarm_enabled = false;
+        } else if (enable_set) {
+            settings.alarm_enabled = true;
+        } else {
+            settings.alarm_enabled = true;
+        }
+
+        g_system_controller->request_settings_update(settings, nullptr);
+        printf("Alarm update requested: %02u:%02u:%02u %s (track %u)\n",
+               settings.alarm_hour, settings.alarm_minute, settings.alarm_second,
+               settings.alarm_enabled ? "enabled" : "disabled", settings.alarm_track);
+        return 0;
+    }
+
+    if (strcmp(subcmd, "set_tz") == 0) {
+        if (argc < 3) {
+            printf("Usage: rtctool set_tz <offset_hours>\n");
+            printf("Example: rtctool set_tz 8\n");
+            return 1;
+        }
+
+        const int tz = atoi(argv[2]);
+        if (tz < -12 || tz > 14) {
+            printf("Timezone offset must be -12..14 hours\n");
+            return 1;
+        }
+
+        ClockSettings settings = rtc_load_settings();
+        settings.tz_offset_hours = static_cast<int8_t>(tz);
+        g_system_controller->request_settings_update(settings, nullptr);
+        printf("Timezone offset set to %+d h\n", settings.tz_offset_hours);
+        return 0;
+    }
+
+    printf("Unknown subcommand: %s\n", subcmd);
+    printf("Usage: rtctool <read|set_time|set_alarm|set_tz> [args...]\n");
+    return 1;
+}
+
 // --- Command: get_hw_version ---
 static int get_hw_version_func(int argc, char **argv)
 {
@@ -437,7 +884,20 @@ static int help_func(int argc, char **argv)
     printf("disable_hv                                      Disable HV power rail\n");
     printf("enable_df_power                                 Enable DFPlayer power rail\n");
     printf("disable_df_power                                Disable DFPlayer power rail\n");
+    printf("dftool list                                     List SD card audio tracks\n");
+    printf("dftool status                                   Show playback status\n");
+    printf("dftool play <track> [--loop]                    Play a track (optional loop)\n");
+    printf("dftool toggle <track>                           Play/pause toggle (web UI behavior)\n");
+    printf("dftool pause|resume|stop                        Pause, resume, or stop playback\n");
+    printf("dftool next|prev                                Play next or previous track\n");
+    printf("dftool volume <0-30>                            Set volume\n");
+    printf("dftool vol_up|vol_down                          Step volume up or down\n");
     printf("ggtool <status|peek|block|config|read|cache>  BQ27441 gasgauge tools\n");
+    printf("rtctool read                                    Read RTC time and alarm status\n");
+    printf("rtctool set_time <YYYY-MM-DD HH:MM:SS>          Calibrate RTC (local wall clock)\n");
+    printf("rtctool set_alarm <HH:MM:SS> [--enable|--disable] [--track <n>]\n");
+    printf("                                                Set daily alarm (local time)\n");
+    printf("rtctool set_tz <offset_hours>                   Set timezone offset (-12..14)\n");
     printf("reboot                                          reboot the device\n");
     return 0;
 }
@@ -446,12 +906,14 @@ CliDaemon::CliDaemon(SystemController &system_controller,
                      ChargerController &charger_controller,
                      GasgaugeService &gasgauge_service,
                      PowerController &power_controller,
-                     SystemState &system_state)
+                     SystemState &system_state,
+                     AudioDaemon &audio_daemon)
     : system_controller_(system_controller),
       charger_controller_(charger_controller),
       power_controller_(power_controller),
       gasgauge_service_(gasgauge_service),
       system_state_(system_state),
+      audio_daemon_(audio_daemon),
       task_handle_(nullptr)
 {
     g_system_controller = &system_controller;
@@ -459,6 +921,7 @@ CliDaemon::CliDaemon(SystemController &system_controller,
     g_gasgauge_service = &gasgauge_service;
     g_power_controller = &power_controller;
     g_system_state = &system_state;
+    g_audio_daemon = &audio_daemon;
 }
 
 CliDaemon::~CliDaemon()
@@ -550,6 +1013,20 @@ void CliDaemon::register_commands()
         .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&ggtool_cmd));
+
+    // Register: rtctool
+    rtctool_args.subcmd = arg_str1(NULL, NULL, "<subcmd>", "read|set_time|set_alarm|set_tz");
+    rtctool_args.end = arg_end(4);
+    const esp_console_cmd_t rtctool_cmd = {
+        .command = "rtctool",
+        .help = "DS3231 RTC: read, set_time, set_alarm, set_tz",
+        .hint = NULL,
+        .func = &rtctool_func,
+        .argtable = &rtctool_args,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&rtctool_cmd));
 
     // Register: get_uuid
     const esp_console_cmd_t get_uuid_cmd = {
@@ -682,6 +1159,21 @@ void CliDaemon::register_commands()
         .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&disable_df_power_cmd));
+
+    // Register: dftool
+    dftool_args.subcmd = arg_str1(NULL, NULL, "<subcmd>",
+                                  "list|status|play|toggle|pause|resume|stop|next|prev|volume|vol_up|vol_down");
+    dftool_args.end = arg_end(4);
+    const esp_console_cmd_t dftool_cmd = {
+        .command = "dftool",
+        .help = "DFPlayer: list, status, play, toggle, pause, resume, stop, next, prev, volume",
+        .hint = NULL,
+        .func = &dftool_func,
+        .argtable = &dftool_args,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&dftool_cmd));
 
     // Register: help
     const esp_console_cmd_t help_cmd = {

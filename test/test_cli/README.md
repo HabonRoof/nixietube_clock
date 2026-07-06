@@ -37,6 +37,21 @@ This document outlines the test plan for the Nixie Clock CLI.
 9.  **Invalid Command**:
     *   Command: `set_nixie --number` (missing value)
     *   Expected Result: Error message indicating missing argument.
+10. **RTC Read**:
+    *   Command: `rtctool read`
+    *   Expected Result: Local time, timezone, calibration/OSF flags, temperature, and alarm settings.
+11. **RTC Set Timezone**:
+    *   Command: `rtctool set_tz 8`
+    *   Expected Result: `Timezone offset set to +8 h`.
+12. **RTC Calibrate**:
+    *   Command: `rtctool set_time 2026-07-06 16:30:00`
+    *   Expected Result: `RTC calibration requested: ...` then `rtctool read` shows the new local time.
+13. **RTC Set Alarm**:
+    *   Command: `rtctool set_alarm 07:30:00 --enable --track 1`
+    *   Expected Result: `Alarm update requested: 07:30:00 enabled (track 1)`.
+14. **RTC Disable Alarm**:
+    *   Command: `rtctool set_alarm 07:30:00 --disable`
+    *   Expected Result: `Alarm update requested: ... disabled`.
 
 ## Automated Testing
 

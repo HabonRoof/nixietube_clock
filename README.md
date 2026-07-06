@@ -57,6 +57,7 @@ flowchart TB
     CLI --> SC
     CLI --> CC
     CLI --> PC
+    CLI --> AD
 
     SC --> DD
     SC --> AD
@@ -119,19 +120,103 @@ Configurable settings include timezone offset, alarm, backlight color/brightness
 
 ### CLI Daemon (`src/daemons/cli_daemon.cpp`)
 
-Serial console at **115200 baud** for development and diagnostics. Type `help` for the full list. Notable commands:
+Interactive serial console for development, diagnostics, and factory setup. Connect at **115200 baud** (8N1, no flow control) via USB or UART. The prompt is `nixie_clock> `. Type `help` for a summary of all commands.
+
+```bash
+pio run -t monitor
+```
+
+#### Display and backlight
 
 | Command | Description |
 | :--- | :--- |
-| `set_nixie --number <n>` | Display a number on the tubes |
-| `set_backlight --rgb R,G,B --brightness N` | Set backlight color and brightness |
-| `get_uuid` / `get_hw_version` / `get_fw_version` | Device identification |
-| `ggtool` | BQ27441 fuel-gauge diagnostics |
-| `get_bq25601_status` | Charger status registers |
+| `set_nixie --number <n>` | Display a 6-digit number on the tubes |
+| `set_backlight --rgb R,G,B --brightness N` | Set backlight color and brightness (0–255) |
+
+#### Device info
+
+| Command | Description |
+| :--- | :--- |
+| `get_uuid` | Wi-Fi MAC-based device ID |
+| `get_hw_version` | ESP32-S3 chip and board revision |
+| `get_fw_version` | Git commit hash and ESP-IDF version |
+| `reboot` | Restart the device |
+
+#### RTC and alarm (`rtctool`)
+
+The DS3231 RTC stores **UTC** internally; CLI time and alarm values are **local wall clock** and are converted using the configured timezone offset. Set operations are asynchronous — run `rtctool read` afterward to confirm.
+
+| Subcommand | Description |
+| :--- | :--- |
+| `rtctool read` | Read local time, UTC epoch, timezone, calibration/OSF status, temperature, and alarm settings |
+| `rtctool set_tz <offset_hours>` | Set timezone offset (-12..+14) |
+| `rtctool set_time <YYYY-MM-DD HH:MM:SS>` | Calibrate RTC and system clock (marks RTC as calibrated) |
+| `rtctool set_alarm <HH:MM:SS> [--enable\|--disable] [--track <n>]` | Set daily alarm time; enables alarm by default |
+
+Example workflow:
+
+```text
+nixie_clock> rtctool set_tz 8
+nixie_clock> rtctool set_time 2026-07-06 16:30:00
+nixie_clock> rtctool set_alarm 07:30:00 --enable --track 1
+nixie_clock> rtctool read
+```
+
+To disable the alarm without changing its time:
+
+```text
+nixie_clock> rtctool set_alarm 07:30:00 --disable
+```
+
+#### Power and charging
+
+| Command | Description |
+| :--- | :--- |
+| `get_bq25601_status` | Read BQ25601 charger status registers |
 | `enable_charging` / `disable_charging` | Control battery charging |
 | `enable_hv` / `disable_hv` | Control HV power rail |
 | `enable_df_power` / `disable_df_power` | Control DFPlayer power rail |
-| `reboot` | Restart the device |
+
+#### DFPlayer audio (`dftool`)
+
+Commands talk to the `AudioDaemon`, which powers the DFPlayer rail automatically when needed. SD card tracks are numbered `0001.mp3`, `0002.mp3`, etc. (up to 10 tracks by default).
+
+| Subcommand | Description |
+| :--- | :--- |
+| `dftool list` | List available SD card tracks |
+| `dftool status` | Show current track, playback state, and track count |
+| `dftool play <track> [--loop]` | Play a track; add `--loop` for repeat |
+| `dftool toggle <track>` | Play/pause toggle (same behavior as the web UI) |
+| `dftool pause` | Pause playback |
+| `dftool resume` | Resume playback |
+| `dftool stop` | Stop playback |
+| `dftool next` | Play next track |
+| `dftool prev` | Play previous track |
+| `dftool volume <0-30>` | Set volume (DFPlayer range) |
+| `dftool vol_up` / `dftool vol_down` | Step volume up or down |
+
+Example workflow:
+
+```text
+nixie_clock> dftool list
+nixie_clock> dftool play 1
+nixie_clock> dftool status
+nixie_clock> dftool pause
+nixie_clock> dftool resume
+nixie_clock> dftool volume 20
+nixie_clock> dftool stop
+```
+
+#### Fuel gauge (`ggtool`)
+
+| Subcommand | Description |
+| :--- | :--- |
+| `ggtool status` | Probe BQ27441 device info and gauging readiness |
+| `ggtool read` | Read live SOC, SOH, voltage, and current |
+| `ggtool cache` | Read last cached battery values from `SystemState` |
+| `ggtool peek <reg_hex> [len]` | Dump raw register bytes |
+| `ggtool block [class] [index]` | Dump a 32-byte state block |
+| `ggtool config [mAh]` | Configure design capacity |
 
 See `test/test_cli/README.md` for a manual test plan and automated test script.
 
