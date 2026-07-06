@@ -5,6 +5,7 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "soc/gpio_reg.h"
 #include <algorithm>
 
 namespace
@@ -34,6 +35,12 @@ struct AnodeScanCtx
 
 AnodeScanCtx g_anode_ctx;
 esp_timer_handle_t g_anode_timer = nullptr;
+portMUX_TYPE g_anode_mux = portMUX_INITIALIZER_UNLOCKED;
+
+constexpr uint32_t kAnodePinMask =
+    (1U << kAnodeA0) | (1U << kAnodeA1) | (1U << kAnodeA2);
+
+void select_anode(uint8_t address);
 
 struct ChannelRef
 {
@@ -71,24 +78,26 @@ void init_anode_mux()
     cfg.pull_down_en = GPIO_PULLDOWN_DISABLE;
     cfg.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio_config(&cfg);
-
-    gpio_set_level(kAnodeA0, (kAnodeBlankAddress >> 0) & 1);
-    gpio_set_level(kAnodeA1, (kAnodeBlankAddress >> 1) & 1);
-    gpio_set_level(kAnodeA2, (kAnodeBlankAddress >> 2) & 1);
+    select_anode(kAnodeBlankAddress);
 }
 
 void select_anode(uint8_t address)
 {
-    gpio_set_level(kAnodeA0, (address >> 0) & 1);
-    gpio_set_level(kAnodeA1, (address >> 1) & 1);
-    gpio_set_level(kAnodeA2, (address >> 2) & 1);
+    const uint32_t levels = ((address & 1U) << kAnodeA0) | (((address >> 1) & 1U) << kAnodeA1) |
+                            (((address >> 2) & 1U) << kAnodeA2);
+    portENTER_CRITICAL(&g_anode_mux);
+    const uint32_t out = REG_READ(GPIO_OUT_REG);
+    REG_WRITE(GPIO_OUT_REG, (out & ~kAnodePinMask) | levels);
+    portEXIT_CRITICAL(&g_anode_mux);
 }
 
 void anode_timer_callback(void *arg)
 {
     auto *ctx = static_cast<AnodeScanCtx *>(arg);
+    gpio_set_level(kPca9685OePin, 1);
     select_anode(kAnodeBlankAddress);
     select_anode(static_cast<uint8_t>(ctx->tube_index));
+    gpio_set_level(kPca9685OePin, 0);
     ctx->tube_index = (ctx->tube_index + 1) % kAnodeTubeCount;
 }
 

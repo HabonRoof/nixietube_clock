@@ -165,6 +165,7 @@ const char kIndexHtml[] =
     "<script>\n"
     "let liveTimer,protLiveTimer,loading=false,rtcSyncing=false,clockBase=null,audioState={track:0,state:'stopped'},"
     "savedAlarmTrack=1;\n"
+    "function pad2(n){return String(parseInt(n,10)||0).padStart(2,'0');}\n"
     "function intVal(id,fallback){var v=parseInt(document.getElementById(id).value,10);"
     "return isNaN(v)?fallback:v;}\n"
     "function updateRtcIndicator(j,errMsg){var led=document.getElementById('rtc_led'),"

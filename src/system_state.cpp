@@ -7,8 +7,7 @@
 namespace {
 constexpr const char *kNamespace = "clock_cfg";
 constexpr const char *kBlobKey = "settings";
-// Size of persisted ClockSettings before backlight_effect was added (v1).
-constexpr size_t kSettingsV1Size = offsetof(ClockSettings, backlight_effect);
+// Size of persisted ClockSettings before profiles were added (v4).
 constexpr size_t kSettingsV4Size = offsetof(ClockSettings, profiles);
 
 struct TubeProtectionPeriodV6 {
@@ -180,9 +179,14 @@ bool SystemState::load()
 
     const size_t prefix_len = std::min(stored_size, kSettingsV7ProtectionOffset);
     std::memcpy(&settings, buffer, prefix_len);
-    if (stored_size < sizeof(ClockSettings) && stored_size >= kSettingsV1Size) {
-        settings.volume = buffer[kSettingsV1Size - 1];
+    const uint16_t stored_version = settings.version;
+    bool needs_save = false;
+
+    if (stored_size < offsetof(ClockSettings, backlight_effect)) {
         settings.backlight_effect = 1;
+    }
+    if (stored_size < offsetof(ClockSettings, volume)) {
+        settings.volume = 15;
     }
     if (stored_size < sizeof(ClockSettings)) {
         settings.rtc_calibrated = false;
@@ -198,11 +202,23 @@ bool SystemState::load()
     } else if (stored_size < sizeof(ClockSettings)) {
         init_default_protection(&settings);
     }
+    if (stored_version < 8) {
+        settings.volume = 15;
+        needs_save = true;
+    }
+    if (settings.volume > 30) {
+        settings.volume = 15;
+        needs_save = true;
+    }
     settings.version = kSettingsVersion;
 
     portENTER_CRITICAL(&mux_);
     settings_ = settings;
     portEXIT_CRITICAL(&mux_);
+
+    if (needs_save) {
+        save_settings();
+    }
     return true;
 }
 

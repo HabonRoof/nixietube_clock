@@ -6,7 +6,7 @@
 
 // Bump whenever the layout/meaning of ClockSettings changes. NVS load uses
 // this to migrate (rather than discard) older persisted blobs.
-constexpr uint16_t kSettingsVersion = 7;
+constexpr uint16_t kSettingsVersion = 8;
 constexpr uint8_t kBacklightProfileCount = 4;
 
 struct BacklightProfile {
