@@ -16,10 +16,30 @@ enum class LedEffectType
     OFF
 };
 
+enum class NixieTransitionType
+{
+    INSTANT,
+    FADE,
+};
+
+enum class TubeTransitionPhase
+{
+    STABLE,
+    FADE_OUT,
+    FADE_IN,
+};
+
 enum class DivergencePhase
 {
     JUMPING,
     FROZEN,
+};
+
+struct TubeTransitionState
+{
+    TubeTransitionPhase phase = TubeTransitionPhase::STABLE;
+    uint8_t pending_digit = 0;
+    uint8_t current_scale = 255;
 };
 
 struct DivergenceMeterState
@@ -54,9 +74,13 @@ private:
     void update_effects(uint32_t dt_ms);
     void update_divergence_meter(uint32_t dt_ms);
     void update_cathode_poisoning(uint32_t dt_ms);
+    void update_nixie_transitions(uint32_t dt_ms);
     void reset_divergence_meter();
     void reset_cathode_poisoning();
+    void reset_tube_transitions();
     void request_auto_return_clock();
+    void handle_time_update(const DisplayMessage &msg);
+    std::array<uint8_t, 6> digits_from_time(const DisplayMessage &msg) const;
 
     void run_breath_effect(uint32_t dt_ms);
     void run_rainbow_effect(uint32_t dt_ms);
@@ -69,6 +93,7 @@ private:
     static constexpr uint32_t kDivergenceStepMs = 50;
     static constexpr uint32_t kCathodeStepMs = 300;
     static constexpr uint8_t kCathodeSteps = 15;
+    static constexpr uint8_t kFadeStep = 51;
 
     INixieDriver &nixie_driver_;
     ILedDriver &led_driver_;
@@ -80,9 +105,14 @@ private:
     DisplayMode current_mode_;
     uint32_t manual_number_;
     LedEffectType current_effect_type_;
+    NixieTransitionType current_nixie_transition_;
     float effect_color_phase_;
     float effect_speed_;
     BackLightState base_backlight_;
+    uint8_t base_nixie_brightness_;
+    std::array<uint8_t, 6> last_digits_{};
+    bool last_digits_valid_;
+    std::array<TubeTransitionState, 6> tube_transitions_{};
     DivergenceMeterState divergence_;
     CathodePoisoningState cathode_;
     bool auto_return_requested_;

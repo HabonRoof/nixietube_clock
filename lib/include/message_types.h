@@ -77,6 +77,7 @@ enum class DisplayCmd : uint8_t
     ENABLE_EFFECT,
     DIVERGENCE_RESTART,
     SET_NIXIE_BRIGHTNESS,
+    SET_NIXIE_TRANSITION,
 };
 
 enum class DisplayMode : uint8_t
@@ -109,6 +110,7 @@ struct DisplayMessage
         HsvColor hsv;
         uint8_t brightness;
         uint8_t effect_id; // 0: static, 1: breath, 2: rainbow, 3: off
+        uint8_t transition_id; // 0: instant, 1: fade
     } data;
 };
 

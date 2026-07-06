@@ -438,6 +438,11 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
         dmsg.data.brightness =
             settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness;
         xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+        dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;
+        dmsg.data.transition_id =
+            settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_transition;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
     }
 
     AudioMessage amsg = {};
@@ -907,6 +912,10 @@ void SystemController::apply_profile_to_display(const BacklightProfile &profile)
 
     dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
     dmsg.data.brightness = profile.nixie_brightness;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;
+    dmsg.data.transition_id = profile.nixie_transition;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 }
 

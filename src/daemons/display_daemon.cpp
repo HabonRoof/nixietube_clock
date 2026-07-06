@@ -17,9 +17,12 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver,
       current_mode_(DisplayMode::CLOCK_HHMMSS),
       manual_number_(0),
       current_effect_type_(LedEffectType::BREATH),
+      current_nixie_transition_(NixieTransitionType::INSTANT),
       effect_color_phase_(0.0f),
       effect_speed_(0.35f),
       base_backlight_{{0, 255, 255}, 255},
+      base_nixie_brightness_(255),
+      last_digits_valid_(false),
       divergence_{},
       cathode_{},
       auto_return_requested_(false)
@@ -58,6 +61,14 @@ void DisplayDaemon::task_entry(void *param)
     daemon->loop();
 }
 
+void DisplayDaemon::reset_tube_transitions()
+{
+    for (size_t i = 0; i < tube_transitions_.size(); ++i) {
+        tube_transitions_[i] = TubeTransitionState{};
+        nixie_driver_.set_tube_brightness(i, 255);
+    }
+}
+
 void DisplayDaemon::request_auto_return_clock()
 {
     if (auto_return_requested_ || !system_queue_) {
@@ -72,6 +83,7 @@ void DisplayDaemon::request_auto_return_clock()
 
 void DisplayDaemon::reset_divergence_meter()
 {
+    reset_tube_transitions();
     divergence_.phase = DivergencePhase::JUMPING;
     divergence_.elapsed_ms = 0;
     divergence_.since_jump_ms = 0;
@@ -81,6 +93,7 @@ void DisplayDaemon::reset_divergence_meter()
 
 void DisplayDaemon::reset_cathode_poisoning()
 {
+    reset_tube_transitions();
     cathode_.start_digit = static_cast<uint8_t>(esp_random() % 10);
     cathode_.step = 0;
     cathode_.step_elapsed_ms = 0;
@@ -90,6 +103,108 @@ void DisplayDaemon::reset_cathode_poisoning()
         cathode_.start_digit, cathode_.start_digit, cathode_.start_digit,
     };
     nixie_driver_.set_digits(digits);
+}
+
+std::array<uint8_t, 6> DisplayDaemon::digits_from_time(const DisplayMessage &msg) const
+{
+    if (current_mode_ == DisplayMode::DATE_YYMMDD) {
+        return {
+            static_cast<uint8_t>(msg.data.time.yy / 10),
+            static_cast<uint8_t>(msg.data.time.yy % 10),
+            static_cast<uint8_t>(msg.data.time.mm / 10),
+            static_cast<uint8_t>(msg.data.time.mm % 10),
+            static_cast<uint8_t>(msg.data.time.dd / 10),
+            static_cast<uint8_t>(msg.data.time.dd % 10),
+        };
+    }
+
+    return {
+        static_cast<uint8_t>(msg.data.time.h / 10),
+        static_cast<uint8_t>(msg.data.time.h % 10),
+        static_cast<uint8_t>(msg.data.time.m / 10),
+        static_cast<uint8_t>(msg.data.time.m % 10),
+        static_cast<uint8_t>(msg.data.time.s / 10),
+        static_cast<uint8_t>(msg.data.time.s % 10),
+    };
+}
+
+void DisplayDaemon::handle_time_update(const DisplayMessage &msg)
+{
+    const std::array<uint8_t, 6> digits = digits_from_time(msg);
+
+    if (current_nixie_transition_ != NixieTransitionType::FADE || !last_digits_valid_) {
+        if (current_mode_ == DisplayMode::DATE_YYMMDD) {
+            nixie_driver_.display_date(msg.data.time.yy, msg.data.time.mm, msg.data.time.dd);
+        } else {
+            nixie_driver_.display_time(msg.data.time.h, msg.data.time.m, msg.data.time.s);
+        }
+        last_digits_ = digits;
+        last_digits_valid_ = true;
+        return;
+    }
+
+    for (size_t i = 0; i < digits.size(); ++i) {
+        if (digits[i] == last_digits_[i]) {
+            continue;
+        }
+
+        TubeTransitionState &tube = tube_transitions_[i];
+        tube.pending_digit = digits[i];
+
+        if (tube.phase == TubeTransitionPhase::STABLE) {
+            tube.phase = TubeTransitionPhase::FADE_OUT;
+        }
+    }
+
+    last_digits_ = digits;
+    last_digits_valid_ = true;
+}
+
+void DisplayDaemon::update_nixie_transitions(uint32_t dt_ms)
+{
+    if (current_nixie_transition_ != NixieTransitionType::FADE) {
+        return;
+    }
+    if (current_mode_ != DisplayMode::CLOCK_HHMMSS &&
+        current_mode_ != DisplayMode::DATE_YYMMDD) {
+        return;
+    }
+
+    for (size_t i = 0; i < tube_transitions_.size(); ++i) {
+        TubeTransitionState &tube = tube_transitions_[i];
+
+        switch (tube.phase) {
+            case TubeTransitionPhase::STABLE:
+                break;
+
+            case TubeTransitionPhase::FADE_OUT: {
+                if (tube.current_scale <= kFadeStep) {
+                    tube.current_scale = 0;
+                    nixie_driver_.set_tube_brightness(i, 0);
+                    nixie_driver_.set_digit_at(i, tube.pending_digit);
+                    tube.phase = TubeTransitionPhase::FADE_IN;
+                } else {
+                    tube.current_scale = static_cast<uint8_t>(tube.current_scale - kFadeStep);
+                    nixie_driver_.set_tube_brightness(i, tube.current_scale);
+                }
+                break;
+            }
+
+            case TubeTransitionPhase::FADE_IN: {
+                if (tube.current_scale >= static_cast<uint8_t>(255 - kFadeStep)) {
+                    tube.current_scale = 255;
+                    nixie_driver_.set_tube_brightness(i, 255);
+                    tube.phase = TubeTransitionPhase::STABLE;
+                } else {
+                    tube.current_scale = static_cast<uint8_t>(tube.current_scale + kFadeStep);
+                    nixie_driver_.set_tube_brightness(i, tube.current_scale);
+                }
+                break;
+            }
+        }
+
+        (void)dt_ms;
+    }
 }
 
 void DisplayDaemon::update_divergence_meter(uint32_t dt_ms)
@@ -155,6 +270,9 @@ void DisplayDaemon::loop()
             update_divergence_meter(20);
         } else if (current_mode_ == DisplayMode::CATHODE_POISONING) {
             update_cathode_poisoning(20);
+        } else if (current_mode_ == DisplayMode::CLOCK_HHMMSS ||
+                   current_mode_ == DisplayMode::DATE_YYMMDD) {
+            update_nixie_transitions(20);
         }
 
         update_effects(20);
@@ -171,10 +289,9 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             if (current_mode_ == DisplayMode::OFF) {
                 break;
             }
-            if (current_mode_ == DisplayMode::CLOCK_HHMMSS) {
-                nixie_driver_.display_time(msg.data.time.h, msg.data.time.m, msg.data.time.s);
-            } else if (current_mode_ == DisplayMode::DATE_YYMMDD) {
-                nixie_driver_.display_date(msg.data.time.yy, msg.data.time.mm, msg.data.time.dd);
+            if (current_mode_ == DisplayMode::CLOCK_HHMMSS ||
+                current_mode_ == DisplayMode::DATE_YYMMDD) {
+                handle_time_update(msg);
             }
             break;
         case DisplayCmd::SET_MODE:
@@ -182,16 +299,20 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             if (current_mode_ == DisplayMode::CLOCK_HHMMSS ||
                 current_mode_ == DisplayMode::DATE_YYMMDD) {
                 auto_return_requested_ = false;
+                reset_tube_transitions();
+                last_digits_valid_ = false;
             }
             if (current_mode_ == DisplayMode::MANUAL_DISPLAY) {
+                reset_tube_transitions();
                 nixie_driver_.display_number(manual_number_);
-            } else             if (current_mode_ == DisplayMode::DIVERGENCE_METER) {
+            } else if (current_mode_ == DisplayMode::DIVERGENCE_METER) {
                 auto_return_requested_ = false;
                 reset_divergence_meter();
             } else if (current_mode_ == DisplayMode::CATHODE_POISONING) {
                 auto_return_requested_ = false;
                 reset_cathode_poisoning();
             } else if (current_mode_ == DisplayMode::OFF) {
+                reset_tube_transitions();
                 nixie_driver_.set_brightness(0);
             }
             break;
@@ -204,11 +325,20 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
         case DisplayCmd::SET_MANUAL_NUMBER:
             manual_number_ = msg.data.number;
             if (current_mode_ == DisplayMode::MANUAL_DISPLAY) {
+                reset_tube_transitions();
                 nixie_driver_.display_number(manual_number_);
             }
             break;
         case DisplayCmd::SET_NIXIE_BRIGHTNESS:
+            base_nixie_brightness_ = msg.data.brightness;
             nixie_driver_.set_brightness(msg.data.brightness);
+            break;
+        case DisplayCmd::SET_NIXIE_TRANSITION:
+            current_nixie_transition_ =
+                msg.data.transition_id == 1 ? NixieTransitionType::FADE : NixieTransitionType::INSTANT;
+            if (current_nixie_transition_ == NixieTransitionType::INSTANT) {
+                reset_tube_transitions();
+            }
             break;
         case DisplayCmd::SET_BACKLIGHT_COLOR:
             {

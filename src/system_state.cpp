@@ -59,6 +59,7 @@ void init_default_protection(ClockSettings *settings)
             .backlight_brightness = 0,
             .backlight_effect = 3,
             .nixie_brightness = 128,
+            .nixie_transition = 0,
         },
     };
 }
@@ -93,6 +94,7 @@ void init_profiles_from_backlight(ClockSettings *settings)
             .backlight_brightness = settings->backlight_brightness,
             .backlight_effect = settings->backlight_effect,
             .nixie_brightness = 255,
+            .nixie_transition = 0,
         };
     }
     settings->active_profile_index = 0;
@@ -197,6 +199,12 @@ bool SystemState::load()
         migrate_protection_from_v6(&settings, buffer, stored_size);
     } else if (stored_size < sizeof(ClockSettings)) {
         init_default_protection(&settings);
+    }
+    if (stored_size < sizeof(ClockSettings)) {
+        for (uint8_t i = 0; i < kBacklightProfileCount; ++i) {
+            settings.profiles[i].nixie_transition = 0;
+        }
+        settings.protection.profile.nixie_transition = 0;
     }
     settings.version = kSettingsVersion;
 
