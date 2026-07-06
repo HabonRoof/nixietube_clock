@@ -879,6 +879,8 @@ DisplayMode SystemController::next_display_mode(DisplayMode mode)
         case DisplayMode::CLOCK_HHMMSS:
             return DisplayMode::DATE_YYMMDD;
         case DisplayMode::DATE_YYMMDD:
+            return DisplayMode::POMODORO;
+        case DisplayMode::POMODORO:
             return DisplayMode::DIVERGENCE_METER;
         case DisplayMode::DIVERGENCE_METER:
             return DisplayMode::CATHODE_POISONING;
@@ -931,11 +933,17 @@ void SystemController::return_to_clock_mode()
 
 void SystemController::cycle_display_mode()
 {
+    const DisplayMode prev = current_display_mode_;
     current_display_mode_ = next_display_mode(current_display_mode_);
     DisplayMessage dmsg = {};
     dmsg.command = DisplayCmd::SET_MODE;
     dmsg.data.mode = current_display_mode_;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    if (prev == DisplayMode::POMODORO) {
+        ClockSettings settings;
+        system_state_.get_settings(&settings);
+        apply_profile_to_display(settings.profiles[settings.active_profile_index]);
+    }
     ESP_LOGI(TAG, "Display mode cycled to %u", static_cast<unsigned>(current_display_mode_));
 }
 
@@ -979,6 +987,14 @@ void SystemController::handle_button_press(uint8_t button_id)
             return;
         }
 
+        if (current_display_mode_ == DisplayMode::POMODORO) {
+            DisplayMessage dmsg = {};
+            dmsg.command = DisplayCmd::POMODORO_START;
+            xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+            ESP_LOGI(TAG, "Pomodoro started");
+            return;
+        }
+
         if (current_display_mode_ == DisplayMode::DIVERGENCE_METER) {
             DisplayMessage dmsg = {};
             dmsg.command = DisplayCmd::DIVERGENCE_RESTART;
@@ -994,6 +1010,9 @@ void SystemController::handle_button_press(uint8_t button_id)
     }
 
     if (button_id == kButtonProfileCycle) {
+        if (current_display_mode_ == DisplayMode::POMODORO) {
+            return;
+        }
         cycle_profile();
     }
 }

@@ -25,7 +25,7 @@ Pin assignments are defined in `src/system_controller.cpp` and `lib/drivers/powe
 | **UART** | TX | GPIO 18 | Audio TX → DFPlayer RX |
 | | RX | GPIO 17 | Audio RX ← DFPlayer TX |
 | **GPIO** | RTC_INT | GPIO 2 | DS3231 interrupt (active low) |
-| | BTN_0 | GPIO 8 | Alarm stop / divergence re-trigger |
+| | BTN_0 | GPIO 8 | Alarm stop / pomodoro start / divergence re-trigger |
 | | BTN_1 | GPIO 12 | Display mode cycle |
 | | BTN_2 | GPIO 13 | Backlight profile cycle |
 | | PCA_OE | GPIO 4 | PCA9685 output enable (active low) |
@@ -92,6 +92,18 @@ Manages all visual output:
 - Drives LED backlights via `LedDriver`.
 - Runs the LED effects engine (static, breath, rainbow, off).
 - Updates hardware at 50 Hz.
+
+#### Display modes (BTN_1 cycle)
+
+Press **BTN_1** to cycle through display modes in this order:
+
+1. **Clock** (`HHMMSS`) — normal time display
+2. **Date** (`YYMMDD`) — current date
+3. **Pomodoro** — 25-minute work / 5-minute break timer
+4. **Divergence meter** — random digit animation (auto-returns to clock)
+5. **Cathode poisoning** — digit sweep on all tubes (auto-returns to clock)
+
+**Pomodoro mode:** On entry the display shows `002500` with a static red backlight (brightness follows your profile). Press **BTN_0** to start the countdown; the backlight breathes red during work and green during break. Work and break sessions alternate automatically until you cycle away with **BTN_1**, which restores your backlight profile.
 
 ### Audio Daemon (`src/daemons/audio_daemon.cpp`)
 

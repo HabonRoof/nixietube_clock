@@ -78,12 +78,14 @@ enum class DisplayCmd : uint8_t
     DIVERGENCE_RESTART,
     SET_NIXIE_BRIGHTNESS,
     SET_NIXIE_TRANSITION,
+    POMODORO_START,
 };
 
 enum class DisplayMode : uint8_t
 {
     CLOCK_HHMMSS,
     DATE_YYMMDD,
+    POMODORO,
     DIVERGENCE_METER,
     CATHODE_POISONING,
     SETTING_MODE,

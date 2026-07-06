@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -57,6 +58,20 @@ struct CathodePoisoningState
     uint32_t step_elapsed_ms = 0;
 };
 
+enum class PomodoroPhase
+{
+    IDLE,
+    WORK,
+    BREAK,
+};
+
+struct PomodoroState
+{
+    PomodoroPhase phase = PomodoroPhase::IDLE;
+    uint32_t remaining_ms = 0;
+    uint32_t last_displayed_s = UINT32_MAX;
+};
+
 class DisplayDaemon
 {
 public:
@@ -74,9 +89,15 @@ private:
     void update_effects(uint32_t dt_ms);
     void update_divergence_meter(uint32_t dt_ms);
     void update_cathode_poisoning(uint32_t dt_ms);
+    void update_pomodoro(uint32_t dt_ms);
     void update_nixie_transitions(uint32_t dt_ms);
     void reset_divergence_meter();
     void reset_cathode_poisoning();
+    void reset_pomodoro();
+    void start_pomodoro_work();
+    void start_pomodoro_break();
+    void apply_pomodoro_backlight(PomodoroPhase phase);
+    void render_pomodoro_display();
     void reset_tube_transitions();
     void auto_return_clock();
     void handle_time_update(const DisplayMessage &msg);
@@ -94,6 +115,8 @@ private:
     static constexpr uint32_t kCathodeStepMs = 300;
     static constexpr uint8_t kCathodePoisonCtr = 15;
     static constexpr uint8_t kFadeStep = 51;
+    static constexpr uint32_t kPomodoroWorkMs = 25 * 60 * 1000;
+    static constexpr uint32_t kPomodoroBreakMs = 5 * 60 * 1000;
 
     INixieDriver &nixie_driver_;
     ILedDriver &led_driver_;
@@ -115,5 +138,6 @@ private:
     std::array<TubeTransitionState, 6> tube_transitions_{};
     DivergenceMeterState divergence_;
     CathodePoisoningState cathode_;
+    PomodoroState pomodoro_;
     bool auto_return_requested_;
 };

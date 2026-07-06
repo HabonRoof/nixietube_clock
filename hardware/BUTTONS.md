@@ -2,7 +2,7 @@
 
 | Net    | GPIO  | Function                          |
 |--------|-------|-----------------------------------|
-| BTN_0  | GPIO8 | Alarm stop / divergence re-trigger |
+| BTN_0  | GPIO8 | Alarm stop / pomodoro start / divergence re-trigger |
 | BTN_1  | GPIO12| Display mode cycle                |
 | BTN_2  | GPIO13| Backlight profile cycle           |
 

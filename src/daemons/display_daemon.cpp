@@ -25,6 +25,7 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver,
       last_digits_valid_(false),
       divergence_{},
       cathode_{},
+      pomodoro_{},
       auto_return_requested_(false)
 {
     queue_ = xQueueCreate(10, sizeof(DisplayMessage));
@@ -103,6 +104,89 @@ void DisplayDaemon::reset_cathode_poisoning()
         cathode_.start_digit, cathode_.start_digit, cathode_.start_digit,
     };
     nixie_driver_.set_digits(digits);
+}
+
+void DisplayDaemon::reset_pomodoro()
+{
+    reset_tube_transitions();
+    pomodoro_.phase = PomodoroPhase::IDLE;
+    pomodoro_.remaining_ms = kPomodoroWorkMs;
+    pomodoro_.last_displayed_s = UINT32_MAX;
+    render_pomodoro_display();
+    apply_pomodoro_backlight(PomodoroPhase::IDLE);
+}
+
+void DisplayDaemon::start_pomodoro_work()
+{
+    pomodoro_.phase = PomodoroPhase::WORK;
+    pomodoro_.remaining_ms = kPomodoroWorkMs;
+    pomodoro_.last_displayed_s = UINT32_MAX;
+    render_pomodoro_display();
+    apply_pomodoro_backlight(PomodoroPhase::WORK);
+}
+
+void DisplayDaemon::start_pomodoro_break()
+{
+    pomodoro_.phase = PomodoroPhase::BREAK;
+    pomodoro_.remaining_ms = kPomodoroBreakMs;
+    pomodoro_.last_displayed_s = UINT32_MAX;
+    render_pomodoro_display();
+    apply_pomodoro_backlight(PomodoroPhase::BREAK);
+}
+
+void DisplayDaemon::apply_pomodoro_backlight(PomodoroPhase phase)
+{
+    const RgbColor rgb = (phase == PomodoroPhase::BREAK)
+        ? RgbColor{0, 255, 0}
+        : RgbColor{255, 0, 0};
+    base_backlight_.color = rgb_to_hsv(rgb);
+
+    if (phase == PomodoroPhase::IDLE) {
+        current_effect_type_ = LedEffectType::NONE;
+    } else {
+        current_effect_type_ = LedEffectType::BREATH;
+        effect_speed_ = 0.35f;
+    }
+    effect_color_phase_ = 0.0f;
+}
+
+void DisplayDaemon::render_pomodoro_display()
+{
+    const uint32_t total_s = pomodoro_.remaining_ms / 1000;
+    if (total_s == pomodoro_.last_displayed_s) {
+        return;
+    }
+    pomodoro_.last_displayed_s = total_s;
+
+    const uint8_t h = static_cast<uint8_t>(total_s / 3600);
+    const uint8_t m = static_cast<uint8_t>((total_s % 3600) / 60);
+    const uint8_t s = static_cast<uint8_t>(total_s % 60);
+    nixie_driver_.display_time(h, m, s);
+}
+
+void DisplayDaemon::update_pomodoro(uint32_t dt_ms)
+{
+    if (pomodoro_.phase == PomodoroPhase::IDLE) {
+        return;
+    }
+
+    if (dt_ms >= pomodoro_.remaining_ms) {
+        pomodoro_.remaining_ms = 0;
+    } else {
+        pomodoro_.remaining_ms -= dt_ms;
+    }
+
+    render_pomodoro_display();
+
+    if (pomodoro_.remaining_ms > 0) {
+        return;
+    }
+
+    if (pomodoro_.phase == PomodoroPhase::WORK) {
+        start_pomodoro_break();
+    } else if (pomodoro_.phase == PomodoroPhase::BREAK) {
+        start_pomodoro_work();
+    }
 }
 
 std::array<uint8_t, 6> DisplayDaemon::digits_from_time(const DisplayMessage &msg) const
@@ -270,6 +354,8 @@ void DisplayDaemon::loop()
             update_divergence_meter(20);
         } else if (current_mode_ == DisplayMode::CATHODE_POISONING) {
             update_cathode_poisoning(20);
+        } else if (current_mode_ == DisplayMode::POMODORO) {
+            update_pomodoro(20);
         } else if (current_mode_ == DisplayMode::CLOCK_HHMMSS ||
                    current_mode_ == DisplayMode::DATE_YYMMDD) {
             update_nixie_transitions(20);
@@ -311,6 +397,8 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             } else if (current_mode_ == DisplayMode::CATHODE_POISONING) {
                 auto_return_requested_ = false;
                 reset_cathode_poisoning();
+            } else if (current_mode_ == DisplayMode::POMODORO) {
+                reset_pomodoro();
             } else if (current_mode_ == DisplayMode::OFF) {
                 reset_tube_transitions();
                 nixie_driver_.set_brightness(0);
@@ -320,6 +408,12 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             if (current_mode_ == DisplayMode::DIVERGENCE_METER) {
                 auto_return_requested_ = false;
                 reset_divergence_meter();
+            }
+            break;
+        case DisplayCmd::POMODORO_START:
+            if (current_mode_ == DisplayMode::POMODORO &&
+                pomodoro_.phase == PomodoroPhase::IDLE) {
+                start_pomodoro_work();
             }
             break;
         case DisplayCmd::SET_MANUAL_NUMBER:
