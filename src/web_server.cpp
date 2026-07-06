@@ -73,7 +73,24 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
                     ",\"backlight_effect\":" + std::to_string(p.backlight_effect) +
                     ",\"nixie_brightness\":" + std::to_string(p.nixie_brightness) + "}";
     }
-    response += "]}";
+    response += "],\"protection\":{";
+    {
+        const TubeProtectionSettings &p = settings.protection;
+        char start_time[8];
+        char end_time[8];
+        snprintf(start_time, sizeof(start_time), "%02u:%02u", p.start_hour, p.start_minute);
+        snprintf(end_time, sizeof(end_time), "%02u:%02u", p.end_hour, p.end_minute);
+        response += "\"enabled\":" + std::string(p.enabled ? "true" : "false") +
+                    ",\"start\":\"" + start_time + "\"" +
+                    ",\"end\":\"" + end_time + "\"" +
+                    ",\"profile\":{\"r\":" + std::to_string(p.profile.r) +
+                    ",\"g\":" + std::to_string(p.profile.g) +
+                    ",\"b\":" + std::to_string(p.profile.b) +
+                    ",\"backlight_brightness\":" + std::to_string(p.profile.backlight_brightness) +
+                    ",\"backlight_effect\":" + std::to_string(p.profile.backlight_effect) +
+                    ",\"nixie_brightness\":" + std::to_string(p.profile.nixie_brightness) + "}}";
+    }
+    response += "}";
 
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_send(req, response.c_str(), response.size());
@@ -199,6 +216,149 @@ static std::string extract_json_value(const std::string &json, const char *key)
         end = json.size();
     }
     return json.substr(start, end - start);
+}
+
+static bool parse_hh_mm(const char *text, uint8_t *h, uint8_t *m)
+{
+    if (!text || !h || !m) {
+        return false;
+    }
+    int hour = 0;
+    int minute = 0;
+    if (sscanf(text, "%d:%d", &hour, &minute) != 2) {
+        return false;
+    }
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+        return false;
+    }
+    *h = static_cast<uint8_t>(hour);
+    *m = static_cast<uint8_t>(minute);
+    return true;
+}
+
+static bool parse_protection_profile(const std::string &obj, BacklightProfile *profile)
+{
+    if (!profile) {
+        return false;
+    }
+
+    std::string r = extract_json_value(obj, "r");
+    std::string g = extract_json_value(obj, "g");
+    std::string b = extract_json_value(obj, "b");
+    if (!r.empty()) {
+        int value = std::stoi(r);
+        if (value >= 0 && value <= 255) {
+            profile->r = static_cast<uint8_t>(value);
+        }
+    }
+    if (!g.empty()) {
+        int value = std::stoi(g);
+        if (value >= 0 && value <= 255) {
+            profile->g = static_cast<uint8_t>(value);
+        }
+    }
+    if (!b.empty()) {
+        int value = std::stoi(b);
+        if (value >= 0 && value <= 255) {
+            profile->b = static_cast<uint8_t>(value);
+        }
+    }
+
+    std::string brightness = extract_json_value(obj, "backlight_brightness");
+    if (!brightness.empty()) {
+        int value = std::stoi(brightness);
+        if (value >= 0 && value <= 255) {
+            profile->backlight_brightness = static_cast<uint8_t>(value);
+        }
+    }
+
+    std::string effect = extract_json_value(obj, "backlight_effect");
+    if (!effect.empty()) {
+        int value = std::stoi(effect);
+        if (value >= 0 && value <= 3) {
+            profile->backlight_effect = static_cast<uint8_t>(value);
+        }
+    }
+
+    std::string nixie = extract_json_value(obj, "nixie_brightness");
+    if (!nixie.empty()) {
+        int value = std::stoi(nixie);
+        if (value >= 0 && value <= 255) {
+            profile->nixie_brightness = static_cast<uint8_t>(value);
+        }
+    }
+    return true;
+}
+
+static bool parse_protection_settings(const std::string &body, ClockSettings *settings)
+{
+    size_t key_pos = body.find("\"protection\"");
+    if (key_pos == std::string::npos) {
+        return false;
+    }
+    size_t obj_start = body.find('{', key_pos);
+    if (obj_start == std::string::npos) {
+        return false;
+    }
+
+    int depth = 0;
+    size_t obj_end = std::string::npos;
+    for (size_t i = obj_start; i < body.size(); ++i) {
+        if (body[i] == '{') {
+            depth++;
+        } else if (body[i] == '}') {
+            depth--;
+            if (depth == 0) {
+                obj_end = i;
+                break;
+            }
+        }
+    }
+    if (obj_end == std::string::npos) {
+        return false;
+    }
+
+    const std::string obj = body.substr(obj_start, obj_end - obj_start + 1);
+    TubeProtectionSettings &protection = settings->protection;
+
+    std::string enabled = extract_json_value(obj, "enabled");
+    if (!enabled.empty()) {
+        protection.enabled = (enabled == "true" || enabled == "1");
+    }
+
+    std::string start = extract_json_value(obj, "start");
+    if (!start.empty()) {
+        uint8_t h = 0;
+        uint8_t m = 0;
+        if (parse_hh_mm(start.c_str(), &h, &m)) {
+            protection.start_hour = h;
+            protection.start_minute = m;
+        }
+    }
+
+    std::string end = extract_json_value(obj, "end");
+    if (!end.empty()) {
+        uint8_t h = 0;
+        uint8_t m = 0;
+        if (parse_hh_mm(end.c_str(), &h, &m)) {
+            protection.end_hour = h;
+            protection.end_minute = m;
+        }
+    }
+
+    size_t profile_pos = obj.find("\"profile\"");
+    if (profile_pos != std::string::npos) {
+        size_t profile_start = obj.find('{', profile_pos);
+        if (profile_start != std::string::npos) {
+            size_t profile_end = obj.find('}', profile_start);
+            if (profile_end != std::string::npos) {
+                const std::string profile_obj =
+                    obj.substr(profile_start, profile_end - profile_start + 1);
+                parse_protection_profile(profile_obj, &protection.profile);
+            }
+        }
+    }
+    return true;
 }
 
 static const char *audio_state_string(AudioPlaybackUiState state)
@@ -409,6 +569,8 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
     if (has_time) {
         settings.rtc_calibrated = true;
     }
+
+    parse_protection_settings(body, &settings);
 
     if (!server->apply_settings(settings, has_time ? &timeinfo : nullptr)) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to apply settings");

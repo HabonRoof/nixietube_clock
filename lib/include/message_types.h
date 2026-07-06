@@ -13,6 +13,7 @@
 enum class AudioCmd : uint8_t
 {
     PLAY_TRACK,
+    PLAY_TRACK_LOOP,
     STOP,
     PAUSE,
     RESUME,

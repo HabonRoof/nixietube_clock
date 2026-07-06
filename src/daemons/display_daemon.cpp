@@ -168,6 +168,9 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
 {
     switch (msg.command) {
         case DisplayCmd::UPDATE_TIME:
+            if (current_mode_ == DisplayMode::OFF) {
+                break;
+            }
             if (current_mode_ == DisplayMode::CLOCK_HHMMSS) {
                 nixie_driver_.display_time(msg.data.time.h, msg.data.time.m, msg.data.time.s);
             } else if (current_mode_ == DisplayMode::DATE_YYMMDD) {
@@ -188,6 +191,8 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             } else if (current_mode_ == DisplayMode::CATHODE_POISONING) {
                 auto_return_requested_ = false;
                 reset_cathode_poisoning();
+            } else if (current_mode_ == DisplayMode::OFF) {
+                nixie_driver_.set_brightness(0);
             }
             break;
         case DisplayCmd::DIVERGENCE_RESTART:

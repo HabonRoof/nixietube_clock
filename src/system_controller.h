@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "esp_timer.h"
 #include "driver/rmt_tx.h"
 #include "driver/rmt_encoder.h"
 #include "driver/uart.h"
@@ -48,7 +49,15 @@ public:
                          time_t *unix_utc = nullptr);
 
 private:
+    enum class ProtectionState : uint8_t
+    {
+        Normal,
+        ProtectedAsleep,
+        ProtectedAwake,
+    };
+
     static void task_entry(void *param);
+    static void alarm_stop_timer_cb(void *arg);
     void loop();
     void process_message(const SystemMessage &msg);
     void update_time();
@@ -57,6 +66,15 @@ private:
     void sync_battery_from_gauge();
     void invalidate_battery_status();
     void check_alarm();
+    void check_protection_idle();
+    void evaluate_protection(uint8_t hour, uint8_t minute);
+    void enter_protection_sleep();
+    void wake_from_protection();
+    void restore_user_profile();
+    void push_current_time_to_display(const struct tm &local_tm);
+    void cancel_alarm_timer();
+    void start_alarm_timer();
+    void stop_alarm_audio();
     void handle_button_press(uint8_t button_id);
     void return_to_clock_mode();
     void cycle_display_mode();
@@ -77,9 +95,15 @@ private:
     uint8_t battery_read_failures_;
     bool gasgauge_ready_;
     bool alarm_audio_active_;
+    esp_timer_handle_t alarm_stop_timer_;
+    ProtectionState protection_state_;
+    bool protection_window_active_;
+    TickType_t protection_idle_deadline_;
     DisplayMode current_display_mode_;
     TickType_t next_rtc_sync_;
     TickType_t next_battery_poll_;
 
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
+    static constexpr uint32_t kAlarmMaxDurationMs = 180000;
+    static constexpr uint32_t kProtectionIdleMs = 60000;
 };

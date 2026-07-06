@@ -12,8 +12,37 @@
 #include "driver/i2c.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
+#include "esp_timer.h"
 
 static const char *TAG = "SystemController";
+
+namespace {
+
+bool time_in_protection_window(uint16_t now_minutes, const TubeProtectionSettings &protection)
+{
+    const uint16_t start =
+        static_cast<uint16_t>(protection.start_hour) * 60U + protection.start_minute;
+    const uint16_t end =
+        static_cast<uint16_t>(protection.end_hour) * 60U + protection.end_minute;
+    if (start == end) {
+        return false;
+    }
+    if (start < end) {
+        return now_minutes >= start && now_minutes < end;
+    }
+    return now_minutes >= start || now_minutes < end;
+}
+
+bool protection_is_active(const ClockSettings &settings, uint8_t hour, uint8_t minute)
+{
+    if (!settings.protection.enabled) {
+        return false;
+    }
+    const uint16_t now_minutes = static_cast<uint16_t>(hour) * 60U + minute;
+    return time_in_protection_window(now_minutes, settings.protection);
+}
+
+} // namespace
 
 // Timekeeping policy: maintain ESP32 system time (UTC) and periodically
 // resync from the DS3231 (the ±2ppm truth source) to correct drift.
@@ -198,6 +227,10 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       battery_read_failures_(0),
       gasgauge_ready_(gasgauge_ready_at_boot),
       alarm_audio_active_(false),
+      alarm_stop_timer_(nullptr),
+      protection_state_(ProtectionState::Normal),
+      protection_window_active_(false),
+      protection_idle_deadline_(0),
       current_display_mode_(DisplayMode::CLOCK_HHMMSS),
       next_rtc_sync_(0),
       next_battery_poll_(0)
@@ -212,10 +245,25 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
     } else {
         ESP_LOGE(TAG, "RTC Initialization Failed");
     }
+
+    esp_timer_create_args_t timer_args = {};
+    timer_args.callback = alarm_stop_timer_cb;
+    timer_args.arg = this;
+    timer_args.dispatch_method = ESP_TIMER_TASK;
+    timer_args.name = "alarm_stop";
+    if (esp_timer_create(&timer_args, &alarm_stop_timer_) != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to create alarm stop timer");
+        alarm_stop_timer_ = nullptr;
+    }
 }
 
 SystemController::~SystemController()
 {
+    cancel_alarm_timer();
+    if (alarm_stop_timer_) {
+        esp_timer_delete(alarm_stop_timer_);
+        alarm_stop_timer_ = nullptr;
+    }
     if (task_handle_) {
         vTaskDelete(task_handle_);
     }
@@ -283,6 +331,7 @@ void SystemController::loop()
         }
 
         check_alarm();
+        check_protection_idle();
 
         vTaskDelay(poll_interval);
     }
@@ -414,6 +463,49 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
             rtc_.clear_alarm1_flag();
         }
     }
+
+    time_t now_utc = 0;
+    time(&now_utc);
+    struct tm local_tm;
+    time_t local = now_utc + (time_t)settings.tz_offset_hours * 3600;
+    gmtime_r(&local, &local_tm);
+    evaluate_protection(static_cast<uint8_t>(local_tm.tm_hour),
+                        static_cast<uint8_t>(local_tm.tm_min));
+}
+
+void SystemController::alarm_stop_timer_cb(void *arg)
+{
+    auto *self = static_cast<SystemController *>(arg);
+    self->stop_alarm_audio();
+}
+
+void SystemController::cancel_alarm_timer()
+{
+    if (alarm_stop_timer_) {
+        esp_timer_stop(alarm_stop_timer_);
+    }
+}
+
+void SystemController::start_alarm_timer()
+{
+    if (!alarm_stop_timer_) {
+        return;
+    }
+    cancel_alarm_timer();
+    esp_timer_start_once(alarm_stop_timer_, kAlarmMaxDurationMs * 1000ULL);
+}
+
+void SystemController::stop_alarm_audio()
+{
+    cancel_alarm_timer();
+    if (!alarm_audio_active_) {
+        return;
+    }
+    AudioMessage amsg = {};
+    amsg.command = AudioCmd::STOP;
+    xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
+    alarm_audio_active_ = false;
+    ESP_LOGI(TAG, "Alarm audio stopped");
 }
 
 void SystemController::check_alarm()
@@ -446,11 +538,125 @@ void SystemController::check_alarm()
     xQueueSend(audio_daemon_.get_queue(), &vol_msg, 0);
 
     AudioMessage amsg = {};
-    amsg.command = AudioCmd::PLAY_TRACK;
+    amsg.command = AudioCmd::PLAY_TRACK_LOOP;
     amsg.param.track_number = track;
     xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
     alarm_audio_active_ = true;
-    ESP_LOGI(TAG, "Alarm triggered, playing track %u", track);
+    start_alarm_timer();
+    ESP_LOGI(TAG, "Alarm triggered, playing track %u (loop, max %u s)", track,
+             kAlarmMaxDurationMs / 1000U);
+}
+
+void SystemController::push_current_time_to_display(const struct tm &local_tm)
+{
+    DisplayMessage msg = {};
+    msg.command = DisplayCmd::UPDATE_TIME;
+    msg.data.time.yy = static_cast<uint8_t>((local_tm.tm_year + 1900) % 100);
+    msg.data.time.mm = static_cast<uint8_t>(local_tm.tm_mon + 1);
+    msg.data.time.dd = static_cast<uint8_t>(local_tm.tm_mday);
+    msg.data.time.h = static_cast<uint8_t>(local_tm.tm_hour);
+    msg.data.time.m = static_cast<uint8_t>(local_tm.tm_min);
+    msg.data.time.s = static_cast<uint8_t>(local_tm.tm_sec);
+    xQueueSend(display_daemon_.get_queue(), &msg, 0);
+}
+
+void SystemController::enter_protection_sleep()
+{
+    current_display_mode_ = DisplayMode::OFF;
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_MODE;
+    dmsg.data.mode = DisplayMode::OFF;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+    dmsg.data.brightness = 0;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_EFFECT;
+    dmsg.data.effect_id = 3;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    ESP_LOGI(TAG, "Tube protection: display asleep");
+}
+
+void SystemController::wake_from_protection()
+{
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+    apply_profile_to_display(settings.protection.profile);
+
+    current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_MODE;
+    dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    time_t now_utc = 0;
+    time(&now_utc);
+    struct tm local_tm;
+    time_t local = now_utc + (time_t)settings.tz_offset_hours * 3600;
+    gmtime_r(&local, &local_tm);
+    push_current_time_to_display(local_tm);
+
+    protection_state_ = ProtectionState::ProtectedAwake;
+    protection_idle_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kProtectionIdleMs);
+    ESP_LOGI(TAG, "Tube protection: display awake");
+}
+
+void SystemController::restore_user_profile()
+{
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+    const BacklightProfile &profile =
+        settings.profiles[settings.active_profile_index % kBacklightProfileCount];
+    apply_profile_to_display(profile);
+}
+
+void SystemController::evaluate_protection(uint8_t hour, uint8_t minute)
+{
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+    const bool in_window = protection_is_active(settings, hour, minute);
+
+    if (!in_window) {
+        if (protection_state_ != ProtectionState::Normal || protection_window_active_) {
+            restore_user_profile();
+            if (protection_state_ != ProtectionState::Normal) {
+                current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
+                DisplayMessage dmsg = {};
+                dmsg.command = DisplayCmd::SET_MODE;
+                dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
+                xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+            }
+            protection_state_ = ProtectionState::Normal;
+            protection_window_active_ = false;
+            ESP_LOGI(TAG, "Tube protection: normal operation");
+        }
+        return;
+    }
+
+    protection_window_active_ = true;
+
+    if (protection_state_ == ProtectionState::ProtectedAwake) {
+        return;
+    }
+
+    if (protection_state_ != ProtectionState::ProtectedAsleep) {
+        protection_state_ = ProtectionState::ProtectedAsleep;
+        enter_protection_sleep();
+    }
+}
+
+void SystemController::check_protection_idle()
+{
+    if (protection_state_ != ProtectionState::ProtectedAwake) {
+        return;
+    }
+    if ((int32_t)(xTaskGetTickCount() - protection_idle_deadline_) < 0) {
+        return;
+    }
+    protection_state_ = ProtectionState::ProtectedAsleep;
+    enter_protection_sleep();
+    ESP_LOGI(TAG, "Tube protection: idle timeout, display asleep");
 }
 
 void SystemController::update_time()
@@ -484,6 +690,9 @@ void SystemController::update_time()
     msg.data.time.m = static_cast<uint8_t>(local_tm.tm_min);
     msg.data.time.s = static_cast<uint8_t>(local_tm.tm_sec);
     xQueueSend(display_daemon_.get_queue(), &msg, 0);
+
+    evaluate_protection(static_cast<uint8_t>(local_tm.tm_hour),
+                        static_cast<uint8_t>(local_tm.tm_min));
 }
 
 void SystemController::sync_time_from_rtc()
@@ -740,13 +949,18 @@ void SystemController::handle_button_press(uint8_t button_id)
 {
     ESP_LOGI(TAG, "Button pressed: %u", button_id);
 
+    if (protection_state_ == ProtectionState::ProtectedAsleep) {
+        wake_from_protection();
+        return;
+    }
+
+    if (protection_state_ == ProtectionState::ProtectedAwake) {
+        protection_idle_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kProtectionIdleMs);
+    }
+
     if (button_id == kButtonAlarmStop) {
         if (is_alarm_audio_active()) {
-            AudioMessage amsg = {};
-            amsg.command = AudioCmd::STOP;
-            xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
-            alarm_audio_active_ = false;
-            ESP_LOGI(TAG, "Alarm audio stopped");
+            stop_alarm_audio();
             return;
         }
 

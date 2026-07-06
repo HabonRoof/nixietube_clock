@@ -11,6 +11,79 @@ constexpr const char *kBlobKey = "settings";
 constexpr size_t kSettingsV1Size = offsetof(ClockSettings, backlight_effect);
 constexpr size_t kSettingsV4Size = offsetof(ClockSettings, profiles);
 
+struct TubeProtectionPeriodV6 {
+    bool enabled;
+    uint8_t start_hour;
+    uint8_t start_minute;
+    uint8_t end_hour;
+    uint8_t end_minute;
+    bool clock_on;
+    uint8_t profile_index;
+};
+
+struct ClockSettingsV6 {
+    uint16_t version;
+    int8_t tz_offset_hours;
+    bool alarm_enabled;
+    uint8_t alarm_hour;
+    uint8_t alarm_minute;
+    uint8_t alarm_second;
+    uint16_t alarm_track;
+    uint8_t backlight_r;
+    uint8_t backlight_g;
+    uint8_t backlight_b;
+    uint8_t backlight_brightness;
+    uint8_t backlight_effect;
+    uint8_t volume;
+    bool rtc_calibrated;
+    BacklightProfile profiles[kBacklightProfileCount];
+    uint8_t active_profile_index;
+    TubeProtectionPeriodV6 protection_periods[3];
+};
+
+constexpr size_t kSettingsV6Size = sizeof(ClockSettingsV6);
+constexpr size_t kSettingsV7ProtectionOffset = offsetof(ClockSettings, protection);
+
+void init_default_protection(ClockSettings *settings)
+{
+    settings->protection = TubeProtectionSettings{
+        .enabled = true,
+        .start_hour = 0,
+        .start_minute = 0,
+        .end_hour = 7,
+        .end_minute = 0,
+        .profile = BacklightProfile{
+            .r = 0,
+            .g = 0,
+            .b = 0,
+            .backlight_brightness = 0,
+            .backlight_effect = 3,
+            .nixie_brightness = 128,
+        },
+    };
+}
+
+void migrate_protection_from_v6(ClockSettings *settings, const uint8_t *buffer, size_t stored_size)
+{
+    if (stored_size < kSettingsV6Size) {
+        init_default_protection(settings);
+        return;
+    }
+
+    TubeProtectionPeriodV6 period0 = {};
+    std::memcpy(&period0,
+                buffer + offsetof(ClockSettingsV6, protection_periods),
+                sizeof(period0));
+
+    settings->protection.enabled = period0.enabled;
+    settings->protection.start_hour = period0.start_hour;
+    settings->protection.start_minute = period0.start_minute;
+    settings->protection.end_hour = period0.end_hour;
+    settings->protection.end_minute = period0.end_minute;
+    settings->protection.profile =
+        settings->profiles[period0.profile_index % kBacklightProfileCount];
+}
+
 void init_profiles_from_backlight(ClockSettings *settings)
 {
     for (uint8_t i = 0; i < kBacklightProfileCount; ++i) {
@@ -62,6 +135,7 @@ ClockSettings SystemState::defaults()
         .active_profile_index = 0,
     };
     init_profiles_from_backlight(&settings);
+    init_default_protection(&settings);
     return settings;
 }
 
@@ -105,8 +179,8 @@ bool SystemState::load()
         return false;
     }
 
-    size_t copy_len = std::min(stored_size, sizeof(ClockSettings));
-    std::memcpy(&settings, buffer, copy_len);
+    const size_t prefix_len = std::min(stored_size, kSettingsV7ProtectionOffset);
+    std::memcpy(&settings, buffer, prefix_len);
     if (stored_size < sizeof(ClockSettings) && stored_size >= kSettingsV1Size) {
         settings.volume = buffer[kSettingsV1Size - 1];
         settings.backlight_effect = 1;
@@ -119,6 +193,11 @@ bool SystemState::load()
     }
     if (stored_size < kSettingsV4Size) {
         init_profiles_from_backlight(&settings);
+    }
+    if (stored_size >= kSettingsV6Size && stored_size < sizeof(ClockSettings)) {
+        migrate_protection_from_v6(&settings, buffer, stored_size);
+    } else if (stored_size < sizeof(ClockSettings)) {
+        init_default_protection(&settings);
     }
     settings.version = kSettingsVersion;
 

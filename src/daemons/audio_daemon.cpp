@@ -287,6 +287,16 @@ void AudioDaemon::process_message(const AudioMessage &msg)
         case AudioCmd::PLAY_TRACK:
             cancel_boot_chime();
             ensure_dfplayer_power();
+            driver_.set_loop(false);
+            if (driver_.play_track(msg.param.track_number) == ESP_OK) {
+                current_track_ = msg.param.track_number;
+                playback_state_ = AudioPlaybackUiState::PLAYING;
+            }
+            break;
+        case AudioCmd::PLAY_TRACK_LOOP:
+            cancel_boot_chime();
+            ensure_dfplayer_power();
+            driver_.set_loop(true);
             if (driver_.play_track(msg.param.track_number) == ESP_OK) {
                 current_track_ = msg.param.track_number;
                 playback_state_ = AudioPlaybackUiState::PLAYING;
@@ -294,6 +304,7 @@ void AudioDaemon::process_message(const AudioMessage &msg)
             break;
         case AudioCmd::STOP:
             ensure_dfplayer_power();
+            driver_.set_loop(false);
             if (driver_.stop() == ESP_OK) {
                 playback_state_ = AudioPlaybackUiState::STOPPED;
             }

@@ -20,6 +20,12 @@ esp_err_t AudioDriver::play_track(uint16_t track_number)
     return player_.play_track(track_number);
 }
 
+esp_err_t AudioDriver::set_loop(bool enable)
+{
+    ensure_initialized();
+    return player_.set_loop(enable);
+}
+
 esp_err_t AudioDriver::stop()
 {
     ensure_initialized();
