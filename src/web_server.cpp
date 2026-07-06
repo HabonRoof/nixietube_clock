@@ -189,6 +189,16 @@ static bool parse_rgb(const char *text, uint8_t *r, uint8_t *g, uint8_t *b)
     return true;
 }
 
+static std::string json_before_key(const std::string &json, const char *key)
+{
+    const std::string pattern = std::string("\"") + key + "\"";
+    const size_t key_pos = json.find(pattern);
+    if (key_pos == std::string::npos) {
+        return json;
+    }
+    return json.substr(0, key_pos);
+}
+
 static std::string extract_json_value(const std::string &json, const char *key)
 {
     std::string pattern = std::string("\"") + key + "\"";
@@ -502,7 +512,11 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         }
     }
 
-    std::string rgb = extract_json_value(body, "backlight_rgb");
+    // Only read top-level backlight fields so nested protection.profile keys
+    // cannot overwrite the active user profile.
+    const std::string top_level = json_before_key(body, "protection");
+
+    std::string rgb = extract_json_value(top_level, "backlight_rgb");
     if (!rgb.empty()) {
         uint8_t r, g, b;
         if (parse_rgb(rgb.c_str(), &r, &g, &b)) {
@@ -512,7 +526,7 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         }
     }
 
-    std::string brightness = extract_json_value(body, "backlight_brightness");
+    std::string brightness = extract_json_value(top_level, "backlight_brightness");
     if (!brightness.empty()) {
         int value = std::stoi(brightness);
         if (value >= 0 && value <= 255) {
@@ -520,7 +534,7 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         }
     }
 
-    std::string effect = extract_json_value(body, "backlight_effect");
+    std::string effect = extract_json_value(top_level, "backlight_effect");
     if (!effect.empty()) {
         int value = std::stoi(effect);
         if (value >= 0 && value <= 3) {
@@ -528,7 +542,7 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         }
     }
 
-    std::string nixie_brightness = extract_json_value(body, "nixie_brightness");
+    std::string nixie_brightness = extract_json_value(top_level, "nixie_brightness");
     uint8_t nixie_value = settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness;
     if (!nixie_brightness.empty()) {
         int value = std::stoi(nixie_brightness);
@@ -537,7 +551,7 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         }
     }
 
-    std::string save_profile = extract_json_value(body, "save_profile_index");
+    std::string save_profile = extract_json_value(top_level, "save_profile_index");
     if (!save_profile.empty()) {
         int profile_index = std::stoi(save_profile);
         if (profile_index >= 0 && profile_index < kBacklightProfileCount) {

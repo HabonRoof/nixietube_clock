@@ -84,11 +84,9 @@ extern "C" void app_main(void)
     static InputDaemon input_daemon(system_controller);
     static ChargerController charger_controller(charger_driver);
 
-    {
-        ClockSettings settings;
-        system_state.get_settings(&settings);
-        system_controller.apply_settings(settings, nullptr);
-    }
+    ClockSettings settings;
+    system_state.get_settings(&settings);
+    system_controller.apply_settings(settings, nullptr);
 
     static CliDaemon cli_daemon(system_controller, charger_controller, gasgauge_service,
                                 power_controller, system_state);

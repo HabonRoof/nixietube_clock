@@ -414,25 +414,31 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
         }
     }
 
-    DisplayMessage dmsg = {};
-    dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
-    dmsg.data.color.r = settings.backlight_r;
-    dmsg.data.color.g = settings.backlight_g;
-    dmsg.data.color.b = settings.backlight_b;
-    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    if (protection_state_ == ProtectionState::ProtectedAsleep) {
+        // Keep the display off while protection sleep is active.
+    } else if (protection_state_ == ProtectionState::ProtectedAwake) {
+        apply_profile_to_display(settings.protection.profile);
+    } else {
+        DisplayMessage dmsg = {};
+        dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
+        dmsg.data.color.r = settings.backlight_r;
+        dmsg.data.color.g = settings.backlight_g;
+        dmsg.data.color.b = settings.backlight_b;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
-    dmsg.command = DisplayCmd::SET_BACKLIGHT_BRIGHTNESS;
-    dmsg.data.brightness = settings.backlight_brightness;
-    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+        dmsg.command = DisplayCmd::SET_BACKLIGHT_BRIGHTNESS;
+        dmsg.data.brightness = settings.backlight_brightness;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
-    dmsg.command = DisplayCmd::SET_EFFECT;
-    dmsg.data.effect_id = settings.backlight_effect;
-    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+        dmsg.command = DisplayCmd::SET_EFFECT;
+        dmsg.data.effect_id = settings.backlight_effect;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
-    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
-    dmsg.data.brightness =
-        settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness;
-    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+        dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+        dmsg.data.brightness =
+            settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    }
 
     AudioMessage amsg = {};
     amsg.command = AudioCmd::SET_VOLUME;

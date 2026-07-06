@@ -75,13 +75,12 @@ void migrate_protection_from_v6(ClockSettings *settings, const uint8_t *buffer, 
                 buffer + offsetof(ClockSettingsV6, protection_periods),
                 sizeof(period0));
 
+    init_default_protection(settings);
     settings->protection.enabled = period0.enabled;
     settings->protection.start_hour = period0.start_hour;
     settings->protection.start_minute = period0.start_minute;
     settings->protection.end_hour = period0.end_hour;
     settings->protection.end_minute = period0.end_minute;
-    settings->protection.profile =
-        settings->profiles[period0.profile_index % kBacklightProfileCount];
 }
 
 void init_profiles_from_backlight(ClockSettings *settings)
@@ -129,7 +128,7 @@ ClockSettings SystemState::defaults()
         .backlight_b = 128,
         .backlight_brightness = 128,
         .backlight_effect = 1,
-        .volume = 20,
+        .volume = 15,
         .rtc_calibrated = false,
         .profiles = {},
         .active_profile_index = 0,
