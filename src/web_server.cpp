@@ -405,13 +405,13 @@ static esp_err_t audio_tracks_get_handler(httpd_req_t *req)
                                HTTPD_RESP_USE_STRLEN);
     }
 
-    std::string response = "{\"count\":" + std::to_string(count) + ",\"tracks\":[";
+    std::string response = "{\"folder\":\"mp3\",\"count\":" + std::to_string(count) + ",\"tracks\":[";
     for (uint16_t i = 1; i <= count; ++i) {
         if (i > 1) {
             response += ',';
         }
-        char name[16];
-        snprintf(name, sizeof(name), "%04u.mp3", i);
+        char name[24];
+        snprintf(name, sizeof(name), "mp3/%04u.mp3", i);
         response += "{\"id\":" + std::to_string(i) + ",\"name\":\"" + name + "\"}";
     }
     response += "]}";

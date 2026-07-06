@@ -48,7 +48,7 @@ public:
     DfPlayerMini &operator=(const DfPlayerMini &) = delete;
 
     esp_err_t begin(int baud_rate = 9600);
-    esp_err_t play_track(uint16_t track_number);
+    esp_err_t play_from_mp3_folder(uint16_t file_number);
     esp_err_t play_next();
     esp_err_t play_previous();
     esp_err_t pause();

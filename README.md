@@ -179,11 +179,11 @@ nixie_clock> rtctool set_alarm 07:30:00 --disable
 
 #### DFPlayer audio (`dftool`)
 
-Commands talk to the `AudioDaemon`, which powers the DFPlayer rail automatically when needed. SD card tracks are numbered `0001.mp3`, `0002.mp3`, etc. (up to 10 tracks by default).
+Commands talk to the `AudioDaemon`, which powers the DFPlayer rail automatically when needed. Place MP3 files in an `mp3` folder on the SD card root and name them `0001.mp3`, `0002.mp3`, etc. (up to 9999). Track numbers match the numeric prefix in each filename.
 
 | Subcommand | Description |
 | :--- | :--- |
-| `dftool list` | List available SD card tracks |
+| `dftool list` | List tracks in the SD card `mp3/` folder |
 | `dftool status` | Show current track, playback state, and track count |
 | `dftool play <track> [--loop]` | Play a track; add `--loop` for repeat |
 | `dftool toggle <track>` | Play/pause toggle (same behavior as the web UI) |

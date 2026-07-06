@@ -17,6 +17,7 @@ constexpr size_t kFrameSize = 10;
 constexpr uint8_t kCmdNext = 0x01;
 constexpr uint8_t kCmdPrevious = 0x02;
 constexpr uint8_t kCmdPlayTrack = 0x03;
+constexpr uint8_t kCmdPlayMp3Folder = 0x12;
 constexpr uint8_t kCmdVolumeUp = 0x04;
 constexpr uint8_t kCmdVolumeDown = 0x05;
 constexpr uint8_t kCmdSetVolume = 0x06;
@@ -30,11 +31,11 @@ constexpr uint8_t kCmdLoopThisTrack = 0x19;
 
 // Query commands (datasheet: Query System Parameters)
 constexpr uint8_t kCmdQueryStatus = 0x42;
-constexpr uint8_t kCmdQuerySdFileCount = 0x47;
-constexpr uint8_t kCmdQueryUdiskFileCount = 0x48;
+constexpr uint8_t kCmdQueryUdiskFileCount = 0x47;
+constexpr uint8_t kCmdQuerySdFileCount = 0x48;
 constexpr uint8_t kCmdQueryFlashFileCount = 0x49;
-constexpr uint8_t kCmdQuerySdCurrentTrack = 0x4B;
-constexpr uint8_t kCmdQueryUdiskCurrentTrack = 0x4C;
+constexpr uint8_t kCmdQueryUdiskCurrentTrack = 0x4B;
+constexpr uint8_t kCmdQuerySdCurrentTrack = 0x4C;
 constexpr uint8_t kRspFeedbackBase = 0x48;
 
 constexpr TickType_t kInterCommandDelayMs = 80;
@@ -223,7 +224,7 @@ esp_err_t DfPlayerMini::query_sd_track_count(uint16_t *out_count, uint32_t timeo
     }
 
     uint16_t count = 0;
-    esp_err_t err = send_query(kCmdQueryFlashFileCount, &count, timeout_ms);
+    esp_err_t err = send_query(kCmdQuerySdFileCount, &count, timeout_ms);
     if (err != ESP_OK)
     {
         return err;
@@ -302,24 +303,30 @@ esp_err_t DfPlayerMini::query_playback_status(DfPlayerPlaybackStatus *out_status
     return ESP_OK;
 }
 
-esp_err_t DfPlayerMini::play_track(uint16_t track_number)
+esp_err_t DfPlayerMini::play_from_mp3_folder(uint16_t file_number)
 {
-    esp_err_t err = send_simple_command(kCmdPlayTrack, track_number);
+    if (file_number < 1 || file_number > 9999)
+    {
+        ESP_LOGE(kLogTag, "MP3 folder file number out of range: %u", file_number);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    esp_err_t err = send_simple_command(kCmdPlayMp3Folder, file_number);
     if (err == ESP_OK && mutex_)
     {
         xSemaphoreTake(mutex_, portMAX_DELAY);
-        state_.track_number = track_number;
+        state_.track_number = file_number;
         state_.paused = false;
         state_.playback_status = DfPlayerPlaybackStatus::kPlaying;
         state_.low_power = false;
-        auto it = track_names_.find(track_number);
+        auto it = track_names_.find(file_number);
         if (it != track_names_.end())
         {
-            ESP_LOGI(kLogTag, "Playing track %u: %s", track_number, it->second.c_str());
+            ESP_LOGI(kLogTag, "Playing mp3/%04u.mp3 (%s)", file_number, it->second.c_str());
         }
         else
         {
-            ESP_LOGI(kLogTag, "Playing track %u", track_number);
+            ESP_LOGI(kLogTag, "Playing mp3/%04u.mp3", file_number);
         }
         xSemaphoreGive(mutex_);
     }

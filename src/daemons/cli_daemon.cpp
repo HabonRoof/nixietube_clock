@@ -338,8 +338,8 @@ static bool df_send_audio_cmd(AudioCmd cmd, uint16_t param = 0)
 
 static void df_print_track_name(uint16_t track)
 {
-    char name[16];
-    snprintf(name, sizeof(name), "%04u.mp3", track);
+    char name[20];
+    snprintf(name, sizeof(name), "mp3/%04u.mp3", track);
     printf("  %u: %s\n", track, name);
 }
 
@@ -374,10 +374,10 @@ static int dftool_func(int argc, char **argv)
     if (strcmp(subcmd, "list") == 0) {
         uint16_t count = 0;
         if (!g_audio_daemon->rpc_query_tracks(&count)) {
-            printf("Failed to query SD track count\n");
+            printf("Failed to query mp3/ folder track count\n");
             return 1;
         }
-        printf("SD tracks: %u\n", count);
+        printf("mp3/ tracks: %u\n", count);
         for (uint16_t i = 1; i <= count; ++i) {
             df_print_track_name(i);
         }
@@ -884,7 +884,7 @@ static int help_func(int argc, char **argv)
     printf("disable_hv                                      Disable HV power rail\n");
     printf("enable_df_power                                 Enable DFPlayer power rail\n");
     printf("disable_df_power                                Disable DFPlayer power rail\n");
-    printf("dftool list                                     List SD card audio tracks\n");
+    printf("dftool list                                     List mp3/ folder tracks on SD card\n");
     printf("dftool status                                   Show playback status\n");
     printf("dftool play <track> [--loop]                    Play a track (optional loop)\n");
     printf("dftool toggle <track>                           Play/pause toggle (web UI behavior)\n");
