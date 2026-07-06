@@ -1,4 +1,5 @@
 #pragma once
+// TODO: Remove this once the I2C debugging is complete
 
 // Temporary I2C isolation flags for BQ27441 debugging.
 namespace i2c_debug {

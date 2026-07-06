@@ -39,7 +39,8 @@ extern "C" void app_main(void)
     }
 
     HardwareHandles hw_handles = SystemController::init_hardware();
-
+    
+    // Driver injection points
     static Bq27441 gasgauge_driver(hw_handles.i2c_port);
     static GasgaugeService gasgauge_service(gasgauge_driver);
     static SystemState system_state;

@@ -17,7 +17,7 @@ static const char *TAG = "SystemController";
 
 // Timekeeping policy: maintain ESP32 system time (UTC) and periodically
 // resync from the DS3231 (the ±2ppm truth source) to correct drift.
-static constexpr uint32_t kResyncIntervalMs = 30000; // 1 hour
+static constexpr uint32_t kResyncIntervalMs = 3600000; // 1 hour
 static constexpr uint8_t kMaxReadFailures = 5;
 
 // Convert a broken-down UTC time to a Unix epoch without relying on timegm()
@@ -204,6 +204,7 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
     
+    // TODO: Remove this once the DS3231 RTC is working
     if (i2c_debug::kDisableDs3231Rtc) {
         ESP_LOGW(TAG, "DS3231 RTC I2C disabled");
     } else if (rtc_.init()) {
