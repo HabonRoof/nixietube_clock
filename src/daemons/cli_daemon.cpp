@@ -27,7 +27,7 @@ static AudioDaemon *g_audio_daemon = nullptr;
 #define GIT_COMMIT_HASH "unknown"
 #endif
 
-#define DEV_BOARD_VERSION "v0.9.0" // Hardcoded for now
+#define DEV_BOARD_VERSION "v0.9.1" // Hardcoded for now
 
 // --- Command: set_nixie ---
 struct set_nixie_args {
