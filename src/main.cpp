@@ -89,7 +89,7 @@ extern "C" void app_main(void)
     system_controller.apply_settings(settings, nullptr);
 
     static CliDaemon cli_daemon(system_controller, charger_controller, gasgauge_service,
-                                power_controller, system_state);
+                                power_controller, system_state, audio_daemon);
     static WebServer web_server(system_controller, system_state, audio_daemon);
 
     ESP_LOGI(kLogTag, "Starting Daemons...");

@@ -42,7 +42,6 @@ private:
     static constexpr uint16_t kBootChimeTrack = 3;
     static constexpr uint32_t kBootPlayDelayMs = 3000;
     static constexpr uint32_t kBootPlayDurationMs = 10000;
-    static constexpr uint16_t kKnownSdTrackCount = 10;
 
     IAudioDriver &driver_;
     PowerController &power_controller_;

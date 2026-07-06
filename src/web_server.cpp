@@ -48,6 +48,7 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
 
     const uint8_t active = settings.active_profile_index % kBacklightProfileCount;
     const uint8_t nixie_brightness = settings.profiles[active].nixie_brightness;
+    const uint8_t nixie_transition = settings.profiles[active].nixie_transition;
 
     std::string response = "{\"tz_offset\":" + std::to_string(settings.tz_offset_hours) +
                            ",\"alarm_enabled\":" + (settings.alarm_enabled ? "true" : "false") +
@@ -60,6 +61,7 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
                            ",\"rtc_calibrated\":" + (settings.rtc_calibrated ? "true" : "false") +
                            ",\"active_profile_index\":" + std::to_string(settings.active_profile_index) +
                            ",\"nixie_brightness\":" + std::to_string(nixie_brightness) +
+                           ",\"nixie_transition\":" + std::to_string(nixie_transition) +
                            ",\"profiles\":[";
     for (uint8_t i = 0; i < kBacklightProfileCount; ++i) {
         if (i > 0) {
@@ -71,7 +73,8 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
                     ",\"b\":" + std::to_string(p.b) +
                     ",\"backlight_brightness\":" + std::to_string(p.backlight_brightness) +
                     ",\"backlight_effect\":" + std::to_string(p.backlight_effect) +
-                    ",\"nixie_brightness\":" + std::to_string(p.nixie_brightness) + "}";
+                    ",\"nixie_brightness\":" + std::to_string(p.nixie_brightness) +
+                    ",\"nixie_transition\":" + std::to_string(p.nixie_transition) + "}";
     }
     response += "],\"protection\":{";
     {
@@ -88,7 +91,8 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
                     ",\"b\":" + std::to_string(p.profile.b) +
                     ",\"backlight_brightness\":" + std::to_string(p.profile.backlight_brightness) +
                     ",\"backlight_effect\":" + std::to_string(p.profile.backlight_effect) +
-                    ",\"nixie_brightness\":" + std::to_string(p.profile.nixie_brightness) + "}}";
+                    ",\"nixie_brightness\":" + std::to_string(p.profile.nixie_brightness) +
+                    ",\"nixie_transition\":" + std::to_string(p.profile.nixie_transition) + "}}";
     }
     response += "}";
 
@@ -297,6 +301,14 @@ static bool parse_protection_profile(const std::string &obj, BacklightProfile *p
             profile->nixie_brightness = static_cast<uint8_t>(value);
         }
     }
+
+    std::string transition = extract_json_value(obj, "nixie_transition");
+    if (!transition.empty()) {
+        int value = std::stoi(transition);
+        if (value >= 0 && value <= 1) {
+            profile->nixie_transition = static_cast<uint8_t>(value);
+        }
+    }
     return true;
 }
 
@@ -393,13 +405,13 @@ static esp_err_t audio_tracks_get_handler(httpd_req_t *req)
                                HTTPD_RESP_USE_STRLEN);
     }
 
-    std::string response = "{\"count\":" + std::to_string(count) + ",\"tracks\":[";
+    std::string response = "{\"folder\":\"mp3\",\"count\":" + std::to_string(count) + ",\"tracks\":[";
     for (uint16_t i = 1; i <= count; ++i) {
         if (i > 1) {
             response += ',';
         }
-        char name[16];
-        snprintf(name, sizeof(name), "%04u.mp3", i);
+        char name[24];
+        snprintf(name, sizeof(name), "mp3/%04u.mp3", i);
         response += "{\"id\":" + std::to_string(i) + ",\"name\":\"" + name + "\"}";
     }
     response += "]}";
@@ -551,6 +563,16 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         }
     }
 
+    std::string nixie_transition = extract_json_value(top_level, "nixie_transition");
+    uint8_t transition_value =
+        settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_transition;
+    if (!nixie_transition.empty()) {
+        int value = std::stoi(nixie_transition);
+        if (value >= 0 && value <= 1) {
+            transition_value = static_cast<uint8_t>(value);
+        }
+    }
+
     std::string save_profile = extract_json_value(top_level, "save_profile_index");
     if (!save_profile.empty()) {
         int profile_index = std::stoi(save_profile);
@@ -562,11 +584,19 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
                 .backlight_brightness = settings.backlight_brightness,
                 .backlight_effect = settings.backlight_effect,
                 .nixie_brightness = nixie_value,
+                .nixie_transition = transition_value,
             };
             settings.active_profile_index = static_cast<uint8_t>(profile_index);
         }
-    } else if (!nixie_brightness.empty()) {
-        settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness = nixie_value;
+    } else {
+        BacklightProfile &active_profile =
+            settings.profiles[settings.active_profile_index % kBacklightProfileCount];
+        if (!nixie_brightness.empty()) {
+            active_profile.nixie_brightness = nixie_value;
+        }
+        if (!nixie_transition.empty()) {
+            active_profile.nixie_transition = transition_value;
+        }
     }
 
     std::string volume = extract_json_value(body, "volume");

@@ -9,7 +9,7 @@ class IAudioDriver
 {
 public:
     virtual ~IAudioDriver() = default;
-    virtual esp_err_t play_track(uint16_t track_number) = 0;
+    virtual esp_err_t play_from_mp3_folder(uint16_t file_number) = 0;
     virtual esp_err_t set_loop(bool enable) = 0;
     virtual esp_err_t stop() = 0;
     virtual esp_err_t pause() = 0;
@@ -32,7 +32,7 @@ public:
     explicit AudioDriver(uart_port_t uart_num);
     ~AudioDriver() override = default;
 
-    esp_err_t play_track(uint16_t track_number) override;
+    esp_err_t play_from_mp3_folder(uint16_t file_number) override;
     esp_err_t set_loop(bool enable) override;
     esp_err_t stop() override;
     esp_err_t pause() override;

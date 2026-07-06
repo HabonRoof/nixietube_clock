@@ -257,7 +257,7 @@ void AudioDaemon::toggle_track(uint16_t track)
         return;
     }
 
-    if (driver_.play_track(track) == ESP_OK) {
+    if (driver_.play_from_mp3_folder(track) == ESP_OK) {
         current_track_ = track;
         playback_state_ = AudioPlaybackUiState::PLAYING;
     }
@@ -288,7 +288,7 @@ void AudioDaemon::process_message(const AudioMessage &msg)
             cancel_boot_chime();
             ensure_dfplayer_power();
             driver_.set_loop(false);
-            if (driver_.play_track(msg.param.track_number) == ESP_OK) {
+            if (driver_.play_from_mp3_folder(msg.param.track_number) == ESP_OK) {
                 current_track_ = msg.param.track_number;
                 playback_state_ = AudioPlaybackUiState::PLAYING;
             }
@@ -297,7 +297,7 @@ void AudioDaemon::process_message(const AudioMessage &msg)
             cancel_boot_chime();
             ensure_dfplayer_power();
             driver_.set_loop(true);
-            if (driver_.play_track(msg.param.track_number) == ESP_OK) {
+            if (driver_.play_from_mp3_folder(msg.param.track_number) == ESP_OK) {
                 current_track_ = msg.param.track_number;
                 playback_state_ = AudioPlaybackUiState::PLAYING;
             }
@@ -347,13 +347,16 @@ void AudioDaemon::process_message(const AudioMessage &msg)
             break;
         case AudioCmd::QUERY_TRACK_COUNT: {
             ensure_dfplayer_power();
-            const uint16_t count = kKnownSdTrackCount;
-            track_count_ = count;
-            track_count_valid_ = true;
-            if (msg.response_count) {
-                *msg.response_count = count;
+            uint16_t count = 0;
+            const bool ok = driver_.query_sd_track_count(&count) == ESP_OK && count > 0;
+            if (ok) {
+                track_count_ = count;
+                track_count_valid_ = true;
+                if (msg.response_count) {
+                    *msg.response_count = count;
+                }
             }
-            complete_rpc(msg, true);
+            complete_rpc(msg, ok);
             break;
         }
         case AudioCmd::GET_STATUS: {
@@ -373,7 +376,7 @@ void AudioDaemon::process_message(const AudioMessage &msg)
         case AudioCmd::BOOT_CHIME_PLAY:
             ensure_dfplayer_power();
             driver_.set_volume(boot_volume_);
-            if (driver_.play_track(kBootChimeTrack) == ESP_OK) {
+            if (driver_.play_from_mp3_folder(kBootChimeTrack) == ESP_OK) {
                 current_track_ = kBootChimeTrack;
                 playback_state_ = AudioPlaybackUiState::PLAYING;
                 boot_chime_active_ = true;

@@ -110,6 +110,7 @@ NixieDriver::NixieDriver()
 {
     for (size_t i = 0; i < digit_cache_.size(); ++i) {
         digit_cache_[i] = 0;
+        tube_brightness_[i] = 255;
     }
     for (auto &ref : active_cathode_) {
         ref = {255, 255};
@@ -118,10 +119,6 @@ NixieDriver::NixieDriver()
 
 void NixieDriver::display_time(uint8_t h, uint8_t m, uint8_t s)
 {
-    if (tubes_.size() < 6) {
-        return;
-    }
-
     portENTER_CRITICAL(&mux_);
     digit_cache_[0] = h / 10;
     digit_cache_[1] = h % 10;
@@ -131,18 +128,10 @@ void NixieDriver::display_time(uint8_t h, uint8_t m, uint8_t s)
     digit_cache_[5] = s % 10;
     pwm_dirty_ = true;
     portEXIT_CRITICAL(&mux_);
-
-    for (size_t i = 0; i < tubes_.size(); ++i) {
-        tubes_[i].set_numeral(digit_cache_[i]);
-    }
 }
 
 void NixieDriver::display_date(uint8_t yy, uint8_t mm, uint8_t dd)
 {
-    if (tubes_.size() < 6) {
-        return;
-    }
-
     portENTER_CRITICAL(&mux_);
     digit_cache_[0] = yy / 10;
     digit_cache_[1] = yy % 10;
@@ -152,25 +141,17 @@ void NixieDriver::display_date(uint8_t yy, uint8_t mm, uint8_t dd)
     digit_cache_[5] = dd % 10;
     pwm_dirty_ = true;
     portEXIT_CRITICAL(&mux_);
-
-    for (size_t i = 0; i < tubes_.size(); ++i) {
-        tubes_[i].set_numeral(digit_cache_[i]);
-    }
 }
 
 void NixieDriver::display_number(uint32_t number)
 {
     portENTER_CRITICAL(&mux_);
-    for (int i = static_cast<int>(tubes_.size()) - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(kTubeCount) - 1; i >= 0; --i) {
         digit_cache_[static_cast<size_t>(i)] = number % 10;
         number /= 10;
     }
     pwm_dirty_ = true;
     portEXIT_CRITICAL(&mux_);
-
-    for (size_t i = 0; i < tubes_.size(); ++i) {
-        tubes_[i].set_numeral(digit_cache_[i]);
-    }
 }
 
 void NixieDriver::set_brightness(uint8_t brightness)
@@ -187,47 +168,30 @@ void NixieDriver::set_digits(const std::array<uint8_t, 6> &digits)
     digit_cache_ = digits;
     pwm_dirty_ = true;
     portEXIT_CRITICAL(&mux_);
-
-    for (size_t i = 0; i < tubes_.size(); ++i) {
-        tubes_[i].set_numeral(digit_cache_[i]);
-    }
 }
 
-void NixieDriver::fade_brightness(uint8_t target, uint16_t duration_ms)
+void NixieDriver::set_digit_at(size_t tube_index, uint8_t digit)
 {
-    portENTER_CRITICAL(&mux_);
-    uint16_t frames = static_cast<uint16_t>((static_cast<uint32_t>(duration_ms) * kPwmUpdateHz) / 1000);
-    if (frames == 0) {
-        frames = 1;
-    }
-
-    fade_.target = target;
-    fade_.active = true;
-    fade_.frames_remaining = frames;
-
-    const int16_t delta = static_cast<int16_t>(target) - static_cast<int16_t>(brightness_);
-    fade_.step = static_cast<int8_t>(delta / static_cast<int16_t>(frames));
-    if (fade_.step == 0 && delta != 0) {
-        fade_.step = delta > 0 ? 1 : -1;
-    }
-    portEXIT_CRITICAL(&mux_);
-}
-
-void NixieDriver::update_fade_step()
-{
-    if (!fade_.active || fade_.frames_remaining == 0) {
-        fade_.active = false;
+    if (tube_index >= digit_cache_.size()) {
         return;
     }
 
-    const int16_t next = static_cast<int16_t>(brightness_) + fade_.step;
-    brightness_ = static_cast<uint8_t>(std::clamp(next, static_cast<int16_t>(0), static_cast<int16_t>(255)));
-    fade_.frames_remaining--;
+    portENTER_CRITICAL(&mux_);
+    digit_cache_[tube_index] = digit % 10;
+    pwm_dirty_ = true;
+    portEXIT_CRITICAL(&mux_);
+}
 
-    if (fade_.frames_remaining == 0) {
-        brightness_ = fade_.target;
-        fade_.active = false;
+void NixieDriver::set_tube_brightness(size_t tube_index, uint8_t scale)
+{
+    if (tube_index >= tube_brightness_.size()) {
+        return;
     }
+
+    portENTER_CRITICAL(&mux_);
+    tube_brightness_[tube_index] = scale;
+    pwm_dirty_ = true;
+    portEXIT_CRITICAL(&mux_);
 }
 
 void NixieDriver::nixie_scan_start(i2c_port_t i2c_port)
@@ -238,16 +202,6 @@ void NixieDriver::nixie_scan_start(i2c_port_t i2c_port)
     i2c_port_ = i2c_port;
     init_default_mapping();
     xTaskCreate(scan_task_entry, "nixie_scan", 4096, this, 6, &scan_task_);
-}
-
-std::vector<NixieTube *> NixieDriver::get_tubes()
-{
-    std::vector<NixieTube *> ptrs;
-    ptrs.reserve(tubes_.size());
-    for (auto &tube : tubes_) {
-        ptrs.push_back(&tube);
-    }
-    return ptrs;
 }
 
 void NixieDriver::scan_task_entry(void *param)
@@ -293,13 +247,15 @@ void NixieDriver::flush_chip(Pca9685 &chip, uint8_t chip_index)
 
 void NixieDriver::push_all_cathodes(std::array<Pca9685, 4> &pca)
 {
-    const uint16_t duty = static_cast<uint16_t>((static_cast<uint32_t>(brightness_) * 4095) / 255);
-
     portENTER_CRITICAL(&mux_);
     const std::array<uint8_t, 6> digits = digit_cache_;
+    const std::array<uint8_t, 6> tube_scales = tube_brightness_;
+    const uint8_t global_brightness = brightness_;
     portEXIT_CRITICAL(&mux_);
 
-    for (size_t t = 0; t < 6; ++t) {
+    for (size_t t = 0; t < kTubeCount; ++t) {
+        const uint16_t duty = static_cast<uint16_t>(
+            (static_cast<uint32_t>(global_brightness) * tube_scales[t] * 4095) / (255 * 255));
         const auto mapped = kTubeMap[t][digits[t] % 10];
         const ChannelRef new_ref = {mapped.chip_index, mapped.channel};
         const ChannelRef old_ref = active_cathode_[t];
@@ -370,20 +326,13 @@ void NixieDriver::scan_loop()
     while (true) {
         vTaskDelay(pdMS_TO_TICKS(kPwmUpdatePeriodMs));
 
-        bool fading = false;
         bool dirty = false;
 
         portENTER_CRITICAL(&mux_);
-        fading = fade_.active;
         dirty = pwm_dirty_;
         portEXIT_CRITICAL(&mux_);
 
-        if (fading) {
-            portENTER_CRITICAL(&mux_);
-            update_fade_step();
-            portEXIT_CRITICAL(&mux_);
-            push_all_cathodes(pca);
-        } else if (dirty) {
+        if (dirty) {
             push_all_cathodes(pca);
             portENTER_CRITICAL(&mux_);
             pwm_dirty_ = false;

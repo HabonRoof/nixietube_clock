@@ -16,6 +16,7 @@ struct BacklightProfile {
     uint8_t backlight_brightness;
     uint8_t backlight_effect; // 0: static, 1: breath, 2: rainbow, 3: off
     uint8_t nixie_brightness;
+    uint8_t nixie_transition; // 0: instant, 1: fade
 };
 
 struct TubeProtectionSettings {

@@ -14,10 +14,10 @@ void AudioDriver::ensure_initialized()
     }
 }
 
-esp_err_t AudioDriver::play_track(uint16_t track_number)
+esp_err_t AudioDriver::play_from_mp3_folder(uint16_t file_number)
 {
     ensure_initialized();
-    return player_.play_track(track_number);
+    return player_.play_from_mp3_folder(file_number);
 }
 
 esp_err_t AudioDriver::set_loop(bool enable)

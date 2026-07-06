@@ -9,6 +9,8 @@
 #include "gasgauge_service.h"
 #include "system_state.h"
 
+class AudioDaemon;
+
 class CliDaemon
 {
 public:
@@ -16,7 +18,8 @@ public:
               ChargerController &charger_controller,
               GasgaugeService &gasgauge_service,
               PowerController &power_controller,
-              SystemState &system_state);
+              SystemState &system_state,
+              AudioDaemon &audio_daemon);
     ~CliDaemon();
 
     void start();
@@ -31,5 +34,6 @@ private:
     PowerController &power_controller_;
     GasgaugeService &gasgauge_service_;
     SystemState &system_state_;
+    AudioDaemon &audio_daemon_;
     TaskHandle_t task_handle_;
 };
