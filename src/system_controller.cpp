@@ -571,6 +571,20 @@ void SystemController::push_current_time_to_display(const struct tm &local_tm)
     xQueueSend(display_daemon_.get_queue(), &msg, 0);
 }
 
+void SystemController::push_local_time_now()
+{
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+
+    time_t now_utc = 0;
+    time(&now_utc);
+    const time_t local = now_utc + static_cast<time_t>(settings.tz_offset_hours) * 3600;
+
+    struct tm local_tm;
+    gmtime_r(&local, &local_tm);
+    push_current_time_to_display(local_tm);
+}
+
 void SystemController::enter_protection_sleep()
 {
     current_display_mode_ = DisplayMode::OFF;
@@ -601,12 +615,7 @@ void SystemController::wake_from_protection()
     dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
-    time_t now_utc = 0;
-    time(&now_utc);
-    struct tm local_tm;
-    time_t local = now_utc + (time_t)settings.tz_offset_hours * 3600;
-    gmtime_r(&local, &local_tm);
-    push_current_time_to_display(local_tm);
+    push_local_time_now();
 
     protection_state_ = ProtectionState::ProtectedAwake;
     protection_idle_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kProtectionIdleMs);
@@ -928,6 +937,7 @@ void SystemController::return_to_clock_mode()
     dmsg.command = DisplayCmd::SET_MODE;
     dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    push_local_time_now();
     ESP_LOGI(TAG, "Auto-return to clock mode");
 }
 
@@ -943,6 +953,11 @@ void SystemController::cycle_display_mode()
         ClockSettings settings;
         system_state_.get_settings(&settings);
         apply_profile_to_display(settings.profiles[settings.active_profile_index]);
+    }
+    const bool is_clockish = current_display_mode_ == DisplayMode::CLOCK_HHMMSS ||
+                             current_display_mode_ == DisplayMode::DATE_YYMMDD;
+    if (is_clockish) {
+        push_local_time_now();
     }
     ESP_LOGI(TAG, "Display mode cycled to %u", static_cast<unsigned>(current_display_mode_));
 }

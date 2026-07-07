@@ -72,6 +72,7 @@ private:
     void wake_from_protection();
     void restore_user_profile();
     void push_current_time_to_display(const struct tm &local_tm);
+    void push_local_time_now();
     void cancel_alarm_timer();
     void start_alarm_timer();
     void stop_alarm_audio();
