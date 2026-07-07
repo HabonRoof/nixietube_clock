@@ -12,6 +12,7 @@
 #include "driver/i2c.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
+#include "display_board_config.h"
 #include "esp_timer.h"
 
 static const char *TAG = "SystemController";
@@ -177,6 +178,11 @@ HardwareHandles SystemController::init_hardware()
     anode_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     anode_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     ESP_ERROR_CHECK(gpio_config(&anode_conf));
+
+    // 4c. Read upper display board type (GPIO19 / DISPLAY_TYPE)
+    init_display_type_gpio();
+    handles.display_board_type = get_display_board_type();
+    ESP_LOGI(TAG, "Display Board Type: %s", display_board_type_name(handles.display_board_type));
     ESP_ERROR_CHECK(gpio_set_level(kAnodeA0, 1));
     ESP_ERROR_CHECK(gpio_set_level(kAnodeA1, 1));
     ESP_ERROR_CHECK(gpio_set_level(kAnodeA2, 1));

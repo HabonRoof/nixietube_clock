@@ -11,6 +11,7 @@
 #include "esp_vfs_dev.h"
 #include "linenoise/linenoise.h"
 #include "esp_mac.h"
+#include "display_board_config.h"
 #include <cstring>
 #include <cstdio>
 #include <ctime>
@@ -749,7 +750,9 @@ static int get_hw_version_func(int argc, char **argv)
 {
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
-    printf("HW Version: ESP32-S3 (Rev %d)\nBoard version: %s\n", chip_info.revision, DEV_BOARD_VERSION);
+    printf("HW Version: ESP32-S3 (Rev %d)\nBoard version: %s\nDisplay board: %s\n",
+           chip_info.revision, DEV_BOARD_VERSION,
+           display_board_type_name(get_display_board_type()));
     return 0;
 }
 
