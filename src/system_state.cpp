@@ -20,6 +20,15 @@ struct TubeProtectionPeriodV6 {
     uint8_t profile_index;
 };
 
+struct TubeProtectionSettingsV8 {
+    bool enabled;
+    uint8_t start_hour;
+    uint8_t start_minute;
+    uint8_t end_hour;
+    uint8_t end_minute;
+    BacklightProfile profile;
+};
+
 struct ClockSettingsV6 {
     uint16_t version;
     int8_t tz_offset_hours;
@@ -51,16 +60,26 @@ void init_default_protection(ClockSettings *settings)
         .start_minute = 0,
         .end_hour = 7,
         .end_minute = 0,
-        .profile = BacklightProfile{
-            .r = 0,
-            .g = 0,
-            .b = 0,
-            .backlight_brightness = 0,
-            .backlight_effect = 3,
-            .nixie_brightness = 128,
-            .nixie_transition = 0,
-        },
+        .nixie_brightness = 128,
     };
+}
+
+void migrate_protection_from_v8(ClockSettings *settings, const uint8_t *buffer, size_t stored_size)
+{
+    if (stored_size < offsetof(ClockSettings, protection) + sizeof(TubeProtectionSettingsV8)) {
+        init_default_protection(settings);
+        return;
+    }
+
+    TubeProtectionSettingsV8 old = {};
+    std::memcpy(&old, buffer + offsetof(ClockSettings, protection), sizeof(old));
+
+    settings->protection.enabled = old.enabled;
+    settings->protection.start_hour = old.start_hour;
+    settings->protection.start_minute = old.start_minute;
+    settings->protection.end_hour = old.end_hour;
+    settings->protection.end_minute = old.end_minute;
+    settings->protection.nixie_brightness = old.profile.nixie_brightness;
 }
 
 void migrate_protection_from_v6(ClockSettings *settings, const uint8_t *buffer, size_t stored_size)
@@ -199,16 +218,23 @@ bool SystemState::load()
     if (stored_size < kSettingsV4Size) {
         init_profiles_from_backlight(&settings);
     }
-    if (stored_size >= kSettingsV6Size && stored_size < sizeof(ClockSettings)) {
+    if (stored_version < 9 &&
+        stored_size >= offsetof(ClockSettings, protection) + sizeof(TubeProtectionSettingsV8)) {
+        migrate_protection_from_v8(&settings, buffer, stored_size);
+        needs_save = true;
+    } else if (stored_size >= sizeof(ClockSettings)) {
+        std::memcpy(&settings.protection,
+                    buffer + offsetof(ClockSettings, protection),
+                    sizeof(TubeProtectionSettings));
+    } else if (stored_size >= kSettingsV6Size) {
         migrate_protection_from_v6(&settings, buffer, stored_size);
-    } else if (stored_size < sizeof(ClockSettings)) {
+    } else {
         init_default_protection(&settings);
     }
     if (stored_size < sizeof(ClockSettings)) {
         for (uint8_t i = 0; i < kBacklightProfileCount; ++i) {
             settings.profiles[i].nixie_transition = 0;
         }
-        settings.protection.profile.nixie_transition = 0;
     }
     if (stored_version < 8) {
         settings.volume = 15;

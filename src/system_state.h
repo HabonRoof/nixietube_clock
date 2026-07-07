@@ -6,7 +6,7 @@
 
 // Bump whenever the layout/meaning of ClockSettings changes. NVS load uses
 // this to migrate (rather than discard) older persisted blobs.
-constexpr uint16_t kSettingsVersion = 8;
+constexpr uint16_t kSettingsVersion = 9;
 constexpr uint8_t kBacklightProfileCount = 4;
 
 struct BacklightProfile {
@@ -25,7 +25,7 @@ struct TubeProtectionSettings {
     uint8_t start_minute;
     uint8_t end_hour;
     uint8_t end_minute;
-    BacklightProfile profile;
+    uint8_t nixie_brightness;
 };
 
 struct ClockSettings {

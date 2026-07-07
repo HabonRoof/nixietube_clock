@@ -86,13 +86,7 @@ static esp_err_t settings_get_handler(httpd_req_t *req)
         response += "\"enabled\":" + std::string(p.enabled ? "true" : "false") +
                     ",\"start\":\"" + start_time + "\"" +
                     ",\"end\":\"" + end_time + "\"" +
-                    ",\"profile\":{\"r\":" + std::to_string(p.profile.r) +
-                    ",\"g\":" + std::to_string(p.profile.g) +
-                    ",\"b\":" + std::to_string(p.profile.b) +
-                    ",\"backlight_brightness\":" + std::to_string(p.profile.backlight_brightness) +
-                    ",\"backlight_effect\":" + std::to_string(p.profile.backlight_effect) +
-                    ",\"nixie_brightness\":" + std::to_string(p.profile.nixie_brightness) +
-                    ",\"nixie_transition\":" + std::to_string(p.profile.nixie_transition) + "}}";
+                    ",\"nixie_brightness\":" + std::to_string(p.nixie_brightness) + "}}";
     }
     response += "}";
 
@@ -368,6 +362,14 @@ static bool parse_protection_settings(const std::string &body, ClockSettings *se
         }
     }
 
+    std::string nixie = extract_json_value(obj, "nixie_brightness");
+    if (!nixie.empty()) {
+        int value = std::stoi(nixie);
+        if (value >= 0 && value <= 255) {
+            protection.nixie_brightness = static_cast<uint8_t>(value);
+        }
+    }
+
     size_t profile_pos = obj.find("\"profile\"");
     if (profile_pos != std::string::npos) {
         size_t profile_start = obj.find('{', profile_pos);
@@ -376,7 +378,9 @@ static bool parse_protection_settings(const std::string &body, ClockSettings *se
             if (profile_end != std::string::npos) {
                 const std::string profile_obj =
                     obj.substr(profile_start, profile_end - profile_start + 1);
-                parse_protection_profile(profile_obj, &protection.profile);
+                BacklightProfile legacy_profile = {};
+                parse_protection_profile(profile_obj, &legacy_profile);
+                protection.nixie_brightness = legacy_profile.nixie_brightness;
             }
         }
     }
@@ -491,9 +495,75 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
+    // Standalone tube-brightness preview request: show the value on the tubes
+    // for a few seconds without touching stored settings.
+    std::string preview_brightness = extract_json_value(body, "preview_protection_brightness");
+    if (!preview_brightness.empty()) {
+        int value = std::stoi(preview_brightness);
+        if (value < 0) {
+            value = 0;
+        } else if (value > 255) {
+            value = 255;
+        }
+        server->preview_protection_brightness(static_cast<uint8_t>(value));
+        httpd_resp_set_type(req, "text/plain");
+        return httpd_resp_send(req, "OK", HTTPD_RESP_USE_STRLEN);
+    }
+
     ClockSettings settings;
     if (!server->load_settings(&settings)) {
         settings = SystemState::defaults();
+    }
+
+    // "preview":true applies backlight/profile changes to the display live
+    // without persisting them (used while dragging sliders on the Light tab).
+    // Start from the active stored profile so unspecified fields are preserved.
+    std::string preview_flag = extract_json_value(body, "preview");
+    if (preview_flag == "true" || preview_flag == "1") {
+        BacklightProfile profile =
+            settings.profiles[settings.active_profile_index % kBacklightProfileCount];
+
+        std::string prgb = extract_json_value(body, "backlight_rgb");
+        if (!prgb.empty()) {
+            uint8_t r, g, b;
+            if (parse_rgb(prgb.c_str(), &r, &g, &b)) {
+                profile.r = r;
+                profile.g = g;
+                profile.b = b;
+            }
+        }
+        std::string pbright = extract_json_value(body, "backlight_brightness");
+        if (!pbright.empty()) {
+            int value = std::stoi(pbright);
+            if (value >= 0 && value <= 255) {
+                profile.backlight_brightness = static_cast<uint8_t>(value);
+            }
+        }
+        std::string peffect = extract_json_value(body, "backlight_effect");
+        if (!peffect.empty()) {
+            int value = std::stoi(peffect);
+            if (value >= 0 && value <= 3) {
+                profile.backlight_effect = static_cast<uint8_t>(value);
+            }
+        }
+        std::string pnixie = extract_json_value(body, "nixie_brightness");
+        if (!pnixie.empty()) {
+            int value = std::stoi(pnixie);
+            if (value >= 0 && value <= 255) {
+                profile.nixie_brightness = static_cast<uint8_t>(value);
+            }
+        }
+        std::string ptrans = extract_json_value(body, "nixie_transition");
+        if (!ptrans.empty()) {
+            int value = std::stoi(ptrans);
+            if (value >= 0 && value <= 1) {
+                profile.nixie_transition = static_cast<uint8_t>(value);
+            }
+        }
+
+        server->preview_profile(profile);
+        httpd_resp_set_type(req, "text/plain");
+        return httpd_resp_send(req, "OK", HTTPD_RESP_USE_STRLEN);
     }
 
     std::string tz_value = extract_json_value(body, "tz_offset");
@@ -812,6 +882,16 @@ bool WebServer::apply_settings(const ClockSettings &settings, const struct tm *n
 {
     system_controller_.request_settings_update(settings, new_time);
     return true;
+}
+
+void WebServer::preview_profile(const BacklightProfile &profile)
+{
+    system_controller_.request_preview_profile(profile);
+}
+
+void WebServer::preview_protection_brightness(uint8_t nixie_brightness)
+{
+    system_controller_.request_protection_preview(nixie_brightness);
 }
 
 bool WebServer::get_time_status(struct tm *local_out, bool *time_valid, bool *osf,

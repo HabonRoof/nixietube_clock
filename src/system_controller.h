@@ -43,6 +43,14 @@ public:
     // so the SystemController task remains the sole owner of rtc_/settings.
     void request_settings_update(const ClockSettings &settings, const struct tm *local_time);
 
+    // Thread-safe: apply a backlight/nixie profile to the display for a live
+    // preview only. Does not modify stored settings or write to NVS.
+    void request_preview_profile(const BacklightProfile &profile);
+
+    // Thread-safe: preview the given nixie brightness on the tubes for a few
+    // seconds, then restore the normal display state.
+    void request_protection_preview(uint8_t nixie_brightness);
+
     // Snapshot of current time state for status endpoints (thread-safe read of
     // system time + a cached RTC read).
     bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
@@ -67,6 +75,9 @@ private:
     void invalidate_battery_status();
     void check_alarm();
     void check_protection_idle();
+    void check_protection_preview();
+    void begin_protection_preview(uint8_t nixie_brightness);
+    void end_protection_preview();
     void evaluate_protection(uint8_t hour, uint8_t minute);
     void enter_protection_sleep();
     void wake_from_protection();
@@ -81,6 +92,7 @@ private:
     void cycle_display_mode();
     void cycle_profile();
     void apply_profile_to_display(const BacklightProfile &profile);
+    void apply_protection_wake_to_display(const ClockSettings &settings);
     bool is_alarm_audio_active() const;
     static DisplayMode next_display_mode(DisplayMode mode);
 
@@ -100,6 +112,8 @@ private:
     ProtectionState protection_state_;
     bool protection_window_active_;
     TickType_t protection_idle_deadline_;
+    bool protection_preview_active_;
+    TickType_t protection_preview_deadline_;
     DisplayMode current_display_mode_;
     TickType_t next_rtc_sync_;
     TickType_t next_battery_poll_;
@@ -107,4 +121,5 @@ private:
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
     static constexpr uint32_t kProtectionIdleMs = 60000;
+    static constexpr uint32_t kProtectionPreviewMs = 3000;
 };

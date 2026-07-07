@@ -231,6 +231,8 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       protection_state_(ProtectionState::Normal),
       protection_window_active_(false),
       protection_idle_deadline_(0),
+      protection_preview_active_(false),
+      protection_preview_deadline_(0),
       current_display_mode_(DisplayMode::CLOCK_HHMMSS),
       next_rtc_sync_(0),
       next_battery_poll_(0)
@@ -332,6 +334,7 @@ void SystemController::loop()
 
         check_alarm();
         check_protection_idle();
+        check_protection_preview();
 
         vTaskDelay(poll_interval);
     }
@@ -378,6 +381,12 @@ void SystemController::process_message(const SystemMessage &msg)
                            msg.data.apply.has_time ? &msg.data.apply.local_time : nullptr);
             system_state_.save_settings();
             break;
+        case SystemEvent::PREVIEW_PROFILE:
+            apply_profile_to_display(msg.data.preview_profile);
+            break;
+        case SystemEvent::PREVIEW_PROTECTION_BRIGHTNESS:
+            begin_protection_preview(msg.data.preview_brightness);
+            break;
         case SystemEvent::BATTERY_UPDATE:
             break;
         default:
@@ -417,7 +426,7 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
     if (protection_state_ == ProtectionState::ProtectedAsleep) {
         // Keep the display off while protection sleep is active.
     } else if (protection_state_ == ProtectionState::ProtectedAwake) {
-        apply_profile_to_display(settings.protection.profile);
+        apply_protection_wake_to_display(settings);
     } else {
         DisplayMessage dmsg = {};
         dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
@@ -607,7 +616,7 @@ void SystemController::wake_from_protection()
 {
     ClockSettings settings;
     system_state_.get_settings(&settings);
-    apply_profile_to_display(settings.protection.profile);
+    apply_protection_wake_to_display(settings);
 
     current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
     DisplayMessage dmsg = {};
@@ -664,6 +673,84 @@ void SystemController::evaluate_protection(uint8_t hour, uint8_t minute)
         protection_state_ = ProtectionState::ProtectedAsleep;
         enter_protection_sleep();
     }
+}
+
+void SystemController::begin_protection_preview(uint8_t nixie_brightness)
+{
+    const BacklightProfile *transition_profile = nullptr;
+    ClockSettings settings;
+    if (system_state_.get_settings(&settings)) {
+        transition_profile =
+            &settings.profiles[settings.active_profile_index % kBacklightProfileCount];
+    }
+
+    // Show the clock with the backlight off so the preview matches how the
+    // tubes look when protection wakes them, at the requested brightness.
+    current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_MODE;
+    dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_EFFECT;
+    dmsg.data.effect_id = 3;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    if (transition_profile) {
+        dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;
+        dmsg.data.transition_id = transition_profile->nixie_transition;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    }
+
+    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+    dmsg.data.brightness = nixie_brightness;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    push_local_time_now();
+
+    protection_preview_active_ = true;
+    protection_preview_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kProtectionPreviewMs);
+    ESP_LOGI(TAG, "Tube protection: previewing brightness %u", nixie_brightness);
+}
+
+void SystemController::end_protection_preview()
+{
+    protection_preview_active_ = false;
+
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+
+    time_t now_utc = 0;
+    time(&now_utc);
+    struct tm local_tm;
+    const time_t local = now_utc + static_cast<time_t>(settings.tz_offset_hours) * 3600;
+    gmtime_r(&local, &local_tm);
+
+    // Restore the correct display state based on whether we are currently
+    // inside the protection window.
+    if (protection_is_active(settings, static_cast<uint8_t>(local_tm.tm_hour),
+                             static_cast<uint8_t>(local_tm.tm_min))) {
+        protection_state_ = ProtectionState::ProtectedAsleep;
+        protection_window_active_ = true;
+        enter_protection_sleep();
+    } else {
+        protection_state_ = ProtectionState::Normal;
+        protection_window_active_ = false;
+        restore_user_profile();
+        return_to_clock_mode();
+    }
+    ESP_LOGI(TAG, "Tube protection: preview ended");
+}
+
+void SystemController::check_protection_preview()
+{
+    if (!protection_preview_active_) {
+        return;
+    }
+    if ((int32_t)(xTaskGetTickCount() - protection_preview_deadline_) < 0) {
+        return;
+    }
+    end_protection_preview();
 }
 
 void SystemController::check_protection_idle()
@@ -844,6 +931,22 @@ void SystemController::request_settings_update(const ClockSettings &settings,
     xQueueSend(queue_, &msg, 0);
 }
 
+void SystemController::request_preview_profile(const BacklightProfile &profile)
+{
+    SystemMessage msg = {};
+    msg.event = SystemEvent::PREVIEW_PROFILE;
+    msg.data.preview_profile = profile;
+    xQueueSend(queue_, &msg, 0);
+}
+
+void SystemController::request_protection_preview(uint8_t nixie_brightness)
+{
+    SystemMessage msg = {};
+    msg.event = SystemEvent::PREVIEW_PROTECTION_BRIGHTNESS;
+    msg.data.preview_brightness = nixie_brightness;
+    xQueueSend(queue_, &msg, 0);
+}
+
 bool SystemController::get_time_status(struct tm *local_out, bool *time_valid,
                                        bool *osf, float *temperature,
                                        time_t *unix_utc)
@@ -923,6 +1026,25 @@ void SystemController::apply_profile_to_display(const BacklightProfile &profile)
 
     dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
     dmsg.data.brightness = profile.nixie_brightness;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;
+    dmsg.data.transition_id = profile.nixie_transition;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+}
+
+void SystemController::apply_protection_wake_to_display(const ClockSettings &settings)
+{
+    const BacklightProfile &profile =
+        settings.profiles[settings.active_profile_index % kBacklightProfileCount];
+
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_EFFECT;
+    dmsg.data.effect_id = 3;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+    dmsg.data.brightness = settings.protection.nixie_brightness;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
     dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;

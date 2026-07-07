@@ -157,11 +157,7 @@ void DisplayDaemon::render_pomodoro_display()
         return;
     }
     pomodoro_.last_displayed_s = total_s;
-
-    const uint8_t h = static_cast<uint8_t>(total_s / 3600);
-    const uint8_t m = static_cast<uint8_t>((total_s % 3600) / 60);
-    const uint8_t s = static_cast<uint8_t>(total_s % 60);
-    nixie_driver_.display_time(h, m, s);
+    handle_digit_update(digits_from_pomodoro());
 }
 
 void DisplayDaemon::update_pomodoro(uint32_t dt_ms)
@@ -212,16 +208,10 @@ std::array<uint8_t, 6> DisplayDaemon::digits_from_time(const DisplayMessage &msg
     };
 }
 
-void DisplayDaemon::handle_time_update(const DisplayMessage &msg)
+void DisplayDaemon::handle_digit_update(const std::array<uint8_t, 6> &digits)
 {
-    const std::array<uint8_t, 6> digits = digits_from_time(msg);
-
     if (current_nixie_transition_ != NixieTransitionType::FADE || !last_digits_valid_) {
-        if (current_mode_ == DisplayMode::DATE_YYMMDD) {
-            nixie_driver_.display_date(msg.data.time.yy, msg.data.time.mm, msg.data.time.dd);
-        } else {
-            nixie_driver_.display_time(msg.data.time.h, msg.data.time.m, msg.data.time.s);
-        }
+        nixie_driver_.set_digits(digits);
         last_digits_ = digits;
         last_digits_valid_ = true;
         return;
@@ -244,13 +234,36 @@ void DisplayDaemon::handle_time_update(const DisplayMessage &msg)
     last_digits_valid_ = true;
 }
 
+void DisplayDaemon::handle_time_update(const DisplayMessage &msg)
+{
+    handle_digit_update(digits_from_time(msg));
+}
+
+std::array<uint8_t, 6> DisplayDaemon::digits_from_pomodoro() const
+{
+    const uint32_t total_s = pomodoro_.remaining_ms / 1000;
+    const uint8_t h = static_cast<uint8_t>(total_s / 3600);
+    const uint8_t m = static_cast<uint8_t>((total_s % 3600) / 60);
+    const uint8_t s = static_cast<uint8_t>(total_s % 60);
+
+    return {
+        static_cast<uint8_t>(h / 10),
+        static_cast<uint8_t>(h % 10),
+        static_cast<uint8_t>(m / 10),
+        static_cast<uint8_t>(m % 10),
+        static_cast<uint8_t>(s / 10),
+        static_cast<uint8_t>(s % 10),
+    };
+}
+
 void DisplayDaemon::update_nixie_transitions(uint32_t dt_ms)
 {
     if (current_nixie_transition_ != NixieTransitionType::FADE) {
         return;
     }
     if (current_mode_ != DisplayMode::CLOCK_HHMMSS &&
-        current_mode_ != DisplayMode::DATE_YYMMDD) {
+        current_mode_ != DisplayMode::DATE_YYMMDD &&
+        current_mode_ != DisplayMode::POMODORO) {
         return;
     }
 
@@ -356,6 +369,7 @@ void DisplayDaemon::loop()
             update_cathode_poisoning(20);
         } else if (current_mode_ == DisplayMode::POMODORO) {
             update_pomodoro(20);
+            update_nixie_transitions(20);
         } else if (current_mode_ == DisplayMode::CLOCK_HHMMSS ||
                    current_mode_ == DisplayMode::DATE_YYMMDD) {
             update_nixie_transitions(20);
@@ -398,6 +412,7 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
                 auto_return_requested_ = false;
                 reset_cathode_poisoning();
             } else if (current_mode_ == DisplayMode::POMODORO) {
+                last_digits_valid_ = false;
                 reset_pomodoro();
             } else if (current_mode_ == DisplayMode::OFF) {
                 reset_tube_transitions();

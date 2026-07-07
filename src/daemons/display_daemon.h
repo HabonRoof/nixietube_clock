@@ -101,7 +101,9 @@ private:
     void reset_tube_transitions();
     void auto_return_clock();
     void handle_time_update(const DisplayMessage &msg);
+    void handle_digit_update(const std::array<uint8_t, 6> &digits);
     std::array<uint8_t, 6> digits_from_time(const DisplayMessage &msg) const;
+    std::array<uint8_t, 6> digits_from_pomodoro() const;
 
     void run_breath_effect(uint32_t dt_ms);
     void run_rainbow_effect(uint32_t dt_ms);
