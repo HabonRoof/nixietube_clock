@@ -152,6 +152,7 @@ ClockSettings SystemState::defaults()
         .rtc_calibrated = false,
         .profiles = {},
         .active_profile_index = 0,
+        .protection = {},
     };
     init_profiles_from_backlight(&settings);
     init_default_protection(&settings);
