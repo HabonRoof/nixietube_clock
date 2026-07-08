@@ -77,9 +77,10 @@ private:
     void invalidate_battery_status();
     void check_alarm();
     void check_protection_idle();
-    void check_protection_preview();
+    void check_preview();
     void begin_protection_preview(uint8_t nixie_brightness);
-    void end_protection_preview();
+    void begin_profile_preview(const BacklightProfile &profile);
+    void end_preview();
     void evaluate_protection(uint8_t hour, uint8_t minute);
     void enter_protection_sleep();
     void wake_from_protection();
@@ -114,8 +115,8 @@ private:
     ProtectionState protection_state_;
     bool protection_window_active_;
     TickType_t protection_idle_deadline_;
-    bool protection_preview_active_;
-    TickType_t protection_preview_deadline_;
+    bool preview_active_;
+    TickType_t preview_deadline_;
     DisplayMode current_display_mode_;
     TickType_t next_rtc_sync_;
     TickType_t next_battery_poll_;
@@ -123,5 +124,5 @@ private:
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
     static constexpr uint32_t kProtectionIdleMs = 60000;
-    static constexpr uint32_t kProtectionPreviewMs = 3000;
+    static constexpr uint32_t kPreviewMs = 1000;
 };
