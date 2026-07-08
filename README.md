@@ -1,6 +1,8 @@
 # Nixie Clock Firmware
 
-ESP-IDF firmware for a 6-tube Nixie clock powered by an ESP32-S3. The clock drives multiplexed IN-18 (or IN-4) tubes with RGB backlighting, audio playback, battery management, and a built-in web configuration UI.
+Open-source ESP-IDF firmware for a 6-tube Nixie clock powered by an ESP32-S3. The clock drives multiplexed IN-18 (or IN-4) tubes with RGB backlighting, audio playback, battery management, and a built-in web configuration UI.
+
+Whether you want to hack on display effects, add CLI tools, improve the web UI, or bring up new hardware, this guide will get you building with [PlatformIO](https://platformio.org/) quickly.
 
 ## Features
 
@@ -9,10 +11,187 @@ ESP-IDF firmware for a 6-tube Nixie clock powered by an ESP32-S3. The clock driv
 - **Audio** — DFPlayer Mini integration for sound effects and announcements.
 - **RTC** — DS3231 for precise timekeeping with periodic resync to ESP32 system time.
 - **Web UI** — Wi-Fi access point and HTTP server for settings and time configuration from a phone or laptop.
+- **Buttons** — Debounced physical inputs for display mode, backlight profile, and interactive modes.
 - **Serial CLI** — Interactive console for development, diagnostics, and power-rail control.
 - **Power management** — BQ25601 battery charger, BQ27441 fuel gauge, and switched HV / DFPlayer rails.
 - **Persistent settings** — Clock preferences stored in NVS and restored on boot.
 - **Modular architecture** — FreeRTOS daemons coordinated by a central system controller.
+
+## Developing with PlatformIO
+
+This project uses **PlatformIO + ESP-IDF**. You can work from VS Code / Cursor or from the CLI.
+
+### 1. Install tools
+
+1. Install [Git](https://git-scm.com/) and [Python 3](https://www.python.org/downloads/) (needed for the git-version build script).
+2. Install either:
+   - **Recommended:** [VS Code](https://code.visualstudio.com/) or Cursor with the [PlatformIO IDE](https://platformio.org/install/ide?install=vscode) extension, or
+   - [PlatformIO Core (CLI)](https://docs.platformio.org/en/latest/core/installation.html) alone.
+   For now, the PlatformIO for cursor is not stable, so I recommand to use VSCode to compile and use Cursor for coding. 
+
+Opening this repo in VS Code / Cursor should prompt you to install the recommended `platformio.platformio-ide` extension (see `.vscode/extensions.json`).
+
+### 2. Clone and open the project
+
+```bash
+git clone https://github.com/HabonRoof/nixietube_clock.git
+cd nixietube_clock
+```
+
+In VS Code / Cursor: **File → Open Folder** and select the repo root (the folder that contains `platformio.ini`).
+
+First build will download the Espressif platform, ESP-IDF toolchain, and dependencies into `.pio/` — expect a few minutes on a clean machine.
+
+### 3. Pick a build environment
+
+Defined in `platformio.ini`:
+
+| Environment | Board | Use case |
+| :--- | :--- | :--- |
+| `esp32_s3_devkitc_1` (default) | ESP32-S3-DevKitC-1 | General development / bring-up |
+| `eps32_s3_nixie` | Custom `esp32-s3-nixie` (`boards/`) | Production Nixie clock board |
+
+Switch the active env in the PlatformIO status bar, or pass `-e <name>` on the CLI.
+
+### 4. Everyday commands
+
+| Action | CLI | VS Code / Cursor (PlatformIO) |
+| :--- | :--- | :--- |
+| Build | `pio run` | Build (✓) |
+| Flash | `pio run -t upload` | Upload (→) |
+| Serial monitor | `pio run -t monitor` | Serial Monitor (🔌) |
+| Build + flash + monitor | `pio run -t upload && pio run -t monitor` | Upload and Monitor |
+| Clean | `pio run -t clean` | Clean |
+| Build for Nixie board | `pio run -e eps32_s3_nixie` | Select `eps32_s3_nixie` env, then Build |
+
+Serial monitor is **115200 baud** (8N1). After connect you should see boot logs and the CLI prompt `nixie_clock> `.
+
+Useful PlatformIO tips:
+
+```bash
+# Rebuild from a clean slate
+pio run -t clean && pio run
+
+# Flash a specific env, then open the monitor
+pio run -e esp32_s3_devkitc_1 -t upload
+pio run -t monitor
+
+# List detected serial ports if upload fails
+pio device list
+```
+
+The build embeds the current git commit hash via `generate_git_version.py` (`get_fw_version` in the CLI).
+
+### 5. Verify you are up and running
+
+1. Flash firmware and open the serial monitor.
+2. Type `help` at `nixie_clock> ` to list CLI commands.
+3. Optionally join the device Wi-Fi AP (`NixieClock` / `nixie2026`) and open `http://192.168.8.8/`.
+
+If something fails to compile or upload, check:
+
+- The board is in download mode / USB cable is data-capable.
+- The correct env is selected (`esp32_s3_devkitc_1` vs `eps32_s3_nixie`).
+- Python can run `generate_git_version.py` from the project root.
+- Antivirus or missing udev/driver issues are not blocking the serial port (Windows often needs the ESP32 USB serial driver).
+
+### 6. Where to start hacking
+
+| Goal | Start here |
+| :--- | :--- |
+| Boot / wiring of subsystems | `src/main.cpp` |
+| Mode logic, time, settings | `src/system_controller.*` |
+| Tubes / LED effects | `src/daemons/display_daemon.*` |
+| Buttons | `src/daemons/input_daemon.*` |
+| Audio / DFPlayer | `src/daemons/audio_daemon.*` |
+| Serial commands | `src/daemons/cli_daemon.*` |
+| Web settings UI | `src/web_server.cpp`, `src/web_page.cpp` |
+| Device drivers | `lib/drivers/`, `lib/include/` |
+| Shared messages / state | `lib/include/message_types.h`, `src/system_state.*` |
+
+## Software Structure
+
+The firmware is split into clear layers so new contributors can find the right file quickly.
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Interfaces                                                 │
+│    WebServer  ·  CliDaemon  ·  InputDaemon (buttons)        │
+├─────────────────────────────────────────────────────────────┤
+│  Coordination                                               │
+│    SystemController  ·  SystemState (NVS)                   │
+├─────────────────────────────────────────────────────────────┤
+│  FreeRTOS daemons                                           │
+│    DisplayDaemon  ·  AudioDaemon                            │
+├─────────────────────────────────────────────────────────────┤
+│  App drivers / services                                     │
+│    NixieDriver · LedDriver · AudioDriver                    │
+│    PowerController · ChargerController · GasgaugeService    │
+├─────────────────────────────────────────────────────────────┤
+│  Hardware drivers (lib/drivers)                             │
+│    PCA9685 · WS2812 · DFPlayer · DS3231 · BQ25601 · BQ27441 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Directory map
+
+```text
+nixietube_clock/
+├── platformio.ini          # PlatformIO envs, ESP-IDF, build flags
+├── boards/                 # Custom board JSON (esp32-s3-nixie)
+├── generate_git_version.py # Embeds git hash into the firmware
+│
+├── src/                    # Application code (what most PRs touch)
+│   ├── main.cpp            # Boot: NVS, drivers, start daemons
+│   ├── system_controller.* # Central coordinator (time, modes, settings)
+│   ├── system_state.*      # Thread-safe settings / battery / time + NVS
+│   ├── web_server.*        # Wi-Fi AP + HTTP API
+│   ├── web_page.*          # Embedded settings HTML/JS
+│   ├── nixie_driver.*      # High-level tube multiplexing
+│   ├── led_driver.*        # High-level WS2812 control
+│   ├── audio_driver.*      # High-level DFPlayer wrapper
+│   ├── power_controller.*  # HV / DFPlayer rail switching
+│   ├── charger_controller.*
+│   ├── gasgauge_service.*
+│   ├── color_model.cpp     # Color helpers for backlight
+│   └── daemons/
+│       ├── display_daemon.*  # Nixie + LED effects @ 50 Hz
+│       ├── audio_daemon.*    # Async audio commands
+│       ├── input_daemon.*    # Button debounce → SystemController
+│       └── cli_daemon.*      # Serial console
+│
+├── lib/
+│   ├── include/            # Public headers / interfaces / message types
+│   └── drivers/            # Low-level IC drivers (I2C/UART/RMT/GPIO)
+│       ├── pca9685/
+│       ├── ws2812/
+│       ├── dfplayer/
+│       ├── ds3231/
+│       ├── bq25601/
+│       ├── bq27441/
+│       ├── i2c_bus/
+│       ├── power_switch/
+│       └── display_board/
+│
+├── hardware/               # KiCad schematics & PCBs (main, display, HV)
+├── test/                   # Manual CLI tests and component experiments
+└── doc/                    # Datasheets, photos, architecture drawings
+```
+
+### Responsibility cheat sheet
+
+| Module | Role |
+| :--- | :--- |
+| `main.cpp` | Creates drivers/services, wires dependencies, starts tasks |
+| `SystemController` | Owns RTC sync, display mode / backlight / alarm logic; single writer for settings |
+| `SystemState` | Shared snapshots + NVS load/save |
+| `DisplayDaemon` | Tube digits, LED effects, 50 Hz update loop |
+| `AudioDaemon` | Plays/pauses tracks; powers DFPlayer rail via `PowerController` |
+| `InputDaemon` | Polls/debounces BTN_0–2 and posts presses to `SystemController` |
+| `CliDaemon` / `WebServer` | External control surfaces; request settings through `SystemController` |
+| `lib/drivers/*` | Talk to chips; keep bus/register details out of app logic |
+
+Cross-task communication uses FreeRTOS queues and types in `lib/include/message_types.h`. Prefer posting messages (or `SystemController::request_settings_update()`) over reaching into another daemon’s private state.
 
 ## Hardware Configuration
 
@@ -42,9 +221,10 @@ The firmware runs on FreeRTOS and uses a daemon-based design. `SystemState` hold
 
 ```mermaid
 flowchart TB
-    subgraph Services
+    subgraph Interfaces
         Web[WebServer]
         CLI[CliDaemon]
+        IN[InputDaemon]
     end
 
     SC[SystemController]
@@ -58,6 +238,7 @@ flowchart TB
     CLI --> CC
     CLI --> PC
     CLI --> AD
+    IN --> SC
 
     SC --> DD
     SC --> AD
@@ -82,6 +263,7 @@ Central coordinator that:
 - Periodically resyncs from the RTC and publishes time status.
 - Polls the BQ27441 fuel gauge and updates battery status.
 - Dispatches 1 Hz time updates to `DisplayDaemon`.
+- Handles button presses from `InputDaemon` (modes, backlight, pomodoro / alarm).
 - Accepts thread-safe settings changes from the web UI and CLI.
 
 ### Display Daemon (`src/daemons/display_daemon.cpp`)
@@ -104,6 +286,10 @@ Press **BTN_1** to cycle through display modes in this order:
 5. **Cathode poisoning** — digit sweep on all tubes (auto-returns to clock)
 
 **Pomodoro mode:** On entry the display shows `002500` with a static red backlight (brightness follows your profile). Press **BTN_0** to start the countdown; the backlight breathes red during work and green during break. Work and break sessions alternate automatically until you cycle away with **BTN_1**, which restores your backlight profile.
+
+### Input Daemon (`src/daemons/input_daemon.cpp`)
+
+Polls the three front-panel buttons every 20 ms with debounce / inter-press filtering, then posts press events to `SystemController`. Button pin map lives in `lib/include/button_config.h`.
 
 ### Audio Daemon (`src/daemons/audio_daemon.cpp`)
 
@@ -244,73 +430,6 @@ See `test/test_cli/README.md` for a manual test plan and automated test script.
 | `Bq27441` | Fuel gauge IC |
 | `GpioPowerSwitch` | HV and DFPlayer power-rail switching |
 
-## Building and Flashing
-
-This project uses [PlatformIO](https://platformio.org/) with the ESP-IDF framework.
-
-### Prerequisites
-
-- [PlatformIO](https://platformio.org/install) (CLI or VS Code extension)
-
-### Environments
-
-| Environment | Board | Use case |
-| :--- | :--- | :--- |
-| `esp32_s3_devkitc_1` (default) | ESP32-S3-DevKitC-1 | General development |
-| `eps32_s3_nixie` | Custom `esp32-s3-nixie` | Production Nixie clock board |
-
-### Build
-
-```bash
-pio run
-```
-
-Build for the Nixie board:
-
-```bash
-pio run -e eps32_s3_nixie
-```
-
-### Flash
-
-Connect the ESP32-S3 via USB, then:
-
-```bash
-pio run -t upload
-```
-
-### Monitor
-
-View serial logs (115200 baud):
-
-```bash
-pio run -t monitor
-```
-
-The build embeds the current git commit hash via `generate_git_version.py`.
-
-## Directory Structure
-
-```
-├── src/                  # Application source
-│   ├── daemons/          # Display, Audio, and CLI tasks
-│   ├── main.cpp          # Entry point and startup sequence
-│   ├── system_controller.cpp
-│   ├── system_state.cpp  # Shared state and NVS persistence
-│   ├── web_server.cpp    # Wi-Fi AP and HTTP API
-│   ├── web_page.cpp      # Embedded settings UI
-│   ├── power_controller.cpp
-│   ├── charger_controller.cpp
-│   └── gasgauge_service.cpp
-├── lib/
-│   ├── drivers/          # Low-level device drivers
-│   └── include/          # Driver interfaces
-├── hardware/             # KiCad schematics and PCB layouts
-├── boards/               # Custom PlatformIO board definitions
-├── test/                 # CLI and component tests
-└── doc/                  # Datasheets, waveforms, architecture diagrams
-```
-
 ## Development Guide
 
 ### Adding a New LED Effect
@@ -325,3 +444,20 @@ The build embeds the current git commit hash via `generate_git_version.py`.
 ### Applying Settings from a New Interface
 
 Use `SystemController::request_settings_update()` so the system controller task remains the sole owner of RTC and settings state. Read current values from `SystemState` and persist with `SystemState::save_settings()`.
+
+### Adding a CLI Command
+
+1. Register parsing / help text in `src/daemons/cli_daemon.cpp`.
+2. Prefer calling existing controllers/daemons (`SystemController`, `AudioDaemon`, `PowerController`, …) instead of talking to hardware directly.
+3. Document the command in this README under **CLI Daemon**.
+
+## Contributing
+
+Contributions are welcome — effects, CLI tools, web UI polish, driver fixes, docs, and hardware errata all help.
+
+1. Fork the repo and create a feature branch.
+2. Build with PlatformIO (`pio run`) and smoke-test on hardware or a DevKit when possible.
+3. Keep changes focused; match the existing modular daemon style.
+4. Open a pull request describing **what** changed and **how to test** it.
+
+If you are unsure where something belongs, open an issue first — happy to point you at the right module.
