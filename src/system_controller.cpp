@@ -241,7 +241,10 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       protection_preview_deadline_(0),
       current_display_mode_(DisplayMode::CLOCK_HHMMSS),
       next_rtc_sync_(0),
-      next_battery_poll_(0)
+      next_battery_poll_(0),
+      standby_active_(false),
+      idle_standby_deadline_(0),
+      next_auto_cathode_(0)
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
     
@@ -307,6 +310,8 @@ void SystemController::loop()
     // Initial sync: seed ESP32 system time from the DS3231 (UTC).
     sync_time_from_rtc();
     next_rtc_sync_ = xTaskGetTickCount() + pdMS_TO_TICKS(kResyncIntervalMs);
+    idle_standby_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kIdleStandbyMs);
+    next_auto_cathode_ = xTaskGetTickCount() + pdMS_TO_TICKS(kAutoCathodeIntervalMs);
     if (gasgauge_service_ && !i2c_debug::kDisableGasgauge) {
         next_battery_poll_ = xTaskGetTickCount() + pdMS_TO_TICKS(i2c_debug::kBatteryPollMs);
     }
@@ -341,6 +346,8 @@ void SystemController::loop()
         check_alarm();
         check_protection_idle();
         check_protection_preview();
+        check_idle_standby();
+        check_auto_cathode();
 
         vTaskDelay(poll_interval);
     }
@@ -602,6 +609,8 @@ void SystemController::push_local_time_now()
 
 void SystemController::enter_protection_sleep()
 {
+    standby_active_ = false;
+
     current_display_mode_ = DisplayMode::OFF;
     DisplayMessage dmsg = {};
     dmsg.command = DisplayCmd::SET_MODE;
@@ -770,6 +779,102 @@ void SystemController::check_protection_idle()
     protection_state_ = ProtectionState::ProtectedAsleep;
     enter_protection_sleep();
     ESP_LOGI(TAG, "Tube protection: idle timeout, display asleep");
+}
+
+uint8_t SystemController::scale_standby_brightness(uint8_t value)
+{
+    return static_cast<uint8_t>(value * standby_brightness_factor + 0.5f);
+}
+
+void SystemController::note_user_activity()
+{
+    idle_standby_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kIdleStandbyMs);
+}
+
+void SystemController::enter_standby()
+{
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+    const BacklightProfile &profile =
+        settings.profiles[settings.active_profile_index % kBacklightProfileCount];
+
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_BACKLIGHT_BRIGHTNESS;
+    dmsg.data.brightness = scale_standby_brightness(profile.backlight_brightness);
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+    dmsg.data.brightness = scale_standby_brightness(profile.nixie_brightness);
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    standby_active_ = true;
+    ESP_LOGI(TAG, "Standby: dimmed to %u%% of profile",
+             static_cast<unsigned>(standby_brightness_factor * 100.0f + 0.5f));
+}
+
+void SystemController::exit_standby()
+{
+    if (!standby_active_) {
+        return;
+    }
+
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+    const BacklightProfile &profile =
+        settings.profiles[settings.active_profile_index % kBacklightProfileCount];
+    apply_profile_to_display(profile);
+    ESP_LOGI(TAG, "Standby: restored profile brightness");
+}
+
+void SystemController::check_idle_standby()
+{
+    if (protection_state_ != ProtectionState::Normal || standby_active_) {
+        return;
+    }
+    if (current_display_mode_ == DisplayMode::OFF ||
+        current_display_mode_ == DisplayMode::CATHODE_POISONING) {
+        return;
+    }
+    if ((int32_t)(xTaskGetTickCount() - idle_standby_deadline_) < 0) {
+        return;
+    }
+    enter_standby();
+}
+
+void SystemController::start_auto_cathode()
+{
+    if (standby_active_) {
+        exit_standby();
+    }
+
+    current_display_mode_ = DisplayMode::CATHODE_POISONING;
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_MODE;
+    dmsg.data.mode = DisplayMode::CATHODE_POISONING;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    next_auto_cathode_ = xTaskGetTickCount() + pdMS_TO_TICKS(kAutoCathodeIntervalMs);
+    ESP_LOGI(TAG, "Auto cathode poisoning started");
+}
+
+void SystemController::check_auto_cathode()
+{
+    if (protection_state_ != ProtectionState::Normal) {
+        return;
+    }
+    if ((int32_t)(xTaskGetTickCount() - next_auto_cathode_) < 0) {
+        return;
+    }
+
+    if (is_alarm_audio_active() ||
+        current_display_mode_ == DisplayMode::POMODORO ||
+        current_display_mode_ == DisplayMode::DIVERGENCE_METER ||
+        current_display_mode_ == DisplayMode::CATHODE_POISONING ||
+        current_display_mode_ == DisplayMode::OFF) {
+        return;
+    }
+
+    start_auto_cathode();
 }
 
 void SystemController::update_time()
@@ -1037,6 +1142,9 @@ void SystemController::apply_profile_to_display(const BacklightProfile &profile)
     dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;
     dmsg.data.transition_id = profile.nixie_transition;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    standby_active_ = false;
+    note_user_activity();
 }
 
 void SystemController::apply_protection_wake_to_display(const ClockSettings &settings)
@@ -1066,6 +1174,7 @@ void SystemController::return_to_clock_mode()
     dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
     push_local_time_now();
+    note_user_activity();
     ESP_LOGI(TAG, "Auto-return to clock mode");
 }
 
@@ -1123,6 +1232,14 @@ void SystemController::handle_button_press(uint8_t button_id)
     if (protection_state_ == ProtectionState::ProtectedAwake) {
         protection_idle_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kProtectionIdleMs);
     }
+
+    if (standby_active_) {
+        exit_standby();
+        note_user_activity();
+        return;
+    }
+
+    note_user_activity();
 
     if (button_id == kButtonAlarmStop) {
         if (is_alarm_audio_active()) {

@@ -78,12 +78,18 @@ private:
     void check_alarm();
     void check_protection_idle();
     void check_protection_preview();
+    void check_idle_standby();
+    void check_auto_cathode();
     void begin_protection_preview(uint8_t nixie_brightness);
     void end_protection_preview();
     void evaluate_protection(uint8_t hour, uint8_t minute);
     void enter_protection_sleep();
     void wake_from_protection();
     void restore_user_profile();
+    void note_user_activity();
+    void enter_standby();
+    void exit_standby();
+    void start_auto_cathode();
     void push_current_time_to_display(const struct tm &local_tm);
     void push_local_time_now();
     void cancel_alarm_timer();
@@ -97,6 +103,7 @@ private:
     void apply_protection_wake_to_display(const ClockSettings &settings);
     bool is_alarm_audio_active() const;
     static DisplayMode next_display_mode(DisplayMode mode);
+    static uint8_t scale_standby_brightness(uint8_t value);
 
     DisplayDaemon &display_daemon_;
     AudioDaemon &audio_daemon_;
@@ -119,9 +126,15 @@ private:
     DisplayMode current_display_mode_;
     TickType_t next_rtc_sync_;
     TickType_t next_battery_poll_;
+    bool standby_active_;
+    TickType_t idle_standby_deadline_;
+    TickType_t next_auto_cathode_;
 
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
     static constexpr uint32_t kProtectionIdleMs = 60000;
     static constexpr uint32_t kProtectionPreviewMs = 3000;
+    static constexpr uint32_t kIdleStandbyMs = 120000;
+    static constexpr float standby_brightness_factor = 0.25f;
+    static constexpr uint32_t kAutoCathodeIntervalMs = 15 * 60 * 1000;
 };

@@ -12,6 +12,8 @@ Whether you want to hack on display effects, add CLI tools, improve the web UI, 
 - **RTC** — DS3231 for precise timekeeping with periodic resync to ESP32 system time.
 - **Web UI** — Wi-Fi access point and HTTP server for settings and time configuration from a phone or laptop.
 - **Buttons** — Debounced physical inputs for display mode, backlight profile, and interactive modes.
+- **Idle standby** — After 2 minutes without button presses, dim nixie and backlight brightness to 25% of the active profile; first press wakes only.
+- **Auto cathode anti-poisoning** — Every 15 minutes, run the same cathode-poisoning digit sweep as manual mode, then auto-return to the clock.
 - **Serial CLI** — Interactive console for development, diagnostics, and power-rail control.
 - **Power management** — BQ25601 battery charger, BQ27441 fuel gauge, and switched HV / DFPlayer rails.
 - **Persistent settings** — Clock preferences stored in NVS and restored on boot.
@@ -90,10 +92,11 @@ The build embeds the current git commit hash via `generate_git_version.py` (`get
 
 If something fails to compile or upload, check:
 
+- Use USB Type-A to Type-C cable, the hardware is not support to connect C to C cable for uploading.
 - The board is in download mode / USB cable is data-capable.
 - The correct env is selected (`esp32_s3_devkitc_1` vs `eps32_s3_nixie`).
 - Python can run `generate_git_version.py` from the project root.
-- Antivirus or missing udev/driver issues are not blocking the serial port (Windows often needs the ESP32 USB serial driver).
+- Antivirus or missing udev/driver issues are not blocking the serial port (Windows often needs the CP2102 USB serial driver).
 
 ### 6. Where to start hacking
 
