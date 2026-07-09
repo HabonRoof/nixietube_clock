@@ -88,7 +88,6 @@ enum class DisplayMode : uint8_t
     POMODORO,
     DIVERGENCE_METER,
     CATHODE_POISONING,
-    SETTING_MODE,
     MANUAL_DISPLAY,
     OFF
 };

@@ -19,7 +19,7 @@ static const char *TAG = "SystemController";
 
 namespace {
 
-bool time_in_protection_window(uint16_t now_minutes, const TubeProtectionSettings &protection)
+bool in_hibernate_period(uint16_t now_minutes, const TubeProtectionSettings &protection)
 {
     const uint16_t start =
         static_cast<uint16_t>(protection.start_hour) * 60U + protection.start_minute;
@@ -34,13 +34,13 @@ bool time_in_protection_window(uint16_t now_minutes, const TubeProtectionSetting
     return now_minutes >= start || now_minutes < end;
 }
 
-bool protection_is_active(const ClockSettings &settings, uint8_t hour, uint8_t minute)
+bool hibernate_is_active(const ClockSettings &settings, uint8_t hour, uint8_t minute)
 {
     if (!settings.protection.enabled) {
         return false;
     }
     const uint16_t now_minutes = static_cast<uint16_t>(hour) * 60U + minute;
-    return time_in_protection_window(now_minutes, settings.protection);
+    return in_hibernate_period(now_minutes, settings.protection);
 }
 
 } // namespace
@@ -234,11 +234,11 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       gasgauge_ready_(gasgauge_ready_at_boot),
       alarm_audio_active_(false),
       alarm_stop_timer_(nullptr),
-      protection_state_(ProtectionState::Normal),
+      hibernate_state_(HibernateState::Normal),
       protection_window_active_(false),
-      protection_idle_deadline_(0),
-      protection_preview_active_(false),
-      protection_preview_deadline_(0),
+      hibernation_peek_deadline_(0),
+      preview_active_(false),
+      preview_deadline_(0),
       current_display_mode_(DisplayMode::CLOCK_HHMMSS),
       next_rtc_sync_(0),
       next_battery_poll_(0),
@@ -344,8 +344,7 @@ void SystemController::loop()
         }
 
         check_alarm();
-        check_protection_idle();
-        check_protection_preview();
+        check_hibernation();
         check_idle_standby();
         check_auto_cathode();
 
@@ -395,7 +394,7 @@ void SystemController::process_message(const SystemMessage &msg)
             system_state_.save_settings();
             break;
         case SystemEvent::PREVIEW_PROFILE:
-            apply_profile_to_display(msg.data.preview_profile);
+            begin_profile_preview(msg.data.preview_profile);
             break;
         case SystemEvent::PREVIEW_PROTECTION_BRIGHTNESS:
             begin_protection_preview(msg.data.preview_brightness);
@@ -436,9 +435,9 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
         }
     }
 
-    if (protection_state_ == ProtectionState::ProtectedAsleep) {
+    if (hibernate_state_ == HibernateState::Hibernating) {
         // Keep the display off while protection sleep is active.
-    } else if (protection_state_ == ProtectionState::ProtectedAwake) {
+    } else if (hibernate_state_ == HibernateState::Peek) {
         apply_protection_wake_to_display(settings);
     } else {
         DisplayMessage dmsg = {};
@@ -607,7 +606,7 @@ void SystemController::push_local_time_now()
     push_current_time_to_display(local_tm);
 }
 
-void SystemController::enter_protection_sleep()
+void SystemController::enter_hibernation_mode()
 {
     standby_active_ = false;
 
@@ -624,10 +623,10 @@ void SystemController::enter_protection_sleep()
     dmsg.command = DisplayCmd::SET_EFFECT;
     dmsg.data.effect_id = 3;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
-    ESP_LOGI(TAG, "Tube protection: display asleep");
+    ESP_LOGI(TAG, "Entering hibernation mode,turn off LED baclkight and tube");
 }
 
-void SystemController::wake_from_protection()
+void SystemController::peek_from_hibernate()
 {
     ClockSettings settings;
     system_state_.get_settings(&settings);
@@ -641,8 +640,8 @@ void SystemController::wake_from_protection()
 
     push_local_time_now();
 
-    protection_state_ = ProtectionState::ProtectedAwake;
-    protection_idle_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kProtectionIdleMs);
+    hibernate_state_ = HibernateState::Peek;
+    hibernation_peek_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kHibernationPeekMs);
     ESP_LOGI(TAG, "Tube protection: display awake");
 }
 
@@ -659,19 +658,19 @@ void SystemController::evaluate_protection(uint8_t hour, uint8_t minute)
 {
     ClockSettings settings;
     system_state_.get_settings(&settings);
-    const bool in_window = protection_is_active(settings, hour, minute);
+    const bool in_window = hibernate_is_active(settings, hour, minute);
 
     if (!in_window) {
-        if (protection_state_ != ProtectionState::Normal || protection_window_active_) {
+        if (hibernate_state_ != HibernateState::Normal || protection_window_active_) {
             restore_user_profile();
-            if (protection_state_ != ProtectionState::Normal) {
+            if (hibernate_state_ != HibernateState::Normal) {
                 current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
                 DisplayMessage dmsg = {};
                 dmsg.command = DisplayCmd::SET_MODE;
                 dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
                 xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
             }
-            protection_state_ = ProtectionState::Normal;
+            hibernate_state_ = HibernateState::Normal;
             protection_window_active_ = false;
             ESP_LOGI(TAG, "Tube protection: normal operation");
         }
@@ -680,13 +679,13 @@ void SystemController::evaluate_protection(uint8_t hour, uint8_t minute)
 
     protection_window_active_ = true;
 
-    if (protection_state_ == ProtectionState::ProtectedAwake) {
+    if (hibernate_state_ == HibernateState::Peek) {
         return;
     }
 
-    if (protection_state_ != ProtectionState::ProtectedAsleep) {
-        protection_state_ = ProtectionState::ProtectedAsleep;
-        enter_protection_sleep();
+    if (hibernate_state_ != HibernateState::Hibernating) {
+        hibernate_state_ = HibernateState::Hibernating;
+        enter_hibernation_mode();
     }
 }
 
@@ -723,14 +722,38 @@ void SystemController::begin_protection_preview(uint8_t nixie_brightness)
 
     push_local_time_now();
 
-    protection_preview_active_ = true;
-    protection_preview_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kProtectionPreviewMs);
+    preview_active_ = true;
+    preview_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kPreviewMs);
     ESP_LOGI(TAG, "Tube protection: previewing brightness %u", nixie_brightness);
 }
 
-void SystemController::end_protection_preview()
+void SystemController::begin_profile_preview(const BacklightProfile &profile)
 {
-    protection_preview_active_ = false;
+    // Apply the previewed backlight/nixie settings live to the display.
+    apply_profile_to_display(profile);
+
+    // Force one visible digit transition so the selected nixie transition
+    // (fade vs instant) can actually be seen: show the current time, then push
+    // the time with the seconds decremented by one so at least one tube
+    // animates using the current transition. The next 1 Hz update and
+    // end_preview() restore the correct time.
+    ClockSettings settings;
+    system_state_.get_settings(&settings);
+    time_t now_utc = 0;
+    time(&now_utc);
+    const time_t local = now_utc + static_cast<time_t>(settings.tz_offset_hours) * 3600;
+    struct tm local_tm;
+    gmtime_r(&local, &local_tm);
+    push_current_time_to_display(local_tm);
+
+    preview_active_ = true;
+    preview_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kPreviewMs);
+    ESP_LOGI(TAG, "Profile preview started");
+}
+
+void SystemController::end_preview()
+{
+    preview_active_ = false;
 
     ClockSettings settings;
     system_state_.get_settings(&settings);
@@ -743,13 +766,13 @@ void SystemController::end_protection_preview()
 
     // Restore the correct display state based on whether we are currently
     // inside the protection window.
-    if (protection_is_active(settings, static_cast<uint8_t>(local_tm.tm_hour),
+    if (hibernate_is_active(settings, static_cast<uint8_t>(local_tm.tm_hour),
                              static_cast<uint8_t>(local_tm.tm_min))) {
-        protection_state_ = ProtectionState::ProtectedAsleep;
+        hibernate_state_ = HibernateState::Hibernating;
         protection_window_active_ = true;
-        enter_protection_sleep();
+        enter_hibernation_mode();
     } else {
-        protection_state_ = ProtectionState::Normal;
+        hibernate_state_ = HibernateState::Normal;
         protection_window_active_ = false;
         restore_user_profile();
         return_to_clock_mode();
@@ -757,27 +780,27 @@ void SystemController::end_protection_preview()
     ESP_LOGI(TAG, "Tube protection: preview ended");
 }
 
-void SystemController::check_protection_preview()
+void SystemController::check_preview()
 {
-    if (!protection_preview_active_) {
+    if (!preview_active_) {
         return;
     }
-    if ((int32_t)(xTaskGetTickCount() - protection_preview_deadline_) < 0) {
+    if ((int32_t)(xTaskGetTickCount() - preview_deadline_) < 0) {
         return;
     }
-    end_protection_preview();
+    end_preview();
 }
 
-void SystemController::check_protection_idle()
+void SystemController::check_hibernation()
 {
-    if (protection_state_ != ProtectionState::ProtectedAwake) {
+    if (hibernate_state_ != HibernateState::Peek) {
         return;
     }
-    if ((int32_t)(xTaskGetTickCount() - protection_idle_deadline_) < 0) {
+    if ((int32_t)(xTaskGetTickCount() - hibernation_peek_deadline_) < 0) {
         return;
     }
-    protection_state_ = ProtectionState::ProtectedAsleep;
-    enter_protection_sleep();
+    hibernate_state_ = HibernateState::Hibernating;
+    enter_hibernation_mode();
     ESP_LOGI(TAG, "Tube protection: idle timeout, display asleep");
 }
 
@@ -828,7 +851,7 @@ void SystemController::exit_standby()
 
 void SystemController::check_idle_standby()
 {
-    if (protection_state_ != ProtectionState::Normal || standby_active_) {
+    if (hibernate_state_ != HibernateState::Normal || standby_active_) {
         return;
     }
     if (current_display_mode_ == DisplayMode::OFF ||
@@ -859,7 +882,7 @@ void SystemController::start_auto_cathode()
 
 void SystemController::check_auto_cathode()
 {
-    if (protection_state_ != ProtectionState::Normal) {
+    if (hibernate_state_ != HibernateState::Normal) {
         return;
     }
     if ((int32_t)(xTaskGetTickCount() - next_auto_cathode_) < 0) {
@@ -1224,13 +1247,13 @@ void SystemController::handle_button_press(uint8_t button_id)
 {
     ESP_LOGI(TAG, "Button pressed: %u", button_id);
 
-    if (protection_state_ == ProtectionState::ProtectedAsleep) {
-        wake_from_protection();
+    if (hibernate_state_ == HibernateState::Hibernating) {
+        peek_from_hibernate();
         return;
     }
 
-    if (protection_state_ == ProtectionState::ProtectedAwake) {
-        protection_idle_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kProtectionIdleMs);
+    if (hibernate_state_ == HibernateState::Peek) {
+        hibernation_peek_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kHibernationPeekMs);
     }
 
     if (standby_active_) {

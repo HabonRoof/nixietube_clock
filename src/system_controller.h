@@ -59,11 +59,11 @@ public:
                          time_t *unix_utc = nullptr);
 
 private:
-    enum class ProtectionState : uint8_t
+    enum class HibernateState : uint8_t
     {
         Normal,
-        ProtectedAsleep,
-        ProtectedAwake,
+        Peek,
+        Hibernating
     };
 
     static void task_entry(void *param);
@@ -76,15 +76,17 @@ private:
     void sync_battery_from_gauge();
     void invalidate_battery_status();
     void check_alarm();
-    void check_protection_idle();
+    void check_hibernation();
     void check_protection_preview();
     void check_idle_standby();
     void check_auto_cathode();
+    void check_preview();
     void begin_protection_preview(uint8_t nixie_brightness);
-    void end_protection_preview();
+    void begin_profile_preview(const BacklightProfile &profile);
+    void end_preview();
     void evaluate_protection(uint8_t hour, uint8_t minute);
-    void enter_protection_sleep();
-    void wake_from_protection();
+    void enter_hibernation_mode();
+    void peek_from_hibernate();
     void restore_user_profile();
     void note_user_activity();
     void enter_standby();
@@ -118,11 +120,11 @@ private:
     bool gasgauge_ready_;
     bool alarm_audio_active_;
     esp_timer_handle_t alarm_stop_timer_;
-    ProtectionState protection_state_;
+    HibernateState hibernate_state_;
     bool protection_window_active_;
-    TickType_t protection_idle_deadline_;
-    bool protection_preview_active_;
-    TickType_t protection_preview_deadline_;
+    TickType_t hibernation_peek_deadline_;
+    bool preview_active_;
+    TickType_t preview_deadline_;
     DisplayMode current_display_mode_;
     TickType_t next_rtc_sync_;
     TickType_t next_battery_poll_;
@@ -132,9 +134,10 @@ private:
 
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
-    static constexpr uint32_t kProtectionIdleMs = 60000;
+    static constexpr uint32_t kHibernationPeekMs = 60000;
     static constexpr uint32_t kProtectionPreviewMs = 3000;
     static constexpr uint32_t kIdleStandbyMs = 120000;
     static constexpr float standby_brightness_factor = 0.25f;
     static constexpr uint32_t kAutoCathodeIntervalMs = 15 * 60 * 1000;
+    static constexpr uint32_t kPreviewMs = 1000;
 };

@@ -117,6 +117,10 @@ void AudioDaemon::ensure_dfplayer_power()
     if (!dfplayer_powered_) {
         power_controller_.set_dfplayer_enabled(true);
         dfplayer_powered_ = true;
+        // The DFPlayer Mini needs time to boot after its rail is powered before
+        // it will respond to UART commands/queries. Give it a settle delay so
+        // the first command after cold power-on does not time out.
+        vTaskDelay(pdMS_TO_TICKS(1500));
     }
 }
 
@@ -348,7 +352,17 @@ void AudioDaemon::process_message(const AudioMessage &msg)
         case AudioCmd::QUERY_TRACK_COUNT: {
             ensure_dfplayer_power();
             uint16_t count = 0;
-            const bool ok = driver_.query_sd_track_count(&count) == ESP_OK && count > 0;
+            // Retry a few times so a transient UART timeout while the DFPlayer is
+            // busy does not fail the whole request. A successful query with a
+            // count of 0 is a valid "empty SD" result, not a failure.
+            bool ok = false;
+            for (int attempt = 0; attempt < 3; ++attempt) {
+                if (driver_.query_sd_track_count(&count) == ESP_OK) {
+                    ok = true;
+                    break;
+                }
+                vTaskDelay(pdMS_TO_TICKS(250));
+            }
             if (ok) {
                 track_count_ = count;
                 track_count_valid_ = true;
