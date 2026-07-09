@@ -50,42 +50,49 @@ struct ClockSettingsV6 {
 };
 
 constexpr size_t kSettingsV6Size = sizeof(ClockSettingsV6);
-constexpr size_t kSettingsV7ProtectionOffset = offsetof(ClockSettings, protection);
+constexpr size_t kSettingsV7HibernationOffset = offsetof(ClockSettings, hibernation);
 
-void init_default_protection(ClockSettings *settings)
+struct HibernationSettingsV9 {
+    bool enabled;
+    uint8_t start_hour;
+    uint8_t start_minute;
+    uint8_t end_hour;
+    uint8_t end_minute;
+    uint8_t nixie_brightness;
+};
+
+void init_default_hibernation(ClockSettings *settings)
 {
-    settings->protection = TubeProtectionSettings{
-        .enabled = true,
+    settings->hibernation = HibernationSettings{
+        .enabled = false,
         .start_hour = 0,
         .start_minute = 0,
         .end_hour = 7,
         .end_minute = 0,
-        .nixie_brightness = 128,
     };
 }
 
-void migrate_protection_from_v8(ClockSettings *settings, const uint8_t *buffer, size_t stored_size)
+void migrate_hibernation_from_v8(ClockSettings *settings, const uint8_t *buffer, size_t stored_size)
 {
-    if (stored_size < offsetof(ClockSettings, protection) + sizeof(TubeProtectionSettingsV8)) {
-        init_default_protection(settings);
+    if (stored_size < offsetof(ClockSettings, hibernation) + sizeof(TubeProtectionSettingsV8)) {
+        init_default_hibernation(settings);
         return;
     }
 
     TubeProtectionSettingsV8 old = {};
-    std::memcpy(&old, buffer + offsetof(ClockSettings, protection), sizeof(old));
+    std::memcpy(&old, buffer + offsetof(ClockSettings, hibernation), sizeof(old));
 
-    settings->protection.enabled = old.enabled;
-    settings->protection.start_hour = old.start_hour;
-    settings->protection.start_minute = old.start_minute;
-    settings->protection.end_hour = old.end_hour;
-    settings->protection.end_minute = old.end_minute;
-    settings->protection.nixie_brightness = old.profile.nixie_brightness;
+    settings->hibernation.enabled = old.enabled;
+    settings->hibernation.start_hour = old.start_hour;
+    settings->hibernation.start_minute = old.start_minute;
+    settings->hibernation.end_hour = old.end_hour;
+    settings->hibernation.end_minute = old.end_minute;
 }
 
-void migrate_protection_from_v6(ClockSettings *settings, const uint8_t *buffer, size_t stored_size)
+void migrate_hibernation_from_v6(ClockSettings *settings, const uint8_t *buffer, size_t stored_size)
 {
     if (stored_size < kSettingsV6Size) {
-        init_default_protection(settings);
+        init_default_hibernation(settings);
         return;
     }
 
@@ -94,12 +101,12 @@ void migrate_protection_from_v6(ClockSettings *settings, const uint8_t *buffer, 
                 buffer + offsetof(ClockSettingsV6, protection_periods),
                 sizeof(period0));
 
-    init_default_protection(settings);
-    settings->protection.enabled = period0.enabled;
-    settings->protection.start_hour = period0.start_hour;
-    settings->protection.start_minute = period0.start_minute;
-    settings->protection.end_hour = period0.end_hour;
-    settings->protection.end_minute = period0.end_minute;
+    init_default_hibernation(settings);
+    settings->hibernation.enabled = period0.enabled;
+    settings->hibernation.start_hour = period0.start_hour;
+    settings->hibernation.start_minute = period0.start_minute;
+    settings->hibernation.end_hour = period0.end_hour;
+    settings->hibernation.end_minute = period0.end_minute;
 }
 
 void init_profiles_from_backlight(ClockSettings *settings)
@@ -152,10 +159,10 @@ ClockSettings SystemState::defaults()
         .rtc_calibrated = false,
         .profiles = {},
         .active_profile_index = 0,
-        .protection = {},
+        .hibernation = {},
     };
     init_profiles_from_backlight(&settings);
-    init_default_protection(&settings);
+    init_default_hibernation(&settings);
     return settings;
 }
 
@@ -199,7 +206,7 @@ bool SystemState::load()
         return false;
     }
 
-    const size_t prefix_len = std::min(stored_size, kSettingsV7ProtectionOffset);
+    const size_t prefix_len = std::min(stored_size, kSettingsV7HibernationOffset);
     std::memcpy(&settings, buffer, prefix_len);
     const uint16_t stored_version = settings.version;
     bool needs_save = false;
@@ -220,17 +227,27 @@ bool SystemState::load()
         init_profiles_from_backlight(&settings);
     }
     if (stored_version < 9 &&
-        stored_size >= offsetof(ClockSettings, protection) + sizeof(TubeProtectionSettingsV8)) {
-        migrate_protection_from_v8(&settings, buffer, stored_size);
+        stored_size >= offsetof(ClockSettings, hibernation) + sizeof(TubeProtectionSettingsV8)) {
+        migrate_hibernation_from_v8(&settings, buffer, stored_size);
         needs_save = true;
-    } else if (stored_size >= sizeof(ClockSettings)) {
-        std::memcpy(&settings.protection,
-                    buffer + offsetof(ClockSettings, protection),
-                    sizeof(TubeProtectionSettings));
+    } else if (stored_version < 10 &&
+               stored_size >= offsetof(ClockSettings, hibernation) + sizeof(HibernationSettingsV9)) {
+        HibernationSettingsV9 old = {};
+        std::memcpy(&old, buffer + offsetof(ClockSettings, hibernation), sizeof(old));
+        settings.hibernation.enabled = old.enabled;
+        settings.hibernation.start_hour = old.start_hour;
+        settings.hibernation.start_minute = old.start_minute;
+        settings.hibernation.end_hour = old.end_hour;
+        settings.hibernation.end_minute = old.end_minute;
+        needs_save = true;
+    } else if (stored_size >= offsetof(ClockSettings, hibernation) + sizeof(HibernationSettings)) {
+        std::memcpy(&settings.hibernation,
+                    buffer + offsetof(ClockSettings, hibernation),
+                    sizeof(HibernationSettings));
     } else if (stored_size >= kSettingsV6Size) {
-        migrate_protection_from_v6(&settings, buffer, stored_size);
+        migrate_hibernation_from_v6(&settings, buffer, stored_size);
     } else {
-        init_default_protection(&settings);
+        init_default_hibernation(&settings);
     }
     if (stored_size < sizeof(ClockSettings)) {
         for (uint8_t i = 0; i < kBacklightProfileCount; ++i) {

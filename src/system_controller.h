@@ -49,10 +49,6 @@ public:
     // preview only. Does not modify stored settings or write to NVS.
     void request_preview_profile(const BacklightProfile &profile);
 
-    // Thread-safe: preview the given nixie brightness on the tubes for a few
-    // seconds, then restore the normal display state.
-    void request_protection_preview(uint8_t nixie_brightness);
-
     // Snapshot of current time state for status endpoints (thread-safe read of
     // system time + a cached RTC read).
     bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
@@ -77,11 +73,9 @@ private:
     void invalidate_battery_status();
     void check_alarm();
     void check_hibernation();
-    void check_protection_preview();
     void check_idle_standby();
     void check_auto_cathode();
     void check_preview();
-    void begin_protection_preview(uint8_t nixie_brightness);
     void begin_profile_preview(const BacklightProfile &profile);
     void end_preview();
     void evaluate_hibernate_schedule(uint8_t hour, uint8_t minute);
@@ -122,7 +116,7 @@ private:
     bool alarm_audio_active_;
     esp_timer_handle_t alarm_stop_timer_;
     HibernateState hibernate_state_;
-    bool protection_window_active_;
+    bool hibernate_window_active_;
     TickType_t hibernation_peek_deadline_;
     bool preview_active_;
     TickType_t preview_deadline_;
@@ -138,7 +132,6 @@ private:
     static constexpr uint8_t kHibernatePeekNixieBrightness = 50;
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
     static constexpr uint32_t kHibernationPeekMs = 5000;
-    static constexpr uint32_t kProtectionPreviewMs = 3000;
     static constexpr uint32_t kIdleStandbyMs = 60000;
     static constexpr uint32_t kDateDisplayMs = 10000;
     static constexpr float standby_brightness_factor = 0.25f;

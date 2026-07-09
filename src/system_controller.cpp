@@ -19,12 +19,12 @@ static const char *TAG = "SystemController";
 
 namespace {
 
-bool in_hibernate_period(uint16_t now_minutes, const TubeProtectionSettings &protection)
+bool in_hibernate_period(uint16_t now_minutes, const HibernationSettings &hibernation)
 {
     const uint16_t start =
-        static_cast<uint16_t>(protection.start_hour) * 60U + protection.start_minute;
+        static_cast<uint16_t>(hibernation.start_hour) * 60U + hibernation.start_minute;
     const uint16_t end =
-        static_cast<uint16_t>(protection.end_hour) * 60U + protection.end_minute;
+        static_cast<uint16_t>(hibernation.end_hour) * 60U + hibernation.end_minute;
     if (start == end) {
         return false;
     }
@@ -36,11 +36,11 @@ bool in_hibernate_period(uint16_t now_minutes, const TubeProtectionSettings &pro
 
 bool hibernate_is_active(const ClockSettings &settings, uint8_t hour, uint8_t minute)
 {
-    if (!settings.protection.enabled) {
+    if (!settings.hibernation.enabled) {
         return false;
     }
     const uint16_t now_minutes = static_cast<uint16_t>(hour) * 60U + minute;
-    return in_hibernate_period(now_minutes, settings.protection);
+    return in_hibernate_period(now_minutes, settings.hibernation);
 }
 
 } // namespace
@@ -235,7 +235,7 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       alarm_audio_active_(false),
       alarm_stop_timer_(nullptr),
       hibernate_state_(HibernateState::Normal),
-      protection_window_active_(false),
+      hibernate_window_active_(false),
       hibernation_peek_deadline_(0),
       preview_active_(false),
       preview_deadline_(0),
@@ -398,9 +398,6 @@ void SystemController::process_message(const SystemMessage &msg)
         case SystemEvent::PREVIEW_PROFILE:
             begin_profile_preview(msg.data.preview_profile);
             break;
-        case SystemEvent::PREVIEW_PROTECTION_BRIGHTNESS:
-            begin_protection_preview(msg.data.preview_brightness);
-            break;
         case SystemEvent::BATTERY_UPDATE:
             break;
         default:
@@ -438,7 +435,7 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
     }
 
     if (hibernate_state_ == HibernateState::Hibernating) {
-        // Keep the display off while protection sleep is active.
+        // Keep the display off while hibernation is active.
     } else if (hibernate_state_ == HibernateState::Peek) {
         apply_hibernate_peek_to_display(settings);
     } else {
@@ -663,7 +660,7 @@ void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
     const bool in_window = hibernate_is_active(settings, hour, minute);
 
     if (!in_window) {
-        if (hibernate_state_ != HibernateState::Normal || protection_window_active_) {
+        if (hibernate_state_ != HibernateState::Normal || hibernate_window_active_) {
             restore_user_profile();
             if (hibernate_state_ != HibernateState::Normal) {
                 current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
@@ -673,14 +670,14 @@ void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
                 xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
             }
             hibernate_state_ = HibernateState::Normal;
-            protection_window_active_ = false;
+            hibernate_window_active_ = false;
             note_user_activity();
             ESP_LOGI(TAG, "Hibernate: normal operation");
         }
         return;
     }
 
-    protection_window_active_ = true;
+    hibernate_window_active_ = true;
 
     if (hibernate_state_ == HibernateState::Peek) {
         return;
@@ -694,44 +691,6 @@ void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
         hibernate_state_ = HibernateState::Hibernating;
         enter_hibernation_mode();
     }
-}
-
-void SystemController::begin_protection_preview(uint8_t nixie_brightness)
-{
-    const BacklightProfile *transition_profile = nullptr;
-    ClockSettings settings;
-    if (system_state_.get_settings(&settings)) {
-        transition_profile =
-            &settings.profiles[settings.active_profile_index % kBacklightProfileCount];
-    }
-
-    // Show the clock with the backlight off so the preview matches how the
-    // tubes look when protection wakes them, at the requested brightness.
-    current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
-    DisplayMessage dmsg = {};
-    dmsg.command = DisplayCmd::SET_MODE;
-    dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
-    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
-
-    dmsg.command = DisplayCmd::SET_EFFECT;
-    dmsg.data.effect_id = 3;
-    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
-
-    if (transition_profile) {
-        dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;
-        dmsg.data.transition_id = transition_profile->nixie_transition;
-        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
-    }
-
-    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
-    dmsg.data.brightness = kHibernatePeekNixieBrightness;
-    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
-
-    push_local_time_now();
-
-    preview_active_ = true;
-    preview_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kPreviewMs);
-    ESP_LOGI(TAG, "Hibernate: previewing peek brightness %u", kHibernatePeekNixieBrightness);
 }
 
 void SystemController::begin_profile_preview(const BacklightProfile &profile)
@@ -772,19 +731,19 @@ void SystemController::end_preview()
     gmtime_r(&local, &local_tm);
 
     // Restore the correct display state based on whether we are currently
-    // inside the protection window.
+    // inside the hibernate schedule window.
     if (hibernate_is_active(settings, static_cast<uint8_t>(local_tm.tm_hour),
                              static_cast<uint8_t>(local_tm.tm_min))) {
         hibernate_state_ = HibernateState::Hibernating;
-        protection_window_active_ = true;
+        hibernate_window_active_ = true;
         enter_hibernation_mode();
     } else {
         hibernate_state_ = HibernateState::Normal;
-        protection_window_active_ = false;
+        hibernate_window_active_ = false;
         restore_user_profile();
         return_to_clock_mode();
     }
-    ESP_LOGI(TAG, "Hibernate: preview ended");
+    ESP_LOGI(TAG, "preview ended");
 }
 
 void SystemController::check_date_auto_return()
@@ -1089,14 +1048,6 @@ void SystemController::request_preview_profile(const BacklightProfile &profile)
     SystemMessage msg = {};
     msg.event = SystemEvent::PREVIEW_PROFILE;
     msg.data.preview_profile = profile;
-    xQueueSend(queue_, &msg, 0);
-}
-
-void SystemController::request_protection_preview(uint8_t nixie_brightness)
-{
-    SystemMessage msg = {};
-    msg.event = SystemEvent::PREVIEW_PROTECTION_BRIGHTNESS;
-    msg.data.preview_brightness = nixie_brightness;
     xQueueSend(queue_, &msg, 0);
 }
 

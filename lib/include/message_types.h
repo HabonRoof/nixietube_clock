@@ -125,7 +125,6 @@ enum class SystemEvent : uint8_t
     RTC_UPDATE,
     SETTINGS_UPDATE,
     PREVIEW_PROFILE,
-    PREVIEW_PROTECTION_BRIGHTNESS,
     CLI_COMMAND,
     BATTERY_UPDATE,
     CHARGER_UPDATE,
@@ -172,7 +171,6 @@ struct SystemMessage
         ChargerData charger;
         SettingsUpdate apply;
         BacklightProfile preview_profile; // live profile preview (not persisted)
-        uint8_t preview_brightness;
         // TODO: Add other features
         // Add other event data as needed
     } data;

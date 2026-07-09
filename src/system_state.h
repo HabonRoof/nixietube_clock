@@ -6,7 +6,7 @@
 
 // Bump whenever the layout/meaning of ClockSettings changes. NVS load uses
 // this to migrate (rather than discard) older persisted blobs.
-constexpr uint16_t kSettingsVersion = 9;
+constexpr uint16_t kSettingsVersion = 10;
 constexpr uint8_t kBacklightProfileCount = 4;
 
 struct BacklightProfile {
@@ -19,13 +19,12 @@ struct BacklightProfile {
     uint8_t nixie_transition; // 0: instant, 1: fade
 };
 
-struct TubeProtectionSettings {
+struct HibernationSettings {
     bool enabled;
     uint8_t start_hour;
     uint8_t start_minute;
     uint8_t end_hour;
     uint8_t end_minute;
-    uint8_t nixie_brightness;
 };
 
 struct ClockSettings {
@@ -45,7 +44,7 @@ struct ClockSettings {
     bool rtc_calibrated; // true after user/web explicitly sets RTC time
     BacklightProfile profiles[kBacklightProfileCount];
     uint8_t active_profile_index;
-    TubeProtectionSettings protection;
+    HibernationSettings hibernation;
 };
 
 struct BatteryStatus {
