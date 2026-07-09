@@ -72,7 +72,6 @@ private:
     void check_idle_standby();
     void check_auto_cathode();
     void evaluate_hibernate_schedule(uint8_t hour, uint8_t minute);
-    void check_date_auto_return();
     void enter_hibernation_mode();
     void peek_from_hibernate();
     void restore_user_profile();
@@ -116,7 +115,6 @@ private:
     TickType_t next_battery_poll_;
     bool standby_active_;
     TickType_t idle_standby_deadline_;
-    TickType_t date_mode_deadline_;
     TickType_t next_auto_cathode_;
 
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
@@ -124,7 +122,6 @@ private:
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
     static constexpr uint32_t kHibernationPeekMs = 5000;
     static constexpr uint32_t kIdleStandbyMs = 60000;
-    static constexpr uint32_t kDateDisplayMs = 10000;
     static constexpr float standby_brightness_factor = 0.25f;
     static constexpr uint32_t kAutoCathodeIntervalMs = 15 * 60 * 1000;
 };

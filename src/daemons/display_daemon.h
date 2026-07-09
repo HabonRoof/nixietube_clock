@@ -47,7 +47,6 @@ struct DivergenceMeterState
 {
     DivergencePhase phase = DivergencePhase::JUMPING;
     uint32_t elapsed_ms = 0;
-    uint32_t since_jump_ms = 0;
     uint32_t final_value = 0;
 };
 
@@ -88,6 +87,7 @@ private:
     void process_message(const DisplayMessage &msg);
     void update_effects(uint32_t dt_ms);
     void update_divergence_meter(uint32_t dt_ms);
+    void update_date_display(uint32_t dt_ms);
     void update_cathode_poisoning(uint32_t dt_ms);
     void update_pomodoro(uint32_t dt_ms);
     void update_nixie_transitions(uint32_t dt_ms);
@@ -110,10 +110,8 @@ private:
     void turn_off_backlight();
     void apply_backlight_to_all(const BackLightState &state);
 
+    static constexpr uint32_t kAutoReturnDisplayMs = 10000;
     static constexpr uint32_t kDivergenceJumpMs = 3000;
-    static constexpr uint32_t kDivergenceFrozenMs = 60000;
-    static constexpr uint32_t kDivergenceTotalMs = kDivergenceJumpMs + kDivergenceFrozenMs;
-    static constexpr uint32_t kDivergenceStepMs = 50;
     static constexpr uint32_t kCathodeStepMs = 300;
     static constexpr uint8_t kCathodePoisonCtr = 15;
     static constexpr uint8_t kFadeStep = 51;
@@ -139,6 +137,7 @@ private:
     bool last_digits_valid_;
     std::array<TubeTransitionState, 6> tube_transitions_{};
     DivergenceMeterState divergence_;
+    uint32_t date_elapsed_ms_;
     CathodePoisoningState cathode_;
     PomodoroState pomodoro_;
     bool auto_return_requested_;

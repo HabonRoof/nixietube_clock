@@ -24,6 +24,7 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver,
       base_nixie_brightness_(255),
       last_digits_valid_(false),
       divergence_{},
+      date_elapsed_ms_(0),
       cathode_{},
       pomodoro_{},
       auto_return_requested_(false)
@@ -87,7 +88,6 @@ void DisplayDaemon::reset_divergence_meter()
     reset_tube_transitions();
     divergence_.phase = DivergencePhase::JUMPING;
     divergence_.elapsed_ms = 0;
-    divergence_.since_jump_ms = 0;
     divergence_.final_value = esp_random() % 200000;
     nixie_driver_.display_number(esp_random() % 1000000);
 }
@@ -175,9 +175,11 @@ void DisplayDaemon::update_pomodoro(uint32_t dt_ms)
     render_pomodoro_display();
 
     if (pomodoro_.remaining_ms > 0) {
+        // If time is not up, continue the current phase
         return;
     }
 
+    // If time is up, start the next phase
     if (pomodoro_.phase == PomodoroPhase::WORK) {
         start_pomodoro_break();
     } else if (pomodoro_.phase == PomodoroPhase::BREAK) {
@@ -308,17 +310,21 @@ void DisplayDaemon::update_divergence_meter(uint32_t dt_ms)
 {
     divergence_.elapsed_ms += dt_ms;
 
-    if (divergence_.elapsed_ms >= kDivergenceTotalMs) {
+    if (divergence_.elapsed_ms >= kAutoReturnDisplayMs) {
         auto_return_clock();
         return;
     }
 
     if (divergence_.phase == DivergencePhase::JUMPING) {
-        divergence_.since_jump_ms += dt_ms;
-        if (divergence_.since_jump_ms >= kDivergenceStepMs) {
-            divergence_.since_jump_ms = 0;
-            nixie_driver_.display_number(esp_random() % 1000000);
-        }
+        const std::array<uint8_t, 6> temp_digits = {
+            static_cast<uint8_t>(esp_random() % 10),
+            static_cast<uint8_t>(esp_random() % 10),
+            static_cast<uint8_t>(esp_random() % 10),
+            static_cast<uint8_t>(esp_random() % 10),
+            static_cast<uint8_t>(esp_random() % 10),
+            static_cast<uint8_t>(esp_random() % 10),
+        };
+        nixie_driver_.set_digits(temp_digits);
 
         if (divergence_.elapsed_ms >= kDivergenceJumpMs) {
             divergence_.phase = DivergencePhase::FROZEN;
@@ -328,6 +334,14 @@ void DisplayDaemon::update_divergence_meter(uint32_t dt_ms)
     }
 
     // FROZEN: hold final_value until auto-return.
+}
+
+void DisplayDaemon::update_date_display(uint32_t dt_ms)
+{
+    date_elapsed_ms_ += dt_ms;
+    if (date_elapsed_ms_ >= kAutoReturnDisplayMs) {
+        auto_return_clock();
+    }
 }
 
 void DisplayDaemon::update_cathode_poisoning(uint32_t dt_ms)
@@ -370,8 +384,10 @@ void DisplayDaemon::loop()
         } else if (current_mode_ == DisplayMode::POMODORO) {
             update_pomodoro(20);
             update_nixie_transitions(20);
-        } else if (current_mode_ == DisplayMode::CLOCK_HHMMSS ||
-                   current_mode_ == DisplayMode::DATE_YYMMDD) {
+        } else if (current_mode_ == DisplayMode::DATE_YYMMDD) {
+            update_date_display(20);
+            update_nixie_transitions(20);
+        } else if (current_mode_ == DisplayMode::CLOCK_HHMMSS) {
             update_nixie_transitions(20);
         }
 
@@ -396,9 +412,13 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             break;
         case DisplayCmd::SET_MODE:
             current_mode_ = msg.data.mode;
-            if (current_mode_ == DisplayMode::CLOCK_HHMMSS ||
-                current_mode_ == DisplayMode::DATE_YYMMDD) {
+            if (current_mode_ == DisplayMode::CLOCK_HHMMSS) {
                 auto_return_requested_ = false;
+                reset_tube_transitions();
+                last_digits_valid_ = false;
+            } else if (current_mode_ == DisplayMode::DATE_YYMMDD) {
+                auto_return_requested_ = false;
+                date_elapsed_ms_ = 0;
                 reset_tube_transitions();
                 last_digits_valid_ = false;
             }

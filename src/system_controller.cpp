@@ -242,7 +242,6 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       next_battery_poll_(0),
       standby_active_(false),
       idle_standby_deadline_(0),
-      date_mode_deadline_(0),
       next_auto_cathode_(0)
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
@@ -344,7 +343,6 @@ void SystemController::loop()
 
         check_alarm();
         check_hibernation();
-        check_date_auto_return();
         check_idle_standby();
         check_auto_cathode();
 
@@ -686,18 +684,6 @@ void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
         hibernate_state_ = HibernateState::Hibernating;
         enter_hibernation_mode();
     }
-}
-
-void SystemController::check_date_auto_return()
-{
-    if (current_display_mode_ != DisplayMode::DATE_YYMMDD || date_mode_deadline_ == 0) {
-        return;
-    }
-    if ((int32_t)(xTaskGetTickCount() - date_mode_deadline_) < 0) {
-        return;
-    }
-    date_mode_deadline_ = 0;
-    return_to_clock_mode();
 }
 
 void SystemController::check_hibernation()
@@ -1085,7 +1071,6 @@ void SystemController::apply_hibernate_peek_to_display(const ClockSettings &sett
 void SystemController::return_to_clock_mode()
 {
     current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
-    date_mode_deadline_ = 0;
     DisplayMessage dmsg = {};
     dmsg.command = DisplayCmd::SET_MODE;
     dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
@@ -1099,11 +1084,6 @@ void SystemController::cycle_display_mode()
 {
     const DisplayMode prev = current_display_mode_;
     current_display_mode_ = next_display_mode(current_display_mode_);
-    if (current_display_mode_ == DisplayMode::DATE_YYMMDD) {
-        date_mode_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kDateDisplayMs);
-    } else {
-        date_mode_deadline_ = 0;
-    }
     DisplayMessage dmsg = {};
     dmsg.command = DisplayCmd::SET_MODE;
     dmsg.data.mode = current_display_mode_;
