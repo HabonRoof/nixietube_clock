@@ -84,7 +84,8 @@ private:
     void begin_protection_preview(uint8_t nixie_brightness);
     void begin_profile_preview(const BacklightProfile &profile);
     void end_preview();
-    void evaluate_protection(uint8_t hour, uint8_t minute);
+    void evaluate_hibernate_schedule(uint8_t hour, uint8_t minute);
+    void check_date_auto_return();
     void enter_hibernation_mode();
     void peek_from_hibernate();
     void restore_user_profile();
@@ -102,7 +103,7 @@ private:
     void cycle_display_mode();
     void cycle_profile();
     void apply_profile_to_display(const BacklightProfile &profile);
-    void apply_protection_wake_to_display(const ClockSettings &settings);
+    void apply_hibernate_peek_to_display(const ClockSettings &settings);
     bool is_alarm_audio_active() const;
     static DisplayMode next_display_mode(DisplayMode mode);
     static uint8_t scale_standby_brightness(uint8_t value);
@@ -130,13 +131,16 @@ private:
     TickType_t next_battery_poll_;
     bool standby_active_;
     TickType_t idle_standby_deadline_;
+    TickType_t date_mode_deadline_;
     TickType_t next_auto_cathode_;
 
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
+    static constexpr uint8_t kHibernatePeekNixieBrightness = 50;
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
-    static constexpr uint32_t kHibernationPeekMs = 60000;
+    static constexpr uint32_t kHibernationPeekMs = 5000;
     static constexpr uint32_t kProtectionPreviewMs = 3000;
-    static constexpr uint32_t kIdleStandbyMs = 120000;
+    static constexpr uint32_t kIdleStandbyMs = 60000;
+    static constexpr uint32_t kDateDisplayMs = 10000;
     static constexpr float standby_brightness_factor = 0.25f;
     static constexpr uint32_t kAutoCathodeIntervalMs = 15 * 60 * 1000;
     static constexpr uint32_t kPreviewMs = 1000;

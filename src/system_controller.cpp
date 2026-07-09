@@ -244,6 +244,7 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       next_battery_poll_(0),
       standby_active_(false),
       idle_standby_deadline_(0),
+      date_mode_deadline_(0),
       next_auto_cathode_(0)
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
@@ -345,6 +346,7 @@ void SystemController::loop()
 
         check_alarm();
         check_hibernation();
+        check_date_auto_return();
         check_idle_standby();
         check_auto_cathode();
 
@@ -438,7 +440,7 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
     if (hibernate_state_ == HibernateState::Hibernating) {
         // Keep the display off while protection sleep is active.
     } else if (hibernate_state_ == HibernateState::Peek) {
-        apply_protection_wake_to_display(settings);
+        apply_hibernate_peek_to_display(settings);
     } else {
         DisplayMessage dmsg = {};
         dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
@@ -501,7 +503,7 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
     struct tm local_tm;
     time_t local = now_utc + (time_t)settings.tz_offset_hours * 3600;
     gmtime_r(&local, &local_tm);
-    evaluate_protection(static_cast<uint8_t>(local_tm.tm_hour),
+    evaluate_hibernate_schedule(static_cast<uint8_t>(local_tm.tm_hour),
                         static_cast<uint8_t>(local_tm.tm_min));
 }
 
@@ -630,7 +632,7 @@ void SystemController::peek_from_hibernate()
 {
     ClockSettings settings;
     system_state_.get_settings(&settings);
-    apply_protection_wake_to_display(settings);
+    apply_hibernate_peek_to_display(settings);
 
     current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
     DisplayMessage dmsg = {};
@@ -642,7 +644,7 @@ void SystemController::peek_from_hibernate()
 
     hibernate_state_ = HibernateState::Peek;
     hibernation_peek_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kHibernationPeekMs);
-    ESP_LOGI(TAG, "Tube protection: display awake");
+    ESP_LOGI(TAG, "Hibernate: display awake for %u s", kHibernationPeekMs / 1000U);
 }
 
 void SystemController::restore_user_profile()
@@ -654,7 +656,7 @@ void SystemController::restore_user_profile()
     apply_profile_to_display(profile);
 }
 
-void SystemController::evaluate_protection(uint8_t hour, uint8_t minute)
+void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
 {
     ClockSettings settings;
     system_state_.get_settings(&settings);
@@ -672,7 +674,8 @@ void SystemController::evaluate_protection(uint8_t hour, uint8_t minute)
             }
             hibernate_state_ = HibernateState::Normal;
             protection_window_active_ = false;
-            ESP_LOGI(TAG, "Tube protection: normal operation");
+            note_user_activity();
+            ESP_LOGI(TAG, "Hibernate: normal operation");
         }
         return;
     }
@@ -681,6 +684,10 @@ void SystemController::evaluate_protection(uint8_t hour, uint8_t minute)
 
     if (hibernate_state_ == HibernateState::Peek) {
         return;
+    }
+
+    if (standby_active_) {
+        standby_active_ = false;
     }
 
     if (hibernate_state_ != HibernateState::Hibernating) {
@@ -717,14 +724,14 @@ void SystemController::begin_protection_preview(uint8_t nixie_brightness)
     }
 
     dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
-    dmsg.data.brightness = nixie_brightness;
+    dmsg.data.brightness = kHibernatePeekNixieBrightness;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
     push_local_time_now();
 
     preview_active_ = true;
     preview_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kPreviewMs);
-    ESP_LOGI(TAG, "Tube protection: previewing brightness %u", nixie_brightness);
+    ESP_LOGI(TAG, "Hibernate: previewing peek brightness %u", kHibernatePeekNixieBrightness);
 }
 
 void SystemController::begin_profile_preview(const BacklightProfile &profile)
@@ -777,7 +784,19 @@ void SystemController::end_preview()
         restore_user_profile();
         return_to_clock_mode();
     }
-    ESP_LOGI(TAG, "Tube protection: preview ended");
+    ESP_LOGI(TAG, "Hibernate: preview ended");
+}
+
+void SystemController::check_date_auto_return()
+{
+    if (current_display_mode_ != DisplayMode::DATE_YYMMDD || date_mode_deadline_ == 0) {
+        return;
+    }
+    if ((int32_t)(xTaskGetTickCount() - date_mode_deadline_) < 0) {
+        return;
+    }
+    date_mode_deadline_ = 0;
+    return_to_clock_mode();
 }
 
 void SystemController::check_preview()
@@ -801,7 +820,7 @@ void SystemController::check_hibernation()
     }
     hibernate_state_ = HibernateState::Hibernating;
     enter_hibernation_mode();
-    ESP_LOGI(TAG, "Tube protection: idle timeout, display asleep");
+    ESP_LOGI(TAG, "Hibernate: idle timeout, display asleep");
 }
 
 uint8_t SystemController::scale_standby_brightness(uint8_t value)
@@ -846,6 +865,7 @@ void SystemController::exit_standby()
     const BacklightProfile &profile =
         settings.profiles[settings.active_profile_index % kBacklightProfileCount];
     apply_profile_to_display(profile);
+    standby_active_ = false;
     ESP_LOGI(TAG, "Standby: restored profile brightness");
 }
 
@@ -854,8 +874,7 @@ void SystemController::check_idle_standby()
     if (hibernate_state_ != HibernateState::Normal || standby_active_) {
         return;
     }
-    if (current_display_mode_ == DisplayMode::OFF ||
-        current_display_mode_ == DisplayMode::CATHODE_POISONING) {
+    if (current_display_mode_ != DisplayMode::CLOCK_HHMMSS) {
         return;
     }
     if ((int32_t)(xTaskGetTickCount() - idle_standby_deadline_) < 0) {
@@ -932,7 +951,7 @@ void SystemController::update_time()
     msg.data.time.s = static_cast<uint8_t>(local_tm.tm_sec);
     xQueueSend(display_daemon_.get_queue(), &msg, 0);
 
-    evaluate_protection(static_cast<uint8_t>(local_tm.tm_hour),
+    evaluate_hibernate_schedule(static_cast<uint8_t>(local_tm.tm_hour),
                         static_cast<uint8_t>(local_tm.tm_min));
 }
 
@@ -1170,7 +1189,7 @@ void SystemController::apply_profile_to_display(const BacklightProfile &profile)
     note_user_activity();
 }
 
-void SystemController::apply_protection_wake_to_display(const ClockSettings &settings)
+void SystemController::apply_hibernate_peek_to_display(const ClockSettings &settings)
 {
     const BacklightProfile &profile =
         settings.profiles[settings.active_profile_index % kBacklightProfileCount];
@@ -1181,7 +1200,7 @@ void SystemController::apply_protection_wake_to_display(const ClockSettings &set
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
     dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
-    dmsg.data.brightness = settings.protection.nixie_brightness;
+    dmsg.data.brightness = kHibernatePeekNixieBrightness;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
 
     dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;
@@ -1192,6 +1211,7 @@ void SystemController::apply_protection_wake_to_display(const ClockSettings &set
 void SystemController::return_to_clock_mode()
 {
     current_display_mode_ = DisplayMode::CLOCK_HHMMSS;
+    date_mode_deadline_ = 0;
     DisplayMessage dmsg = {};
     dmsg.command = DisplayCmd::SET_MODE;
     dmsg.data.mode = DisplayMode::CLOCK_HHMMSS;
@@ -1205,6 +1225,11 @@ void SystemController::cycle_display_mode()
 {
     const DisplayMode prev = current_display_mode_;
     current_display_mode_ = next_display_mode(current_display_mode_);
+    if (current_display_mode_ == DisplayMode::DATE_YYMMDD) {
+        date_mode_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kDateDisplayMs);
+    } else {
+        date_mode_deadline_ = 0;
+    }
     DisplayMessage dmsg = {};
     dmsg.command = DisplayCmd::SET_MODE;
     dmsg.data.mode = current_display_mode_;
@@ -1218,6 +1243,9 @@ void SystemController::cycle_display_mode()
                              current_display_mode_ == DisplayMode::DATE_YYMMDD;
     if (is_clockish) {
         push_local_time_now();
+    }
+    if (current_display_mode_ == DisplayMode::CLOCK_HHMMSS) {
+        note_user_activity();
     }
     ESP_LOGI(TAG, "Display mode cycled to %u", static_cast<unsigned>(current_display_mode_));
 }
@@ -1254,6 +1282,7 @@ void SystemController::handle_button_press(uint8_t button_id)
 
     if (hibernate_state_ == HibernateState::Peek) {
         hibernation_peek_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kHibernationPeekMs);
+        return;
     }
 
     if (standby_active_) {

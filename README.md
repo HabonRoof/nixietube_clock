@@ -12,7 +12,8 @@ Whether you want to hack on display effects, add CLI tools, improve the web UI, 
 - **RTC** — DS3231 for precise timekeeping with periodic resync to ESP32 system time.
 - **Web UI** — Wi-Fi access point and HTTP server for settings and time configuration from a phone or laptop.
 - **Buttons** — Debounced physical inputs for display mode, backlight profile, and interactive modes.
-- **Idle standby** — After 2 minutes without button presses, dim nixie and backlight brightness to 25% of the active profile; first press wakes only.
+- **Hibernate mode** — Scheduled daily window turns off tubes and LED backlight. Press any button for a 5-second clock preview (tubes at fixed brightness 50, LED off).
+- **Idle standby** — After 1 minute without button presses in clock mode, dim nixie and backlight brightness to 25% of the active profile; any button press restores full brightness.
 - **Auto cathode anti-poisoning** — Every 15 minutes, run the same cathode-poisoning digit sweep as manual mode, then auto-return to the clock.
 - **Serial CLI** — Interactive console for development, diagnostics, and power-rail control.
 - **Power management** — BQ25601 battery charger, BQ27441 fuel gauge, and switched HV / DFPlayer rails.
