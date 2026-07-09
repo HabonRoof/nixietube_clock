@@ -20,7 +20,6 @@ public:
 
     bool load_settings(ClockSettings *out_settings);
     bool apply_settings(const ClockSettings &settings, const struct tm *new_time);
-    void preview_profile(const BacklightProfile &profile);
     bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
                          time_t *unix_utc = nullptr);
 

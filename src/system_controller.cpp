@@ -237,8 +237,6 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       hibernate_state_(HibernateState::Normal),
       hibernate_window_active_(false),
       hibernation_peek_deadline_(0),
-      preview_active_(false),
-      preview_deadline_(0),
       current_display_mode_(DisplayMode::CLOCK_HHMMSS),
       next_rtc_sync_(0),
       next_battery_poll_(0),
@@ -394,9 +392,6 @@ void SystemController::process_message(const SystemMessage &msg)
             apply_settings(msg.data.apply.settings,
                            msg.data.apply.has_time ? &msg.data.apply.local_time : nullptr);
             system_state_.save_settings();
-            break;
-        case SystemEvent::PREVIEW_PROFILE:
-            begin_profile_preview(msg.data.preview_profile);
             break;
         case SystemEvent::BATTERY_UPDATE:
             break;
@@ -693,59 +688,6 @@ void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
     }
 }
 
-void SystemController::begin_profile_preview(const BacklightProfile &profile)
-{
-    // Apply the previewed backlight/nixie settings live to the display.
-    apply_profile_to_display(profile);
-
-    // Force one visible digit transition so the selected nixie transition
-    // (fade vs instant) can actually be seen: show the current time, then push
-    // the time with the seconds decremented by one so at least one tube
-    // animates using the current transition. The next 1 Hz update and
-    // end_preview() restore the correct time.
-    ClockSettings settings;
-    system_state_.get_settings(&settings);
-    time_t now_utc = 0;
-    time(&now_utc);
-    const time_t local = now_utc + static_cast<time_t>(settings.tz_offset_hours) * 3600;
-    struct tm local_tm;
-    gmtime_r(&local, &local_tm);
-    push_current_time_to_display(local_tm);
-
-    preview_active_ = true;
-    preview_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kPreviewMs);
-    ESP_LOGI(TAG, "Profile preview started");
-}
-
-void SystemController::end_preview()
-{
-    preview_active_ = false;
-
-    ClockSettings settings;
-    system_state_.get_settings(&settings);
-
-    time_t now_utc = 0;
-    time(&now_utc);
-    struct tm local_tm;
-    const time_t local = now_utc + static_cast<time_t>(settings.tz_offset_hours) * 3600;
-    gmtime_r(&local, &local_tm);
-
-    // Restore the correct display state based on whether we are currently
-    // inside the hibernate schedule window.
-    if (hibernate_is_active(settings, static_cast<uint8_t>(local_tm.tm_hour),
-                             static_cast<uint8_t>(local_tm.tm_min))) {
-        hibernate_state_ = HibernateState::Hibernating;
-        hibernate_window_active_ = true;
-        enter_hibernation_mode();
-    } else {
-        hibernate_state_ = HibernateState::Normal;
-        hibernate_window_active_ = false;
-        restore_user_profile();
-        return_to_clock_mode();
-    }
-    ESP_LOGI(TAG, "preview ended");
-}
-
 void SystemController::check_date_auto_return()
 {
     if (current_display_mode_ != DisplayMode::DATE_YYMMDD || date_mode_deadline_ == 0) {
@@ -756,17 +698,6 @@ void SystemController::check_date_auto_return()
     }
     date_mode_deadline_ = 0;
     return_to_clock_mode();
-}
-
-void SystemController::check_preview()
-{
-    if (!preview_active_) {
-        return;
-    }
-    if ((int32_t)(xTaskGetTickCount() - preview_deadline_) < 0) {
-        return;
-    }
-    end_preview();
 }
 
 void SystemController::check_hibernation()
@@ -1040,14 +971,6 @@ void SystemController::request_settings_update(const ClockSettings &settings,
     if (local_time) {
         msg.data.apply.local_time = *local_time;
     }
-    xQueueSend(queue_, &msg, 0);
-}
-
-void SystemController::request_preview_profile(const BacklightProfile &profile)
-{
-    SystemMessage msg = {};
-    msg.event = SystemEvent::PREVIEW_PROFILE;
-    msg.data.preview_profile = profile;
     xQueueSend(queue_, &msg, 0);
 }
 

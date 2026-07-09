@@ -45,10 +45,6 @@ public:
     // so the SystemController task remains the sole owner of rtc_/settings.
     void request_settings_update(const ClockSettings &settings, const struct tm *local_time);
 
-    // Thread-safe: apply a backlight/nixie profile to the display for a live
-    // preview only. Does not modify stored settings or write to NVS.
-    void request_preview_profile(const BacklightProfile &profile);
-
     // Snapshot of current time state for status endpoints (thread-safe read of
     // system time + a cached RTC read).
     bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
@@ -75,9 +71,6 @@ private:
     void check_hibernation();
     void check_idle_standby();
     void check_auto_cathode();
-    void check_preview();
-    void begin_profile_preview(const BacklightProfile &profile);
-    void end_preview();
     void evaluate_hibernate_schedule(uint8_t hour, uint8_t minute);
     void check_date_auto_return();
     void enter_hibernation_mode();
@@ -118,8 +111,6 @@ private:
     HibernateState hibernate_state_;
     bool hibernate_window_active_;
     TickType_t hibernation_peek_deadline_;
-    bool preview_active_;
-    TickType_t preview_deadline_;
     DisplayMode current_display_mode_;
     TickType_t next_rtc_sync_;
     TickType_t next_battery_poll_;
@@ -136,5 +127,4 @@ private:
     static constexpr uint32_t kDateDisplayMs = 10000;
     static constexpr float standby_brightness_factor = 0.25f;
     static constexpr uint32_t kAutoCathodeIntervalMs = 15 * 60 * 1000;
-    static constexpr uint32_t kPreviewMs = 1000;
 };

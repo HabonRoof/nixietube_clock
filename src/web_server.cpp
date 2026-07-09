@@ -414,57 +414,6 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
         settings = SystemState::defaults();
     }
 
-    // "preview":true applies backlight/profile changes to the display live
-    // without persisting them (used while dragging sliders on the Light tab).
-    // Start from the active stored profile so unspecified fields are preserved.
-    std::string preview_flag = extract_json_value(body, "preview");
-    if (preview_flag == "true" || preview_flag == "1") {
-        BacklightProfile profile =
-            settings.profiles[settings.active_profile_index % kBacklightProfileCount];
-
-        std::string prgb = extract_json_value(body, "backlight_rgb");
-        if (!prgb.empty()) {
-            uint8_t r, g, b;
-            if (parse_rgb(prgb.c_str(), &r, &g, &b)) {
-                profile.r = r;
-                profile.g = g;
-                profile.b = b;
-            }
-        }
-        std::string pbright = extract_json_value(body, "backlight_brightness");
-        if (!pbright.empty()) {
-            int value = std::stoi(pbright);
-            if (value >= 0 && value <= 255) {
-                profile.backlight_brightness = static_cast<uint8_t>(value);
-            }
-        }
-        std::string peffect = extract_json_value(body, "backlight_effect");
-        if (!peffect.empty()) {
-            int value = std::stoi(peffect);
-            if (value >= 0 && value <= 3) {
-                profile.backlight_effect = static_cast<uint8_t>(value);
-            }
-        }
-        std::string pnixie = extract_json_value(body, "nixie_brightness");
-        if (!pnixie.empty()) {
-            int value = std::stoi(pnixie);
-            if (value >= 0 && value <= 255) {
-                profile.nixie_brightness = static_cast<uint8_t>(value);
-            }
-        }
-        std::string ptrans = extract_json_value(body, "nixie_transition");
-        if (!ptrans.empty()) {
-            int value = std::stoi(ptrans);
-            if (value >= 0 && value <= 1) {
-                profile.nixie_transition = static_cast<uint8_t>(value);
-            }
-        }
-
-        server->preview_profile(profile);
-        httpd_resp_set_type(req, "text/plain");
-        return httpd_resp_send(req, "OK", HTTPD_RESP_USE_STRLEN);
-    }
-
     std::string tz_value = extract_json_value(body, "tz_offset");
     if (!tz_value.empty()) {
         settings.tz_offset_hours = static_cast<int8_t>(std::stoi(tz_value));
@@ -781,11 +730,6 @@ bool WebServer::apply_settings(const ClockSettings &settings, const struct tm *n
 {
     system_controller_.request_settings_update(settings, new_time);
     return true;
-}
-
-void WebServer::preview_profile(const BacklightProfile &profile)
-{
-    system_controller_.request_preview_profile(profile);
 }
 
 bool WebServer::get_time_status(struct tm *local_out, bool *time_valid, bool *osf,
