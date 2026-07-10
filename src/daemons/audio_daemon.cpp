@@ -5,6 +5,18 @@
 
 static const char *TAG = "AudioDaemon";
 
+static AudioPlaybackUiState dfplayer_status_to_ui(DfPlayerPlaybackStatus status)
+{
+    switch (status) {
+        case DfPlayerPlaybackStatus::kPlaying:
+            return AudioPlaybackUiState::PLAYING;
+        case DfPlayerPlaybackStatus::kPaused:
+            return AudioPlaybackUiState::PAUSED;
+        default:
+            return AudioPlaybackUiState::STOPPED;
+    }
+}
+
 AudioDaemon::AudioDaemon(IAudioDriver &driver, PowerController &power_controller, uint8_t boot_volume)
     : driver_(driver),
       power_controller_(power_controller),
@@ -209,6 +221,19 @@ bool AudioDaemon::rpc_query_tracks(uint16_t *count_out, uint32_t timeout_ms)
     return track_count_valid_;
 }
 
+bool AudioDaemon::rpc_query_playback_status(AudioDaemonStatus *out, uint32_t timeout_ms)
+{
+    if (!out) {
+        return false;
+    }
+
+    AudioMessage msg = {};
+    msg.command = AudioCmd::QUERY_PLAYBACK_STATUS;
+    msg.response_status = out;
+
+    return send_rpc(&msg, timeout_ms);
+}
+
 bool AudioDaemon::rpc_get_status(AudioDaemonStatus *out, uint32_t timeout_ms)
 {
     if (!out) {
@@ -368,6 +393,28 @@ void AudioDaemon::process_message(const AudioMessage &msg)
                 track_count_valid_ = true;
                 if (msg.response_count) {
                     *msg.response_count = count;
+                }
+            }
+            complete_rpc(msg, ok);
+            break;
+        }
+        case AudioCmd::QUERY_PLAYBACK_STATUS: {
+            ensure_dfplayer_power();
+            DfPlayerPlaybackStatus hw_status = DfPlayerPlaybackStatus::kStopped;
+            uint16_t track = 0;
+            bool ok = false;
+            for (int attempt = 0; attempt < 3; ++attempt) {
+                if (driver_.query_playback_status(&hw_status, &track, 800) == ESP_OK) {
+                    ok = true;
+                    break;
+                }
+                vTaskDelay(pdMS_TO_TICKS(250));
+            }
+            if (ok) {
+                current_track_ = track;
+                playback_state_ = dfplayer_status_to_ui(hw_status);
+                if (msg.response_status) {
+                    fill_status(msg.response_status);
                 }
             }
             complete_rpc(msg, ok);

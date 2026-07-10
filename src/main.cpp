@@ -95,6 +95,7 @@ extern "C" void app_main(void)
     ESP_LOGI(kLogTag, "Starting Daemons...");
     power_controller.init();
     power_controller.set_hv_enabled(true);
+    power_controller.set_dfplayer_enabled(true);
     vTaskDelay(pdMS_TO_TICKS(50));
 
     if (!i2c_debug::kDisablePca9685I2c) {

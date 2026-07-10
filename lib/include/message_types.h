@@ -23,6 +23,7 @@ enum class AudioCmd : uint8_t
     NEXT,
     PREVIOUS,
     QUERY_TRACK_COUNT,
+    QUERY_PLAYBACK_STATUS,
     TOGGLE_TRACK,
     GET_STATUS,
     BOOT_CHIME_PLAY,

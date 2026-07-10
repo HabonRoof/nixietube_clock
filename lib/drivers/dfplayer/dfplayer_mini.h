@@ -1,6 +1,5 @@
 #pragma once
 
-#include "driver/gpio.h"
 #include "driver/uart.h"
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
@@ -10,6 +9,7 @@
 #include <map>
 #include <string>
 
+// DFR0299 DFPlayer Mini — EQ presets (serial command 0x07)
 enum class DfPlayerEqPreset : uint8_t
 {
     kNormal = 0,
@@ -26,6 +26,18 @@ enum class DfPlayerPlaybackStatus : uint8_t
     kPlaying = 1,
     kPaused = 2,
 };
+
+// TODO: Add storage type for query_status command
+enum class DfPlayerStorageType : uint8_t
+{
+    kUnknown = 0,
+    kUsbDisk = 1,
+    kSdCard = 2,
+};
+
+// SD:/mp3/NNNN.mp3 file numbers (command 0x12).
+inline constexpr uint16_t kDfPlayerMp3MinFile = 1;
+inline constexpr uint16_t kDfPlayerMp3MaxFile = 2999;
 
 struct AudioPlaybackState
 {
@@ -48,6 +60,7 @@ public:
     DfPlayerMini &operator=(const DfPlayerMini &) = delete;
 
     esp_err_t begin(int baud_rate = 9600);
+    // Play SD:/mp3/NNNN.mp3 via command 0x12 (file_number 1..2999).
     esp_err_t play_from_mp3_folder(uint16_t file_number);
     esp_err_t play_next();
     esp_err_t play_previous();
@@ -77,8 +90,7 @@ private:
         uint16_t parameter;
     };
 
-    esp_err_t configure_uart(int baud_rate);
-    esp_err_t send_simple_command(uint8_t command, uint16_t parameter = 0, bool request_feedback = false);
+    esp_err_t send_command(uint8_t command, uint16_t parameter = 0, bool request_feedback = false);
     esp_err_t send_query(uint8_t command, uint16_t *out_parameter, uint32_t timeout_ms);
     esp_err_t read_response_frame(ResponseFrame *out, uint32_t timeout_ms);
     bool is_query_response(uint8_t query_command, uint8_t response_command) const;

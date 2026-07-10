@@ -1,5 +1,6 @@
 #include "daemons/cli_daemon.h"
 #include "daemons/audio_daemon.h"
+#include "dfplayer_mini.h"
 #include "message_types.h"
 #include "gasgauge_service.h"
 #include "bq27441/bq27441_regs.h"
@@ -126,6 +127,8 @@ static int get_uuid_func(int argc, char **argv)
 // --- Command: ggtool ---
 struct ggtool_args {
     struct arg_str *subcmd;
+    struct arg_str *arg1;
+    struct arg_str *arg2;
     struct arg_end *end;
 };
 
@@ -152,13 +155,15 @@ static int ggtool_func(int argc, char **argv)
     const char *subcmd = ggtool_args.subcmd->sval[0];
 
     if (strcmp(subcmd, "peek") == 0) {
-        if (argc < 3) {
+        if (ggtool_args.arg1->count == 0) {
             printf("Usage: ggtool peek <reg_hex> [len]\n");
             return 1;
         }
 
-        const uint8_t reg = static_cast<uint8_t>(strtoul(argv[2], nullptr, 16));
-        const size_t len = (argc >= 4) ? static_cast<size_t>(strtoul(argv[3], nullptr, 10)) : 1U;
+        const uint8_t reg = static_cast<uint8_t>(strtoul(ggtool_args.arg1->sval[0], nullptr, 16));
+        const size_t len = (ggtool_args.arg2->count > 0)
+            ? static_cast<size_t>(strtoul(ggtool_args.arg2->sval[0], nullptr, 10))
+            : 1U;
         if (len == 0 || len > 32) {
             printf("len must be 1..32\n");
             return 1;
@@ -184,11 +189,11 @@ static int ggtool_func(int argc, char **argv)
     }
 
     if (strcmp(subcmd, "block") == 0) {
-        const uint8_t class_id = (argc >= 3)
-            ? static_cast<uint8_t>(strtoul(argv[2], nullptr, 0))
+        const uint8_t class_id = (ggtool_args.arg1->count > 0)
+            ? static_cast<uint8_t>(strtoul(ggtool_args.arg1->sval[0], nullptr, 0))
             : static_cast<uint8_t>(82);
-        const uint8_t block_index = (argc >= 4)
-            ? static_cast<uint8_t>(strtoul(argv[3], nullptr, 0))
+        const uint8_t block_index = (ggtool_args.arg2->count > 0)
+            ? static_cast<uint8_t>(strtoul(ggtool_args.arg2->sval[0], nullptr, 0))
             : static_cast<uint8_t>(0);
 
         uint8_t data[32] = {};
@@ -247,8 +252,8 @@ static int ggtool_func(int argc, char **argv)
 
     if (strcmp(subcmd, "config") == 0) {
         uint16_t mah = GasgaugeService::kDefaultCapacityMah;
-        if (argc >= 3) {
-            mah = static_cast<uint16_t>(strtoul(argv[2], nullptr, 10));
+        if (ggtool_args.arg1->count > 0) {
+            mah = static_cast<uint16_t>(strtoul(ggtool_args.arg1->sval[0], nullptr, 10));
         }
 
         const bool ok = g_gasgauge_service->configure_capacity(mah, true);
@@ -347,6 +352,8 @@ static void df_print_track_name(uint16_t track)
 // --- Command: dftool ---
 struct dftool_args {
     struct arg_str *subcmd;
+    struct arg_str *arg1;
+    struct arg_str *arg2;
     struct arg_end *end;
 };
 
@@ -366,7 +373,7 @@ static int dftool_func(int argc, char **argv)
     }
 
     if (dftool_args.subcmd->count == 0) {
-        printf("Usage: dftool <list|status|play|toggle|pause|resume|stop|next|prev|volume|vol_up|vol_down> [args...]\n");
+        printf("Usage: dftool <list|status|play|playmp3folder|toggle|pause|resume|stop|next|prev|volume|vol_up|vol_down> [args...]\n");
         return 1;
     }
 
@@ -387,35 +394,36 @@ static int dftool_func(int argc, char **argv)
 
     if (strcmp(subcmd, "status") == 0) {
         AudioDaemonStatus status = {};
-        if (!g_audio_daemon->rpc_get_status(&status)) {
-            printf("Failed to read playback status\n");
+        if (!g_audio_daemon->rpc_query_playback_status(&status)) {
+            printf("Failed to query DFPlayer playback status\n");
             return 1;
         }
         printf("Track: %u\n", status.current_track);
         printf("State: %s\n", df_audio_state_string(status.state));
-        printf("Track count: %u\n", status.track_count);
+        if (status.track_count_valid) {
+            printf("Track count: %u (cached)\n", status.track_count);
+        } else {
+            printf("Track count: unknown (run dftool list)\n");
+        }
         return 0;
     }
 
     if (strcmp(subcmd, "play") == 0) {
-        if (argc < 3) {
+        if (dftool_args.arg1->count == 0) {
             printf("Usage: dftool play <track> [--loop]\n");
             return 1;
         }
 
-        int track = atoi(argv[2]);
-        if (track < 1 || track > 9999) {
-            printf("Invalid track number (1-9999)\n");
+        int track = atoi(dftool_args.arg1->sval[0]);
+        if (track < kDfPlayerMp3MinFile || track > kDfPlayerMp3MaxFile) {
+            printf("Invalid track number (%u-%u)\n", kDfPlayerMp3MinFile, kDfPlayerMp3MaxFile);
             return 1;
         }
 
-        bool loop = false;
-        for (int i = 3; i < argc; ++i) {
-            if (strcmp(argv[i], "--loop") == 0) {
-                loop = true;
-            }
-        }
+        bool loop = dftool_args.arg2->count > 0 &&
+                    strcmp(dftool_args.arg2->sval[0], "--loop") == 0;
 
+        // TODO: Looping is unsupported for this command.
         AudioCmd cmd = loop ? AudioCmd::PLAY_TRACK_LOOP : AudioCmd::PLAY_TRACK;
         if (!df_send_audio_cmd(cmd, static_cast<uint16_t>(track))) {
             return 1;
@@ -425,14 +433,14 @@ static int dftool_func(int argc, char **argv)
     }
 
     if (strcmp(subcmd, "toggle") == 0) {
-        if (argc < 3) {
+        if (dftool_args.arg1->count == 0) {
             printf("Usage: dftool toggle <track>\n");
             return 1;
         }
 
-        int track = atoi(argv[2]);
-        if (track < 1 || track > 9999) {
-            printf("Invalid track number (1-9999)\n");
+        int track = atoi(dftool_args.arg1->sval[0]);
+        if (track < kDfPlayerMp3MinFile || track > kDfPlayerMp3MaxFile) {
+            printf("Invalid track number (%u-%u)\n", kDfPlayerMp3MinFile, kDfPlayerMp3MaxFile);
             return 1;
         }
 
@@ -486,12 +494,12 @@ static int dftool_func(int argc, char **argv)
     }
 
     if (strcmp(subcmd, "volume") == 0) {
-        if (argc < 3) {
+        if (dftool_args.arg1->count == 0) {
             printf("Usage: dftool volume <0-30>\n");
             return 1;
         }
 
-        int volume = atoi(argv[2]);
+        int volume = atoi(dftool_args.arg1->sval[0]);
         if (volume < 0 || volume > 30) {
             printf("Invalid volume (0-30)\n");
             return 1;
@@ -582,6 +590,10 @@ static ClockSettings rtc_load_settings()
 // --- Command: rtctool ---
 struct rtctool_args {
     struct arg_str *subcmd;
+    struct arg_str *arg1;
+    struct arg_str *arg2;
+    struct arg_str *arg3;
+    struct arg_str *arg4;
     struct arg_end *end;
 };
 
@@ -635,14 +647,16 @@ static int rtctool_func(int argc, char **argv)
 
     if (strcmp(subcmd, "set_time") == 0) {
         char datetime[48] = {};
-        if (argc >= 4) {
-            snprintf(datetime, sizeof(datetime), "%s %s", argv[2], argv[3]);
-        } else if (argc >= 3) {
-            snprintf(datetime, sizeof(datetime), "%s", argv[2]);
-        } else {
+        if (rtctool_args.arg1->count == 0) {
             printf("Usage: rtctool set_time <YYYY-MM-DD HH:MM:SS>\n");
             printf("Example: rtctool set_time 2026-07-06 16:30:00\n");
             return 1;
+        }
+        if (rtctool_args.arg2->count > 0) {
+            snprintf(datetime, sizeof(datetime), "%s %s",
+                     rtctool_args.arg1->sval[0], rtctool_args.arg2->sval[0]);
+        } else {
+            snprintf(datetime, sizeof(datetime), "%s", rtctool_args.arg1->sval[0]);
         }
 
         struct tm timeinfo = {};
@@ -659,7 +673,7 @@ static int rtctool_func(int argc, char **argv)
     }
 
     if (strcmp(subcmd, "set_alarm") == 0) {
-        if (argc < 3) {
+        if (rtctool_args.arg1->count == 0) {
             printf("Usage: rtctool set_alarm <HH:MM:SS> [--enable|--disable] [--track <n>]\n");
             return 1;
         }
@@ -667,7 +681,7 @@ static int rtctool_func(int argc, char **argv)
         uint8_t hour = 0;
         uint8_t minute = 0;
         uint8_t second = 0;
-        if (!rtc_parse_alarm(argv[2], &hour, &minute, &second)) {
+        if (!rtc_parse_alarm(rtctool_args.arg1->sval[0], &hour, &minute, &second)) {
             printf("Invalid alarm time. Use HH:MM:SS\n");
             return 1;
         }
@@ -677,26 +691,39 @@ static int rtctool_func(int argc, char **argv)
         settings.alarm_minute = minute;
         settings.alarm_second = second;
 
+        const char *opts[3] = {};
+        int opt_count = 0;
+        if (rtctool_args.arg2->count > 0) {
+            opts[opt_count++] = rtctool_args.arg2->sval[0];
+        }
+        if (rtctool_args.arg3->count > 0) {
+            opts[opt_count++] = rtctool_args.arg3->sval[0];
+        }
+        if (rtctool_args.arg4->count > 0) {
+            opts[opt_count++] = rtctool_args.arg4->sval[0];
+        }
+
         bool enable_set = false;
         bool disable_set = false;
-        for (int i = 3; i < argc; ++i) {
-            if (strcmp(argv[i], "--enable") == 0) {
+        for (int i = 0; i < opt_count; ++i) {
+            if (strcmp(opts[i], "--enable") == 0) {
                 enable_set = true;
-            } else if (strcmp(argv[i], "--disable") == 0) {
+            } else if (strcmp(opts[i], "--disable") == 0) {
                 disable_set = true;
-            } else if (strcmp(argv[i], "--track") == 0) {
-                if (i + 1 >= argc) {
-                    printf("--track requires a value (1..9999)\n");
+            } else if (strcmp(opts[i], "--track") == 0) {
+                if (i + 1 >= opt_count) {
+                    printf("--track requires a value (%u..%u)\n", kDfPlayerMp3MinFile,
+                           kDfPlayerMp3MaxFile);
                     return 1;
                 }
-                const int track = atoi(argv[++i]);
-                if (track < 1 || track > 9999) {
-                    printf("Track must be 1..9999\n");
+                const int track = atoi(opts[++i]);
+                if (track < kDfPlayerMp3MinFile || track > kDfPlayerMp3MaxFile) {
+                    printf("Track must be %u..%u\n", kDfPlayerMp3MinFile, kDfPlayerMp3MaxFile);
                     return 1;
                 }
                 settings.alarm_track = static_cast<uint16_t>(track);
             } else {
-                printf("Unknown option: %s\n", argv[i]);
+                printf("Unknown option: %s\n", opts[i]);
                 return 1;
             }
         }
@@ -721,13 +748,13 @@ static int rtctool_func(int argc, char **argv)
     }
 
     if (strcmp(subcmd, "set_tz") == 0) {
-        if (argc < 3) {
+        if (rtctool_args.arg1->count == 0) {
             printf("Usage: rtctool set_tz <offset_hours>\n");
             printf("Example: rtctool set_tz 8\n");
             return 1;
         }
 
-        const int tz = atoi(argv[2]);
+        const int tz = atoi(rtctool_args.arg1->sval[0]);
         if (tz < -12 || tz > 14) {
             printf("Timezone offset must be -12..14 hours\n");
             return 1;
@@ -888,7 +915,7 @@ static int help_func(int argc, char **argv)
     printf("enable_df_power                                 Enable DFPlayer power rail\n");
     printf("disable_df_power                                Disable DFPlayer power rail\n");
     printf("dftool list                                     List mp3/ folder tracks on SD card\n");
-    printf("dftool status                                   Show playback status\n");
+    printf("dftool status                                   Query DFPlayer playback status\n");
     printf("dftool play <track> [--loop]                    Play a track (optional loop)\n");
     printf("dftool toggle <track>                           Play/pause toggle (web UI behavior)\n");
     printf("dftool pause|resume|stop                        Pause, resume, or stop playback\n");
@@ -1005,6 +1032,8 @@ void CliDaemon::register_commands()
 
     // Register: ggtool
     ggtool_args.subcmd = arg_str1(NULL, NULL, "<subcmd>", "status|peek|block|config|read|cache");
+    ggtool_args.arg1 = arg_str0(NULL, NULL, "<arg>", "Subcommand argument");
+    ggtool_args.arg2 = arg_str0(NULL, NULL, "<arg>", "Subcommand argument");
     ggtool_args.end = arg_end(4);
     const esp_console_cmd_t ggtool_cmd = {
         .command = "ggtool",
@@ -1019,6 +1048,10 @@ void CliDaemon::register_commands()
 
     // Register: rtctool
     rtctool_args.subcmd = arg_str1(NULL, NULL, "<subcmd>", "read|set_time|set_alarm|set_tz");
+    rtctool_args.arg1 = arg_str0(NULL, NULL, "<arg>", "Subcommand argument");
+    rtctool_args.arg2 = arg_str0(NULL, NULL, "<arg>", "Subcommand argument or option");
+    rtctool_args.arg3 = arg_str0(NULL, NULL, "<opt>", "Subcommand option");
+    rtctool_args.arg4 = arg_str0(NULL, NULL, "<opt>", "Subcommand option value");
     rtctool_args.end = arg_end(4);
     const esp_console_cmd_t rtctool_cmd = {
         .command = "rtctool",
@@ -1166,6 +1199,8 @@ void CliDaemon::register_commands()
     // Register: dftool
     dftool_args.subcmd = arg_str1(NULL, NULL, "<subcmd>",
                                   "list|status|play|toggle|pause|resume|stop|next|prev|volume|vol_up|vol_down");
+    dftool_args.arg1 = arg_str0(NULL, NULL, "<arg>", "Subcommand argument (track or volume)");
+    dftool_args.arg2 = arg_str0(NULL, NULL, "<opt>", "Optional flag (e.g. --loop)");
     dftool_args.end = arg_end(4);
     const esp_console_cmd_t dftool_cmd = {
         .command = "dftool",

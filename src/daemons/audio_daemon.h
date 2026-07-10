@@ -19,6 +19,7 @@ public:
     QueueHandle_t get_queue() const;
 
     bool rpc_query_tracks(uint16_t *count_out, uint32_t timeout_ms = 4000);
+    bool rpc_query_playback_status(AudioDaemonStatus *out, uint32_t timeout_ms = 4000);
     bool rpc_get_status(AudioDaemonStatus *out, uint32_t timeout_ms = 500);
     bool rpc_toggle_track(uint16_t track, AudioDaemonStatus *out, uint32_t timeout_ms = 500);
     void snapshot_status(AudioDaemonStatus *out) const;

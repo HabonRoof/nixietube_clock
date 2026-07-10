@@ -3,6 +3,7 @@
 #include "system_state.h"
 #include "web_page.h"
 #include "daemons/audio_daemon.h"
+#include "dfplayer_mini.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
@@ -377,7 +378,7 @@ static esp_err_t audio_play_post_handler(httpd_req_t *req)
     }
 
     int track = std::stoi(track_value);
-    if (track < 1 || track > 9999) {
+    if (track < kDfPlayerMp3MinFile || track > kDfPlayerMp3MaxFile) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid track");
         return ESP_FAIL;
     }
@@ -437,7 +438,7 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
     std::string alarm_track = extract_json_value(body, "alarm_track");
     if (!alarm_track.empty()) {
         int value = std::stoi(alarm_track);
-        if (value >= 1 && value <= 9999) {
+        if (value >= kDfPlayerMp3MinFile && value <= kDfPlayerMp3MaxFile) {
             settings.alarm_track = static_cast<uint16_t>(value);
         }
     }
