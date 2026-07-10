@@ -111,7 +111,7 @@ private:
     void apply_backlight_to_all(const BackLightState &state);
 
     static constexpr uint32_t kAutoReturnDisplayMs = 10000;
-    static constexpr uint32_t kDivergenceJumpMs = 3000;
+    static constexpr uint32_t kDivergenceJumpMs = 1500;
     static constexpr uint32_t kCathodeStepMs = 300;
     static constexpr uint8_t kCathodePoisonCtr = 15;
     static constexpr uint8_t kFadeStep = 51;
