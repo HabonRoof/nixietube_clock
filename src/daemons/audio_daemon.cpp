@@ -325,11 +325,11 @@ void AudioDaemon::process_message(const AudioMessage &msg)
         case AudioCmd::PLAY_TRACK_LOOP:
             cancel_boot_chime();
             ensure_dfplayer_power();
-            driver_.set_loop(true);
             if (driver_.play_from_mp3_folder(msg.param.track_number) == ESP_OK) {
                 current_track_ = msg.param.track_number;
                 playback_state_ = AudioPlaybackUiState::PLAYING;
             }
+            driver_.set_loop(true);
             break;
         case AudioCmd::STOP:
             ensure_dfplayer_power();
