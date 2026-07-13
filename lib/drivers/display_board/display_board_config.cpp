@@ -90,6 +90,7 @@ int read_display_type_voltage_mv()
     adc_oneshot_unit_handle_t adc_handle = nullptr;
     adc_oneshot_unit_init_cfg_t unit_cfg = {
         .unit_id = kDisplayTypeAdcUnit,
+        .clk_src = static_cast<adc_oneshot_clk_src_t>(0),
         .ulp_mode = ADC_ULP_MODE_DISABLE,
     };
     if (adc_oneshot_new_unit(&unit_cfg, &adc_handle) != ESP_OK) {
