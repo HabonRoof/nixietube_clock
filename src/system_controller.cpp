@@ -159,7 +159,12 @@ HardwareHandles SystemController::init_hardware()
     ESP_ERROR_CHECK(gpio_config(&io_conf));
     ESP_LOGI(TAG, "RTC Interrupt Pin Initialized");
 
-    // 4. Initialize PCA9685 OE Pin
+    // 4. Read upper display board type (GPIO19 / DISPLAY_TYPE) before MUX / PCA9685 init.
+    init_display_type_adc();
+    handles.display_board_type = get_display_board_type();
+    ESP_LOGI(TAG, "Display Board Type: %s", display_board_type_name(handles.display_board_type));
+
+    // 5. Initialize PCA9685 OE Pin
     gpio_config_t oe_conf = {};
     oe_conf.intr_type = GPIO_INTR_DISABLE;
     oe_conf.mode = GPIO_MODE_OUTPUT;
@@ -170,7 +175,7 @@ HardwareHandles SystemController::init_hardware()
     ESP_ERROR_CHECK(gpio_set_level(kPca9685OePin, 1)); // Disable output (Active LOW)
     ESP_LOGI(TAG, "PCA9685 OE Pin Initialized (Disabled)");
 
-    // 4b. Initialize 74HC238 anode mux (blank until scan task starts)
+    // 6. Initialize 74HC238 anode mux (blank until scan task starts)
     gpio_config_t anode_conf = {};
     anode_conf.intr_type = GPIO_INTR_DISABLE;
     anode_conf.mode = GPIO_MODE_OUTPUT;
@@ -178,11 +183,6 @@ HardwareHandles SystemController::init_hardware()
     anode_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     anode_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     ESP_ERROR_CHECK(gpio_config(&anode_conf));
-
-    // 4c. Read upper display board type (GPIO19 / DISPLAY_TYPE)
-    init_display_type_gpio();
-    handles.display_board_type = get_display_board_type();
-    ESP_LOGI(TAG, "Display Board Type: %s", display_board_type_name(handles.display_board_type));
     ESP_ERROR_CHECK(gpio_set_level(kAnodeA0, 1));
     ESP_ERROR_CHECK(gpio_set_level(kAnodeA1, 1));
     ESP_ERROR_CHECK(gpio_set_level(kAnodeA2, 1));
