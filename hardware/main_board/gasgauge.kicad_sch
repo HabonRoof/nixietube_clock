@@ -1117,6 +1117,15 @@
 				(hide yes)
 			)
 		)
+		(property "Digikey PN" ""
+			(at 118.11 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "44d581cd-790b-4698-91bb-c3e53805339e")
 		)
@@ -1187,6 +1196,15 @@
 			)
 		)
 		(property "LCSC PN" "C473397"
+			(at 139.7 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digikey PN" ""
 			(at 139.7 82.55 0)
 			(effects
 				(font
@@ -1305,6 +1323,15 @@
 				(hide yes)
 			)
 		)
+		(property "Digikey PN" ""
+			(at 96.52 77.47 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "75e8d1d8-294c-4858-892a-367b8e949ad3")
 		)
@@ -1375,6 +1402,15 @@
 			)
 		)
 		(property "LCSC PN" "C1623"
+			(at 175.26 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digikey PN" ""
 			(at 175.26 87.63 0)
 			(effects
 				(font
@@ -1462,6 +1498,15 @@
 				(hide yes)
 			)
 		)
+		(property "Digikey PN" ""
+			(at 105.41 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "ca15a448-ea7c-4656-a2ea-9e053f62033f")
 		)
@@ -1533,6 +1578,15 @@
 			)
 		)
 		(property "LCSC PN" "C25744"
+			(at 160.02 78.74 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digikey PN" ""
 			(at 160.02 78.74 0)
 			(effects
 				(font
