@@ -15,6 +15,10 @@ struct ParsedSettingsUpdate {
     ClockSettings settings;
     struct tm local_time;
     bool has_local_time;
+    bool persist;
+    bool cancel_preview;
+    bool preview_only;
+    BacklightProfile preview_profile;
 };
 
 cJSON *settings_to_json(const ClockSettings &settings);

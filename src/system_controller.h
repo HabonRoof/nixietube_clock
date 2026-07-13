@@ -44,6 +44,7 @@ public:
     // Thread-safe entry point for other tasks (web/CLI): enqueues the change
     // so the SystemController task remains the sole owner of rtc_/settings.
     void request_settings_update(const ClockSettings &settings, const struct tm *local_time);
+    void request_settings_update(const SettingsUpdate &update);
 
     // Snapshot of current time state for status endpoints (thread-safe read of
     // system time + a cached RTC read).
@@ -89,6 +90,8 @@ private:
     void cycle_display_mode();
     void cycle_profile();
     void apply_profile_to_display(const BacklightProfile &profile);
+    void apply_display_preview(const BacklightProfile &profile);
+    void cancel_display_preview();
     void apply_hibernate_peek_to_display(const ClockSettings &settings);
     bool is_alarm_audio_active() const;
     static DisplayMode next_display_mode(DisplayMode mode);
@@ -116,6 +119,8 @@ private:
     bool standby_active_;
     TickType_t idle_standby_deadline_;
     TickType_t next_auto_cathode_;
+    bool display_preview_active_;
+    BacklightProfile display_preview_;
 
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
     static constexpr uint8_t kHibernatePeekNixieBrightness = 50;

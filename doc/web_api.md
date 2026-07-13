@@ -98,7 +98,26 @@ Maximum POST body size: **4096 bytes**.
 
 Send only the groups you want to change. Unknown keys are rejected.
 
+`persist` defaults to `true`. When `persist` is `false`, only a `display` preview may be sent; settings are applied to the hardware immediately but **not** written to NVS.
+
 ### Examples
+
+Live display preview (RAM only, not saved):
+
+```json
+{
+  "display": { "...": "..." },
+  "persist": false
+}
+```
+
+Discard an active web preview and restore the committed active profile:
+
+```json
+{
+  "preview": { "cancel": true }
+}
+```
 
 Set volume only:
 
@@ -122,14 +141,9 @@ Save current display to profile slot 2 (also activates slot 2):
 ```json
 {
   "display": { "...": "..." },
-  "profiles": { "save_index": 2 }
+  "profiles": { "save_index": 2 },
+  "persist": true
 }
-```
-
-Load a saved profile to the device (activates slot 1 without overwriting it):
-
-```json
-{ "profiles": { "active_index": 1 } }
 ```
 
 Update hibernation schedule:
@@ -148,10 +162,15 @@ Update hibernation schedule:
 
 | Field | Behavior |
 | :--- | :--- |
-| `save_index` | Copies the current display state (after any `display` fields in the same request) into the given slot and makes it active. |
-| `active_index` | Loads the stored profile from the given slot into the active display settings and makes it active. |
+| `save_index` | Copies the current display state (after any `display` fields in the same request) into the given slot and makes it active. Requires `persist: true` (default). |
 
-If both are sent, `save_index` runs first, then `active_index`.
+On the device, switch the active profile with **button 2** (not the web UI).
+
+### Web UI behavior
+
+- The **Light** tab sends `persist: false` display previews while sliders move (mobile-friendly pointer events).
+- **Save 1–4** commits the preview to a profile slot with `persist: true`.
+- Leaving the Light tab or closing the browser cancels the preview via `preview.cancel` and restores the active saved profile.
 
 ## `GET /api/time`
 

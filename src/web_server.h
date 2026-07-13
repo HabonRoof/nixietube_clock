@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "settings_json.h"
 #include "system_state.h"
 #include <ctime>
 
@@ -20,6 +21,7 @@ public:
 
     bool load_settings(ClockSettings *out_settings);
     bool apply_settings(const ClockSettings &settings, const struct tm *new_time);
+    bool apply_settings_update(const ParsedSettingsUpdate &update);
     bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
                          time_t *unix_utc = nullptr);
 

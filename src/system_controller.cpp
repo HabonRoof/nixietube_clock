@@ -242,7 +242,9 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       next_battery_poll_(0),
       standby_active_(false),
       idle_standby_deadline_(0),
-      next_auto_cathode_(0)
+      next_auto_cathode_(0),
+      display_preview_active_(false),
+      display_preview_{}
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
     
@@ -387,9 +389,16 @@ void SystemController::process_message(const SystemMessage &msg)
             }
             break;
         case SystemEvent::SETTINGS_UPDATE:
-            apply_settings(msg.data.apply.settings,
-                           msg.data.apply.has_time ? &msg.data.apply.local_time : nullptr);
-            system_state_.save_settings();
+            if (msg.data.apply.cancel_preview) {
+                cancel_display_preview();
+            } else if (!msg.data.apply.persist && msg.data.apply.preview_only) {
+                apply_display_preview(msg.data.apply.preview_profile);
+            } else {
+                apply_settings(msg.data.apply.settings,
+                               msg.data.apply.has_time ? &msg.data.apply.local_time : nullptr);
+                system_state_.save_settings();
+                display_preview_active_ = false;
+            }
             break;
         case SystemEvent::BATTERY_UPDATE:
             break;
@@ -950,13 +959,23 @@ void SystemController::sync_battery_from_gauge()
 void SystemController::request_settings_update(const ClockSettings &settings,
                                                const struct tm *local_time)
 {
+    SettingsUpdate update = {};
+    update.settings = settings;
+    update.has_time = (local_time != nullptr);
+    update.persist = true;
+    update.cancel_preview = false;
+    update.preview_only = false;
+    if (local_time) {
+        update.local_time = *local_time;
+    }
+    request_settings_update(update);
+}
+
+void SystemController::request_settings_update(const SettingsUpdate &update)
+{
     SystemMessage msg = {};
     msg.event = SystemEvent::SETTINGS_UPDATE;
-    msg.data.apply.settings = settings;
-    msg.data.apply.has_time = (local_time != nullptr);
-    if (local_time) {
-        msg.data.apply.local_time = *local_time;
-    }
+    msg.data.apply = update;
     xQueueSend(queue_, &msg, 0);
 }
 
@@ -1049,6 +1068,31 @@ void SystemController::apply_profile_to_display(const BacklightProfile &profile)
     note_user_activity();
 }
 
+void SystemController::apply_display_preview(const BacklightProfile &profile)
+{
+    display_preview_active_ = true;
+    display_preview_ = profile;
+    if (hibernate_state_ == HibernateState::Hibernating) {
+        return;
+    }
+    if (hibernate_state_ == HibernateState::Peek) {
+        return;
+    }
+    apply_profile_to_display(profile);
+}
+
+void SystemController::cancel_display_preview()
+{
+    if (!display_preview_active_) {
+        return;
+    }
+    display_preview_active_ = false;
+    if (hibernate_state_ == HibernateState::Hibernating) {
+        return;
+    }
+    restore_user_profile();
+}
+
 void SystemController::apply_hibernate_peek_to_display(const ClockSettings &settings)
 {
     const BacklightProfile &profile =
@@ -1106,6 +1150,9 @@ void SystemController::cycle_display_mode()
 
 void SystemController::cycle_profile()
 {
+    if (display_preview_active_) {
+        cancel_display_preview();
+    }
     ClockSettings settings;
     system_state_.get_settings(&settings);
     settings.active_profile_index =

@@ -321,9 +321,9 @@ Connect to the AP and open `http://192.168.8.8/` in a browser.
 | `/api/audio/status` | GET | Playback state |
 | `/api/audio/play` | POST | Toggle play/pause for a track |
 
-Full request/response schemas, field ranges, and migration notes from the legacy flat JSON API are documented in [doc/web_api.md](doc/web_api.md).
+Full request/response schemas, field ranges, preview/cancel semantics, and migration notes from the legacy flat JSON API are documented in [doc/web_api.md](doc/web_api.md).
 
-Configurable settings include timezone offset, alarm, backlight color/brightness/effect, nixie brightness/transition, volume, backlight profiles, and hibernation schedule.
+Configurable settings include timezone offset, alarm, backlight color/brightness/effect, nixie brightness/transition, volume, backlight profiles, and hibernation schedule. The web **Light** tab provides live display preview on the clock while dragging sliders; use **Save 1–4** to commit a profile. Switch profiles on the device with **button 2**.
 
 ### CLI Daemon (`src/daemons/cli_daemon.cpp`)
 

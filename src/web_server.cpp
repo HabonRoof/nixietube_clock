@@ -4,6 +4,7 @@
 #include "settings_json.h"
 #include "web_json.h"
 #include "web_page.h"
+#include "message_types.h"
 #include "daemons/audio_daemon.h"
 #include "dfplayer_mini.h"
 #include "esp_log.h"
@@ -223,7 +224,7 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
                         error.field.empty() ? nullptr : error.field.c_str(), error.message.c_str());
         return ESP_FAIL;
     }
-    if (!server->apply_settings(update.settings, update.has_local_time ? &update.local_time : nullptr)) {
+    if (!server->apply_settings_update(update)) {
         send_json_error(req, "500 Internal Server Error", "apply_failed", nullptr,
                         "failed to apply settings");
         return ESP_FAIL;
@@ -417,6 +418,20 @@ bool WebServer::load_settings(ClockSettings *out_settings)
 bool WebServer::apply_settings(const ClockSettings &settings, const struct tm *new_time)
 {
     system_controller_.request_settings_update(settings, new_time);
+    return true;
+}
+
+bool WebServer::apply_settings_update(const ParsedSettingsUpdate &update)
+{
+    SettingsUpdate msg = {};
+    msg.settings = update.settings;
+    msg.local_time = update.local_time;
+    msg.has_time = update.has_local_time;
+    msg.persist = update.persist;
+    msg.cancel_preview = update.cancel_preview;
+    msg.preview_only = update.preview_only;
+    msg.preview_profile = update.preview_profile;
+    system_controller_.request_settings_update(msg);
     return true;
 }
 

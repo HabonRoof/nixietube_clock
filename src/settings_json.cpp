@@ -296,6 +296,20 @@ bool parse_display(const cJSON *display, ClockSettings *settings, uint8_t *nixie
     }
     return true;
 }
+
+BacklightProfile profile_from_display(const ClockSettings &settings, uint8_t nixie_brightness,
+                                     uint8_t transition)
+{
+    return BacklightProfile{
+        .r = settings.backlight_r,
+        .g = settings.backlight_g,
+        .b = settings.backlight_b,
+        .backlight_brightness = settings.backlight_brightness,
+        .backlight_effect = settings.backlight_effect,
+        .nixie_brightness = nixie_brightness,
+        .nixie_transition = transition,
+    };
+}
 }
 
 cJSON *settings_to_json(const ClockSettings &settings)
@@ -365,7 +379,8 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
     if (!update || !cJSON_IsObject(root)) {
         return fail(error, "invalid_type", "", "root must be an object");
     }
-    if (!reject_unknown(root, {"clock", "alarm", "display", "audio", "profiles", "hibernation"},
+    if (!reject_unknown(root, {"clock", "alarm", "display", "audio", "profiles", "hibernation",
+                               "persist", "preview"},
                         "", error)) {
         return false;
     }
@@ -376,13 +391,70 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
     update->settings = current;
     update->local_time = {};
     update->has_local_time = false;
+    update->persist = true;
+    update->cancel_preview = false;
+    update->preview_only = false;
+    update->preview_profile = {};
+
+    const cJSON *preview = field(root, "preview");
+    if (preview) {
+        if (!require_nonempty_object(preview, "preview", error) ||
+            !reject_unknown(preview, {"cancel"}, "preview", error)) {
+            return false;
+        }
+        const cJSON *cancel = field(preview, "cancel");
+        if (!cancel) {
+            return fail(error, "empty_update", "preview", "cancel is required");
+        }
+        bool cancel_value = false;
+        if (!read_bool(cancel, "preview.cancel", &cancel_value, error)) {
+            return false;
+        }
+        if (!cancel_value) {
+            return fail(error, "invalid_value", "preview.cancel", "must be true");
+        }
+        update->cancel_preview = true;
+        update->persist = false;
+        return true;
+    }
+
+    const cJSON *persist_field = field(root, "persist");
+    if (persist_field && !read_bool(persist_field, "persist", &update->persist, error)) {
+        return false;
+    }
+
+    const cJSON *display = field(root, "display");
+    if (!update->persist) {
+        if (!display) {
+            return fail(error, "empty_update", "display",
+                        "display is required when persist is false");
+        }
+        if (field(root, "clock") || field(root, "alarm") || field(root, "audio") ||
+            field(root, "profiles") || field(root, "hibernation")) {
+            return fail(error, "invalid_request", "",
+                        "only display may be sent when persist is false");
+        }
+        ClockSettings preview_settings = current;
+        const uint8_t active = preview_settings.active_profile_index % kBacklightProfileCount;
+        uint8_t nixie_brightness = preview_settings.profiles[active].nixie_brightness;
+        uint8_t transition = preview_settings.profiles[active].nixie_transition;
+        bool nixie_changed = false;
+        if (!parse_display(display, &preview_settings, &nixie_brightness, &transition,
+                           &nixie_changed, error)) {
+            return false;
+        }
+        update->preview_only = true;
+        update->preview_profile =
+            profile_from_display(preview_settings, nixie_brightness, transition);
+        return true;
+    }
+
     ClockSettings &settings = update->settings;
     const uint8_t active = settings.active_profile_index % kBacklightProfileCount;
     uint8_t nixie_brightness = settings.profiles[active].nixie_brightness;
     uint8_t transition = settings.profiles[active].nixie_transition;
     bool nixie_changed = false;
     int save_index = -1;
-    int load_index = -1;
 
     const cJSON *clock = field(root, "clock");
     if (clock) {
@@ -431,7 +503,9 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
 
     const cJSON *display = field(root, "display");
     if (display && !parse_display(display, &settings, &nixie_brightness, &transition,
-                                  &nixie_changed, error)) return false;
+                                  &nixie_changed, error)) {
+        return false;
+    }
 
     const cJSON *audio = field(root, "audio");
     if (audio) {
@@ -448,19 +522,15 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
     const cJSON *profiles = field(root, "profiles");
     if (profiles) {
         if (!require_nonempty_object(profiles, "profiles", error) ||
-            !reject_unknown(profiles, {"save_index", "active_index"}, "profiles", error)) {
+            !reject_unknown(profiles, {"save_index"}, "profiles", error)) {
             return false;
         }
         const cJSON *save = field(profiles, "save_index");
-        if (save &&
-            !read_integer(save, "profiles.save_index", 0, kBacklightProfileCount - 1, &save_index,
-                          error)) {
-            return false;
+        if (!save) {
+            return fail(error, "empty_update", "profiles", "save_index is required");
         }
-        const cJSON *active = field(profiles, "active_index");
-        if (active &&
-            !read_integer(active, "profiles.active_index", 0, kBacklightProfileCount - 1,
-                          &load_index, error)) {
+        if (!read_integer(save, "profiles.save_index", 0, kBacklightProfileCount - 1, &save_index,
+                          error)) {
             return false;
         }
     }
@@ -495,19 +565,7 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
             .backlight_effect = settings.backlight_effect,
             .nixie_brightness = nixie_brightness, .nixie_transition = transition};
         settings.active_profile_index = static_cast<uint8_t>(save_index);
-    }
-    if (load_index >= 0) {
-        const BacklightProfile &profile = settings.profiles[load_index];
-        settings.backlight_r = profile.r;
-        settings.backlight_g = profile.g;
-        settings.backlight_b = profile.b;
-        settings.backlight_brightness = profile.backlight_brightness;
-        settings.backlight_effect = profile.backlight_effect;
-        nixie_brightness = profile.nixie_brightness;
-        transition = profile.nixie_transition;
-        nixie_changed = true;
-        settings.active_profile_index = static_cast<uint8_t>(load_index);
-    } else if (save_index < 0 && nixie_changed) {
+    } else if (nixie_changed) {
         settings.profiles[active].nixie_brightness = nixie_brightness;
         settings.profiles[active].nixie_transition = transition;
     }

@@ -140,6 +140,10 @@ struct SettingsUpdate
     ClockSettings settings;
     struct tm local_time; // user-entered local wall-clock time
     bool has_time;
+    bool persist;
+    bool cancel_preview;
+    bool preview_only;
+    BacklightProfile preview_profile;
 };
 
 enum class CliCommandType : uint8_t
