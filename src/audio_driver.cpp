@@ -87,6 +87,12 @@ esp_err_t AudioDriver::query_playback_status(DfPlayerPlaybackStatus *out_status,
     return player_.query_playback_status(out_status, out_track, timeout_ms);
 }
 
+esp_err_t AudioDriver::set_low_power_mode(bool enable)
+{
+    ensure_initialized();
+    return player_.set_low_power_mode(enable);
+}
+
 AudioPlaybackState AudioDriver::state() const
 {
     return player_.state();

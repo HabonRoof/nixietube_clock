@@ -25,6 +25,7 @@ AudioDaemon::AudioDaemon(IAudioDriver &driver, PowerController &power_controller
       boot_play_timer_(nullptr),
       boot_stop_timer_(nullptr),
       dfplayer_powered_(false),
+      dfplayer_sleeping_(false),
       boot_chime_active_(false),
       track_count_(0),
       track_count_valid_(false),
@@ -129,11 +130,63 @@ void AudioDaemon::ensure_dfplayer_power()
     if (!dfplayer_powered_) {
         power_controller_.set_dfplayer_enabled(true);
         dfplayer_powered_ = true;
+        dfplayer_sleeping_ = false;
         // The DFPlayer Mini needs time to boot after its rail is powered before
         // it will respond to UART commands/queries. Give it a settle delay so
         // the first command after cold power-on does not time out.
         vTaskDelay(pdMS_TO_TICKS(1500));
+        return;
     }
+
+    if (dfplayer_sleeping_) {
+        if (driver_.set_low_power_mode(false) == ESP_OK) {
+            dfplayer_sleeping_ = false;
+            ESP_LOGI(TAG, "DFPlayer woke from sleep");
+        } else {
+            ESP_LOGW(TAG, "DFPlayer wake from sleep failed");
+        }
+    }
+}
+
+void AudioDaemon::sleep_dfplayer_if_idle()
+{
+    if (!dfplayer_powered_ || dfplayer_sleeping_) {
+        return;
+    }
+    if (playback_state_ != AudioPlaybackUiState::STOPPED) {
+        return;
+    }
+    if (boot_chime_active_) {
+        return;
+    }
+
+    if (driver_.set_low_power_mode(true) == ESP_OK) {
+        dfplayer_sleeping_ = true;
+        ESP_LOGI(TAG, "DFPlayer entered sleep (0x0A)");
+    }
+}
+
+void AudioDaemon::poll_playback_idle()
+{
+    if (!dfplayer_powered_ || dfplayer_sleeping_) {
+        return;
+    }
+    if (playback_state_ != AudioPlaybackUiState::PLAYING) {
+        return;
+    }
+    if (boot_chime_active_) {
+        return;
+    }
+
+    DfPlayerPlaybackStatus hw_status = DfPlayerPlaybackStatus::kStopped;
+    uint16_t track = 0;
+    if (driver_.query_playback_status(&hw_status, &track, 800) != ESP_OK) {
+        return;
+    }
+
+    current_track_ = track;
+    playback_state_ = dfplayer_status_to_ui(hw_status);
+    sleep_dfplayer_if_idle();
 }
 
 void AudioDaemon::fill_status(AudioDaemonStatus *out) const
@@ -304,8 +357,10 @@ void AudioDaemon::loop()
 
     while (true) {
         AudioMessage msg;
-        if (xQueueReceive(queue_, &msg, portMAX_DELAY) == pdTRUE) {
+        if (xQueueReceive(queue_, &msg, pdMS_TO_TICKS(kIdlePollMs)) == pdTRUE) {
             process_message(msg);
+        } else {
+            poll_playback_idle();
         }
     }
 }
@@ -459,4 +514,6 @@ void AudioDaemon::process_message(const AudioMessage &msg)
             complete_rpc(msg, false);
             break;
     }
+
+    sleep_dfplayer_if_idle();
 }

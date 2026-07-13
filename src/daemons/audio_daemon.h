@@ -32,6 +32,8 @@ private:
     void loop();
     void process_message(const AudioMessage &msg);
     void ensure_dfplayer_power();
+    void sleep_dfplayer_if_idle();
+    void poll_playback_idle();
     void schedule_boot_chime();
     void cancel_boot_chime();
     void stop_boot_chime_timers();
@@ -43,6 +45,7 @@ private:
     static constexpr uint16_t kBootChimeTrack = 3;
     static constexpr uint32_t kBootPlayDelayMs = 3000;
     static constexpr uint32_t kBootPlayDurationMs = 10000;
+    static constexpr uint32_t kIdlePollMs = 5000;
 
     IAudioDriver &driver_;
     PowerController &power_controller_;
@@ -51,6 +54,7 @@ private:
     esp_timer_handle_t boot_play_timer_;
     esp_timer_handle_t boot_stop_timer_;
     bool dfplayer_powered_;
+    bool dfplayer_sleeping_;
     bool boot_chime_active_;
     uint16_t track_count_;
     bool track_count_valid_;
