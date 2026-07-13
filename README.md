@@ -314,11 +314,16 @@ Connect to the AP and open `http://192.168.8.8/` in a browser.
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
 | `/` | GET | Settings web UI |
-| `/api/settings` | GET | Current clock settings (JSON) |
-| `/api/settings` | POST | Apply settings and optional time (JSON) |
+| `/api/settings` | GET | Current clock settings (JSON); see [doc/web_api.md](doc/web_api.md) |
+| `/api/settings` | POST | Apply partial settings update (JSON) |
 | `/api/time` | GET | Local time, RTC status, temperature (JSON) |
+| `/api/audio/tracks` | GET | SD card MP3 track list |
+| `/api/audio/status` | GET | Playback state |
+| `/api/audio/play` | POST | Toggle play/pause for a track |
 
-Configurable settings include timezone offset, alarm, backlight color/brightness/effect, and volume.
+Full request/response schemas, field ranges, and migration notes from the legacy flat JSON API are documented in [doc/web_api.md](doc/web_api.md).
+
+Configurable settings include timezone offset, alarm, backlight color/brightness/effect, nixie brightness/transition, volume, backlight profiles, and hibernation schedule.
 
 ### CLI Daemon (`src/daemons/cli_daemon.cpp`)
 
