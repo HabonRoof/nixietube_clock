@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include "system_state.h"
 #include "gasgauge_service.h"
+#include "charger_controller.h"
 #include "i2c_debug_config.h"
 #include "i2c_bus.h"
 #include "driver/i2c.h"
@@ -221,11 +222,13 @@ HardwareHandles SystemController::init_hardware()
 SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &audio_daemon,
                                  SystemState &system_state,
                                  GasgaugeService *gasgauge_service,
-                                 bool gasgauge_ready_at_boot)
+                                 bool gasgauge_ready_at_boot,
+                                 ChargerController *charger_controller)
     : display_daemon_(display_daemon),
       audio_daemon_(audio_daemon),
       system_state_(system_state),
       gasgauge_service_(gasgauge_service),
+      charger_controller_(charger_controller),
       queue_(nullptr),
       task_handle_(nullptr),
       rtc_(kI2cPort),
@@ -242,7 +245,9 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       next_battery_poll_(0),
       standby_active_(false),
       idle_standby_deadline_(0),
-      next_auto_cathode_(0)
+      next_auto_cathode_(0),
+      battery_protection_enabled_(false),
+      battery_protection_charging_paused_(false)
 {
     queue_ = xQueueCreate(32, sizeof(SystemMessage));
     
@@ -332,7 +337,13 @@ void SystemController::loop()
         if (gasgauge_service_ && !i2c_debug::kDisableGasgauge &&
             (int32_t)(now - next_battery_poll_) >= 0) {
             sync_battery_from_gauge();
+            // TODO: Add webUI hookup after webui merge
+            // Need to save the setting to NVS in ClockSettings
+            apply_battery_protection();
             next_battery_poll_ = now + pdMS_TO_TICKS(i2c_debug::kBatteryPollMs);
+        } else if (charger_controller_ && battery_protection_charging_paused_ &&
+                   !battery_protection_enabled_.load()) {
+            apply_battery_protection();
         }
 
         // Keep clock update at 1Hz while queue is processed at a higher rate.
@@ -945,6 +956,64 @@ void SystemController::sync_battery_from_gauge()
     system_state_.update_battery(status);
     ESP_LOGD(TAG, "Battery: %u%%, %u mV, %d mA, SOH %u%%",
              data.soc, data.voltage_mv, data.current_ma, data.soh);
+}
+
+void SystemController::apply_battery_protection()
+{
+    if (!charger_controller_) {
+        return;
+    }
+
+    if (!battery_protection_enabled_.load()) {
+        if (battery_protection_charging_paused_) {
+            if (charger_controller_->enable_charging()) {
+                battery_protection_charging_paused_ = false;
+                ESP_LOGI(TAG, "Battery protection disabled; charging resumed");
+            } else {
+                ESP_LOGW(TAG, "Battery protection disabled but failed to resume charging");
+            }
+        }
+        return;
+    }
+
+    BatteryStatus battery;
+    if (!system_state_.get_battery(&battery) || !battery.valid) {
+        return;
+    }
+
+    if (battery.soc >= kBatteryProtectionSocLimit) {
+        if (!battery_protection_charging_paused_) {
+            if (charger_controller_->disable_charging()) {
+                battery_protection_charging_paused_ = true;
+                ESP_LOGI(TAG, "Battery protection: charging stopped at %u%% (limit %u%%)",
+                         battery.soc, kBatteryProtectionSocLimit);
+            } else {
+                ESP_LOGW(TAG, "Battery protection: failed to stop charging at %u%%", battery.soc);
+            }
+        }
+        return;
+    }
+
+    if (battery.soc <= kBatteryProtectionSocResume && battery_protection_charging_paused_) {
+        if (charger_controller_->enable_charging()) {
+            battery_protection_charging_paused_ = false;
+            ESP_LOGI(TAG, "Battery protection: charging resumed at %u%% (resume %u%%)",
+                     battery.soc, kBatteryProtectionSocResume);
+        } else {
+            ESP_LOGW(TAG, "Battery protection: failed to resume charging at %u%%", battery.soc);
+        }
+    }
+}
+
+void SystemController::set_battery_protection_enabled(bool enabled)
+{
+    battery_protection_enabled_.store(enabled);
+    ESP_LOGI(TAG, "Battery protection %s", enabled ? "enabled" : "disabled");
+}
+
+bool SystemController::is_battery_protection_enabled() const
+{
+    return battery_protection_enabled_.load();
 }
 
 void SystemController::request_settings_update(const ClockSettings &settings,
