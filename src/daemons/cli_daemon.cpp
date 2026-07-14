@@ -9,7 +9,7 @@
 #include "esp_chip_info.h"
 #include "argtable3/argtable3.h"
 #include "driver/uart.h"
-#include "esp_vfs_dev.h"
+#include "driver/uart_vfs.h"
 #include "linenoise/linenoise.h"
 #include "esp_mac.h"
 #include "display_board_config.h"
@@ -993,9 +993,9 @@ void CliDaemon::register_commands()
     uart_driver_install(UART_NUM_0, 256, 0, 0, NULL, 0);
     
     // Initialize VFS
-    esp_vfs_dev_uart_use_driver(UART_NUM_0);
-    esp_vfs_dev_uart_port_set_rx_line_endings(UART_NUM_0, ESP_LINE_ENDINGS_CR);
-    esp_vfs_dev_uart_port_set_tx_line_endings(UART_NUM_0, ESP_LINE_ENDINGS_CRLF);
+    uart_vfs_dev_use_driver(UART_NUM_0);
+    uart_vfs_dev_port_set_rx_line_endings(UART_NUM_0, ESP_LINE_ENDINGS_CR);
+    uart_vfs_dev_port_set_tx_line_endings(UART_NUM_0, ESP_LINE_ENDINGS_CRLF);
     
     // Initialize linenoise
     linenoiseSetMultiLine(1);

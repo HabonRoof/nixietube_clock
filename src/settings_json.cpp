@@ -501,7 +501,6 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
         }
     }
 
-    const cJSON *display = field(root, "display");
     if (display && !parse_display(display, &settings, &nixie_brightness, &transition,
                                   &nixie_changed, error)) {
         return false;
