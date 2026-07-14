@@ -89,7 +89,9 @@ esp_err_t receive_json_request(httpd_req_t *req, CJsonPtr *root)
         total += static_cast<size_t>(received);
     }
 
-    CJsonPtr parsed(cJSON_ParseWithLengthOpts(body.data(), total, nullptr, true));
+    // buffer_length must include the trailing NUL when require_null_terminated is true
+    // (cJSON_ParseWithOpts uses strlen(value) + 1 for the same reason).
+    CJsonPtr parsed(cJSON_ParseWithLengthOpts(body.data(), total + 1, nullptr, true));
     if (!parsed) {
         send_simple_error(req, "400 Bad Request", "invalid_json", "malformed JSON document");
         return ESP_FAIL;
