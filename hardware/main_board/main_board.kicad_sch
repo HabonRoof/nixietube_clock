@@ -9259,6 +9259,12 @@
 		(uuid "96131d97-5caa-4531-8d9d-6211925c96af")
 	)
 	(junction
+		(at 259.08 69.85)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "9980282f-fcb6-4926-9252-e7dc22d82901")
+	)
+	(junction
 		(at 295.91 87.63)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -9419,6 +9425,10 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ff67ae21-ea07-47a8-bbbb-eb6b28fdd6a7")
+	)
+	(no_connect
+		(at 344.17 161.29)
+		(uuid "02087f5b-9392-44d8-b98e-6bf3544edefe")
 	)
 	(no_connect
 		(at 182.88 237.49)
@@ -9856,7 +9866,7 @@
 	)
 	(wire
 		(pts
-			(xy 248.92 69.85) (xy 273.05 69.85)
+			(xy 248.92 69.85) (xy 259.08 69.85)
 		)
 		(stroke
 			(width 0)
@@ -12136,6 +12146,16 @@
 	)
 	(wire
 		(pts
+			(xy 259.08 69.85) (xy 273.05 69.85)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "94c947a7-b61e-4040-aebf-02f5dfda1468")
+	)
+	(wire
+		(pts
 			(xy 300.99 20.32) (xy 300.99 21.59)
 		)
 		(stroke
@@ -12266,6 +12286,16 @@
 	)
 	(wire
 		(pts
+			(xy 259.08 80.01) (xy 267.97 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9a7c5677-d502-42fc-b2fa-752734527a12")
+	)
+	(wire
+		(pts
 			(xy 167.64 41.91) (xy 167.64 46.99)
 		)
 		(stroke
@@ -12343,16 +12373,6 @@
 			(type default)
 		)
 		(uuid "a192fc51-2b04-4e4c-8a2c-97c476ee9ff5")
-	)
-	(wire
-		(pts
-			(xy 266.7 80.01) (xy 267.97 80.01)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a1d8f007-a5ad-46d8-b747-daedcbbf63cb")
 	)
 	(wire
 		(pts
@@ -12656,6 +12676,16 @@
 	)
 	(wire
 		(pts
+			(xy 259.08 80.01) (xy 259.08 69.85)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b41a7ef3-abcf-4533-957c-fde43d85c3f1")
+	)
+	(wire
+		(pts
 			(xy 274.32 45.72) (xy 274.32 54.61)
 		)
 		(stroke
@@ -12863,16 +12893,6 @@
 			(type default)
 		)
 		(uuid "c2b5d13c-55c0-4de3-9645-760a05b3164f")
-	)
-	(wire
-		(pts
-			(xy 344.17 161.29) (xy 347.98 161.29)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c32822fe-1ecb-48d5-9db4-b29472e95df4")
 	)
 	(wire
 		(pts
@@ -14144,28 +14164,6 @@
 			)
 		)
 	)
-	(global_label "5V_EN"
-		(shape input)
-		(at 266.7 80.01 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "24fafec3-fc16-4588-b507-e63fbfa15ee1")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 257.9696 80.01 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-				(hide yes)
-			)
-		)
-	)
 	(global_label "I2C0_SCL"
 		(shape input)
 		(at 134.62 49.53 180)
@@ -15125,28 +15123,6 @@
 		(uuid "c80aba4c-e739-431c-9dff-12e6c1f19e73")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 122.0023 130.81 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "5V_EN"
-		(shape input)
-		(at 347.98 161.29 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "cb62dd13-0a79-4342-8764-79276cbe1fe4")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 356.7104 161.29 0)
 			(effects
 				(font
 					(size 1.27 1.27)
