@@ -234,6 +234,7 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       gasgauge_ready_(gasgauge_ready_at_boot),
       alarm_audio_active_(false),
       alarm_stop_timer_(nullptr),
+      display_preview_timer_(nullptr),
       hibernate_state_(HibernateState::Normal),
       hibernate_window_active_(false),
       hibernation_peek_deadline_(0),
@@ -266,6 +267,16 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
         ESP_LOGW(TAG, "Failed to create alarm stop timer");
         alarm_stop_timer_ = nullptr;
     }
+
+    esp_timer_create_args_t preview_timer_args = {};
+    preview_timer_args.callback = display_preview_timer_cb;
+    preview_timer_args.arg = this;
+    preview_timer_args.dispatch_method = ESP_TIMER_TASK;
+    preview_timer_args.name = "disp_preview";
+    if (esp_timer_create(&preview_timer_args, &display_preview_timer_) != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to create display preview timer");
+        display_preview_timer_ = nullptr;
+    }
 }
 
 SystemController::~SystemController()
@@ -274,6 +285,11 @@ SystemController::~SystemController()
     if (alarm_stop_timer_) {
         esp_timer_delete(alarm_stop_timer_);
         alarm_stop_timer_ = nullptr;
+    }
+    stop_display_preview_timer();
+    if (display_preview_timer_) {
+        esp_timer_delete(display_preview_timer_);
+        display_preview_timer_ = nullptr;
     }
     if (task_handle_) {
         vTaskDelete(task_handle_);
@@ -397,6 +413,7 @@ void SystemController::process_message(const SystemMessage &msg)
                 apply_settings(msg.data.apply.settings,
                                msg.data.apply.has_time ? &msg.data.apply.local_time : nullptr);
                 system_state_.save_settings();
+                stop_display_preview_timer();
                 display_preview_active_ = false;
             }
             break;
@@ -512,6 +529,16 @@ void SystemController::alarm_stop_timer_cb(void *arg)
     self->stop_alarm_audio();
 }
 
+void SystemController::display_preview_timer_cb(void *arg)
+{
+    auto *self = static_cast<SystemController *>(arg);
+    SettingsUpdate update = {};
+    update.persist = true;
+    update.cancel_preview = true;
+    update.preview_only = false;
+    self->request_settings_update(update);
+}
+
 void SystemController::cancel_alarm_timer()
 {
     if (alarm_stop_timer_) {
@@ -526,6 +553,22 @@ void SystemController::start_alarm_timer()
     }
     cancel_alarm_timer();
     esp_timer_start_once(alarm_stop_timer_, kAlarmMaxDurationMs * 1000ULL);
+}
+
+void SystemController::stop_display_preview_timer()
+{
+    if (display_preview_timer_) {
+        esp_timer_stop(display_preview_timer_);
+    }
+}
+
+void SystemController::start_display_preview_timer()
+{
+    if (!display_preview_timer_) {
+        return;
+    }
+    stop_display_preview_timer();
+    esp_timer_start_once(display_preview_timer_, kDisplayPreviewDurationMs * 1000ULL);
 }
 
 void SystemController::stop_alarm_audio()
@@ -1072,6 +1115,7 @@ void SystemController::apply_display_preview(const BacklightProfile &profile)
 {
     display_preview_active_ = true;
     display_preview_ = profile;
+    start_display_preview_timer();
     if (hibernate_state_ == HibernateState::Hibernating) {
         return;
     }
@@ -1083,6 +1127,7 @@ void SystemController::apply_display_preview(const BacklightProfile &profile)
 
 void SystemController::cancel_display_preview()
 {
+    stop_display_preview_timer();
     if (!display_preview_active_) {
         return;
     }

@@ -98,7 +98,7 @@ Maximum POST body size: **4096 bytes**.
 
 Send only the groups you want to change. Unknown keys are rejected.
 
-`persist` defaults to `true`. When `persist` is `false`, only a `display` preview may be sent; settings are applied to the hardware immediately but **not** written to NVS.
+`persist` defaults to `true`. When `persist` is `false`, only a `display` preview may be sent; settings are applied to the hardware immediately but **not** written to NVS. After **2 seconds** without a newer preview, the device automatically restores the active saved profile on the hardware.
 
 ### Examples
 
@@ -111,7 +111,7 @@ Live display preview (RAM only, not saved):
 }
 ```
 
-Discard an active web preview and restore the committed active profile:
+Discard an active web preview immediately and restore the committed active profile:
 
 ```json
 {
@@ -168,9 +168,10 @@ On the device, switch the active profile with **button 2** (not the web UI).
 
 ### Web UI behavior
 
-- The **Light** tab sends `persist: false` display previews while sliders move (mobile-friendly pointer events).
-- **Save 1–4** commits the preview to a profile slot with `persist: true`.
-- Leaving the Light tab or closing the browser cancels the preview via `preview.cancel` and restores the active saved profile.
+- The **Light** tab sends `persist: false` display previews while sliders move (throttled live updates via pointer events; flush on pointer up).
+- Each preview restarts a **2 second** device-side timer; when the timer expires without a newer preview, the active saved profile is restored on the hardware (form values stay so Save can still commit).
+- **Save 1–4** commits the preview to a profile slot with `persist: true` and clears the preview timer.
+- Leaving the Light tab or closing the browser cancels the preview via `preview.cancel` and restores the active saved profile (and the form from the last committed display).
 
 ## `GET /api/time`
 
