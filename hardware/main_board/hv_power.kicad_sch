@@ -3138,7 +3138,7 @@
 				)
 			)
 		)
-		(property "Footprint" "johnson:PowerInductor_8mmx8.5mm"
+		(property "Footprint" "KiCad_Library:PowerInductor_8mmx8.5mm"
 			(at 138.43 29.21 0)
 			(effects
 				(font
@@ -3283,7 +3283,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "johnson:Cap_THT_D8.0mm_L12mm_Horizontal"
+		(property "Footprint" "KiCad_Library:Cap_THT_D8.0mm_L12mm_Horizontal"
 			(at 210.82 44.45 0)
 			(effects
 				(font
