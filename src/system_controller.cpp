@@ -248,7 +248,7 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       idle_standby_deadline_(0),
       next_auto_cathode_(0),
       display_preview_active_(false),
-      display_preview_{}
+      display_preview_{},
       battery_protection_enabled_(false),
       battery_protection_charging_paused_(false)
 {

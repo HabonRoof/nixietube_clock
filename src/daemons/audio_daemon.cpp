@@ -514,6 +514,4 @@ void AudioDaemon::process_message(const AudioMessage &msg)
             complete_rpc(msg, false);
             break;
     }
-    // TODO: when using CLI to play the track, DFPlayer will fo to sleep after 2 second
-    sleep_dfplayer_if_idle();
 }

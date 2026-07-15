@@ -11,8 +11,7 @@
 
 namespace
 {
-constexpr gpio_num_t kPca9685OePin = static_cast<gpio_num_t>(4);
-
+constexpr gpio_num_t kPca9685OePin = GPIO_NUM_4;
 constexpr gpio_num_t kAnodeA0 = GPIO_NUM_9;
 constexpr gpio_num_t kAnodeA1 = GPIO_NUM_10;
 constexpr gpio_num_t kAnodeA2 = GPIO_NUM_11;
@@ -125,10 +124,10 @@ void select_anode(uint8_t address)
 void anode_timer_callback(void *arg)
 {
     auto *ctx = static_cast<AnodeScanCtx *>(arg);
-    gpio_set_level(kPca9685OePin, 1);
+    // gpio_set_level(kPca9685OePin, 1);
     select_anode(kAnodeBlankAddress);
     select_anode(static_cast<uint8_t>(ctx->tube_index));
-    gpio_set_level(kPca9685OePin, 0);
+    // gpio_set_level(kPca9685OePin, 0);
     ctx->tube_index = (ctx->tube_index + 1) % g_anode_tube_count;
 }
 
@@ -234,6 +233,7 @@ void NixieDriver::nixie_scan_start(i2c_port_t i2c_port)
     }
     i2c_port_ = i2c_port;
     init_default_mapping();
+    ESP_LOGI(kTag, "Starting Nixie scan");
     xTaskCreate(scan_task_entry, "nixie_scan", 4096, this, 6, &scan_task_);
 }
 
