@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -15,6 +17,7 @@
 #include "system_state.h"
 
 class GasgaugeService;
+class ChargerController;
 
 struct HardwareHandles {
     i2c_port_t i2c_port;
@@ -32,7 +35,8 @@ public:
     SystemController(DisplayDaemon &display_daemon, AudioDaemon &audio_daemon,
                      SystemState &system_state,
                      GasgaugeService *gasgauge_service = nullptr,
-                     bool gasgauge_ready_at_boot = false);
+                     bool gasgauge_ready_at_boot = false,
+                     ChargerController *charger_controller = nullptr);
     ~SystemController();
 
     void start();
@@ -51,6 +55,11 @@ public:
     bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
                          time_t *unix_utc = nullptr);
 
+    // Battery protection caps charge at 80% SOC to extend cell life.
+    // Reserved for Web UI wiring (refactor/webui); defaults to disabled.
+    void set_battery_protection_enabled(bool enabled);
+    bool is_battery_protection_enabled() const;
+
 private:
     enum class HibernateState : uint8_t
     {
@@ -68,6 +77,7 @@ private:
     void sync_time_from_rtc();
     void publish_time_status(bool valid);
     void sync_battery_from_gauge();
+    void apply_battery_protection();
     void invalidate_battery_status();
     void check_alarm();
     void check_hibernation();
@@ -104,6 +114,7 @@ private:
     AudioDaemon &audio_daemon_;
     SystemState &system_state_;
     GasgaugeService *gasgauge_service_;
+    ChargerController *charger_controller_;
     QueueHandle_t queue_;
     TaskHandle_t task_handle_;
 
@@ -126,7 +137,12 @@ private:
     bool display_preview_active_;
     BacklightProfile display_preview_;
 
+    std::atomic<bool> battery_protection_enabled_;
+    bool battery_protection_charging_paused_;
+
     static constexpr uint8_t kMaxBatteryReadFailures = 3;
+    static constexpr uint8_t kBatteryProtectionSocLimit = 80;
+    static constexpr uint8_t kBatteryProtectionSocResume = 78;
     static constexpr uint8_t kHibernatePeekNixieBrightness = 50;
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
     static constexpr uint32_t kDisplayPreviewDurationMs = 2000;

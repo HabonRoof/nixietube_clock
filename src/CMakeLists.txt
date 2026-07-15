@@ -11,4 +11,5 @@ idf_component_register(SRCS ${app_sources} ${driver_sources}
                                     "../lib/drivers/dfplayer"
                                     "../lib/drivers/ws2812"
                                     "../lib/drivers/pca9685"
-                       PRIV_REQUIRES espressif__cjson)
+                       PRIV_REQUIRES espressif__cjson
+                       REQUIRES esp_adc driver)

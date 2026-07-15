@@ -27,17 +27,18 @@ enum class DfPlayerPlaybackStatus : uint8_t
     kPaused = 2,
 };
 
-// TODO: Add storage type for query_status command
+// Storage device MSB values from query status command 0x42 (FN-M16P datasheet 3.7.2).
 enum class DfPlayerStorageType : uint8_t
 {
     kUnknown = 0,
-    kUsbDisk = 1,
-    kSdCard = 2,
+    kUsbDisk = 0x01,
+    kSdCard = 0x02,
+    kSleep = 0x10,
 };
 
 // SD:/mp3/NNNN.mp3 file numbers (command 0x12).
 inline constexpr uint16_t kDfPlayerMp3MinFile = 1;
-inline constexpr uint16_t kDfPlayerMp3MaxFile = 2999;
+inline constexpr uint16_t kDfPlayerMp3MaxFile = 3000;
 
 struct AudioPlaybackState
 {
@@ -60,7 +61,7 @@ public:
     DfPlayerMini &operator=(const DfPlayerMini &) = delete;
 
     esp_err_t begin(int baud_rate = 9600);
-    // Play SD:/mp3/NNNN.mp3 via command 0x12 (file_number 1..2999).
+    // Play SD:/mp3/NNNN.mp3 via command 0x12 (file_number 1..3000).
     esp_err_t play_from_mp3_folder(uint16_t file_number);
     esp_err_t play_next();
     esp_err_t play_previous();

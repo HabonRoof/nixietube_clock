@@ -315,7 +315,7 @@ esp_err_t DfPlayerMini::query_playback_status(DfPlayerPlaybackStatus *out_status
         return ESP_ERR_INVALID_ARG;
     }
 
-    // DFR0299 query status: DH = storage type, DL = playback state (no track number).
+    // FN-M16P query status 0x42: MSB = storage/sleep, LSB = playback state.
     uint16_t raw = 0;
     esp_err_t err = send_query(kCmdQueryStatus, &raw, timeout_ms);
     if (err != ESP_OK)
@@ -323,8 +323,15 @@ esp_err_t DfPlayerMini::query_playback_status(DfPlayerPlaybackStatus *out_status
         return err;
     }
 
+    const uint8_t storage_byte = static_cast<uint8_t>((raw >> 8) & 0xFF);
     uint8_t status_byte = static_cast<uint8_t>(raw & 0xFF);
-    if (status_byte > static_cast<uint8_t>(DfPlayerPlaybackStatus::kPaused))
+    const bool in_sleep =
+        storage_byte == static_cast<uint8_t>(DfPlayerStorageType::kSleep);
+    if (in_sleep)
+    {
+        status_byte = static_cast<uint8_t>(DfPlayerPlaybackStatus::kStopped);
+    }
+    else if (status_byte > static_cast<uint8_t>(DfPlayerPlaybackStatus::kPaused))
     {
         status_byte = static_cast<uint8_t>(DfPlayerPlaybackStatus::kStopped);
     }
@@ -346,6 +353,7 @@ esp_err_t DfPlayerMini::query_playback_status(DfPlayerPlaybackStatus *out_status
         xSemaphoreTake(mutex_, portMAX_DELAY);
         state_.playback_status = *out_status;
         state_.paused = (*out_status == DfPlayerPlaybackStatus::kPaused);
+        state_.low_power = in_sleep;
         if (out_track && track > 0)
         {
             state_.track_number = track;

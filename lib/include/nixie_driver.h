@@ -6,7 +6,9 @@
 
 #include <array>
 
+#include "display_board_config.h"
 #include "pca9685/pca9685.h"
+#include <vector>
 
 #include "freertos/FreeRTOS.h"
 
@@ -51,6 +53,7 @@ class NixieDriver : public INixieDriver
 public:
 
     static constexpr size_t kTubeCount = 6;
+    static constexpr size_t kMaxTubes = kMaxDisplayTubes;
 
 
 
@@ -106,23 +109,23 @@ private:
 
     void scan_loop();
 
-    void push_all_cathodes(std::array<Pca9685, 4> &pca);
+    void push_all_cathodes(std::vector<Pca9685> &pca);
 
     void flush_chip(Pca9685 &chip, uint8_t chip_index);
 
 
 
-    std::array<uint8_t, kTubeCount> digit_cache_{};
+    std::array<uint8_t, kMaxDisplayTubes> digit_cache_{};
 
-    std::array<uint8_t, kTubeCount> tube_brightness_{};
+    std::array<uint8_t, kMaxDisplayTubes> tube_brightness_{};
 
-    std::array<ChannelRef, kTubeCount> active_cathode_{};
+    std::array<ChannelRef, kMaxDisplayTubes> active_cathode_{};
 
-    std::array<std::array<uint16_t, 16>, 4> cathode_shadow_{};
+    std::array<std::array<uint16_t, 16>, kMaxPca9685Chips> cathode_shadow_{};
 
-    std::array<std::array<uint16_t, 16>, 4> flushed_shadow_{};
+    std::array<std::array<uint16_t, 16>, kMaxPca9685Chips> flushed_shadow_{};
 
-    std::array<bool, 4> chip_dirty_{};
+    std::array<bool, kMaxPca9685Chips> chip_dirty_{};
 
     uint8_t brightness_ = 0;
 

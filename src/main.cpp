@@ -77,12 +77,13 @@ extern "C" void app_main(void)
     system_state.get_settings(&boot_settings);
 
     static AudioDaemon audio_daemon(audio_driver, power_controller, boot_settings.volume);
+    static ChargerController charger_controller(charger_driver);
     static SystemController system_controller(display_daemon, audio_daemon, system_state,
                                               i2c_debug::kDisableGasgauge ? nullptr : &gasgauge_service,
-                                              gasgauge_ready);
+                                              gasgauge_ready,
+                                              &charger_controller);
     display_daemon.set_system_queue(system_controller.get_queue());
     static InputDaemon input_daemon(system_controller);
-    static ChargerController charger_controller(charger_driver);
 
     ClockSettings settings;
     system_state.get_settings(&settings);
