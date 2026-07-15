@@ -394,7 +394,6 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
     update->persist = true;
     update->cancel_preview = false;
     update->preview_only = false;
-    update->volume_preview = false;
     update->preview_profile = {};
 
     const cJSON *preview = field(root, "preview");
@@ -425,51 +424,29 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
     }
 
     const cJSON *display = field(root, "display");
-    const cJSON *audio = field(root, "audio");
     if (!update->persist) {
-        if (field(root, "clock") || field(root, "alarm") || field(root, "profiles") ||
-            field(root, "hibernation")) {
+        if (!display) {
+            return fail(error, "empty_update", "display",
+                        "display is required when persist is false");
+        }
+        if (field(root, "clock") || field(root, "alarm") || field(root, "audio") ||
+            field(root, "profiles") || field(root, "hibernation")) {
             return fail(error, "invalid_request", "",
-                        "only display or audio may be sent when persist is false");
+                        "only display may be sent when persist is false");
         }
-        if (display && audio) {
-            return fail(error, "invalid_request", "",
-                        "display and audio cannot be combined when persist is false");
+        ClockSettings preview_settings = current;
+        const uint8_t active = preview_settings.active_profile_index % kBacklightProfileCount;
+        uint8_t nixie_brightness = preview_settings.profiles[active].nixie_brightness;
+        uint8_t transition = preview_settings.profiles[active].nixie_transition;
+        bool nixie_changed = false;
+        if (!parse_display(display, &preview_settings, &nixie_brightness, &transition,
+                           &nixie_changed, error)) {
+            return false;
         }
-        if (display) {
-            ClockSettings preview_settings = current;
-            const uint8_t active = preview_settings.active_profile_index % kBacklightProfileCount;
-            uint8_t nixie_brightness = preview_settings.profiles[active].nixie_brightness;
-            uint8_t transition = preview_settings.profiles[active].nixie_transition;
-            bool nixie_changed = false;
-            if (!parse_display(display, &preview_settings, &nixie_brightness, &transition,
-                               &nixie_changed, error)) {
-                return false;
-            }
-            update->preview_only = true;
-            update->preview_profile =
-                profile_from_display(preview_settings, nixie_brightness, transition);
-            return true;
-        }
-        if (audio) {
-            if (!require_nonempty_object(audio, "audio", error) ||
-                !reject_unknown(audio, {"volume"}, "audio", error)) {
-                return false;
-            }
-            const cJSON *volume = field(audio, "volume");
-            if (!volume) {
-                return fail(error, "empty_update", "audio", "volume is required");
-            }
-            int value;
-            if (!read_integer(volume, "audio.volume", 0, 30, &value, error)) {
-                return false;
-            }
-            update->volume_preview = true;
-            update->settings.volume = static_cast<uint8_t>(value);
-            return true;
-        }
-        return fail(error, "empty_update", "",
-                    "display or audio is required when persist is false");
+        update->preview_only = true;
+        update->preview_profile =
+            profile_from_display(preview_settings, nixie_brightness, transition);
+        return true;
     }
 
     ClockSettings &settings = update->settings;
@@ -529,6 +506,7 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
         return false;
     }
 
+    const cJSON *audio = field(root, "audio");
     if (audio) {
         if (!require_nonempty_object(audio, "audio", error) ||
             !reject_unknown(audio, {"volume"}, "audio", error)) return false;

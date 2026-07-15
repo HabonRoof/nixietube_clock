@@ -420,8 +420,6 @@ void SystemController::process_message(const SystemMessage &msg)
                 cancel_display_preview();
             } else if (!msg.data.apply.persist && msg.data.apply.preview_only) {
                 apply_display_preview(msg.data.apply.preview_profile);
-            } else if (!msg.data.apply.persist && msg.data.apply.volume_preview) {
-                apply_volume_preview(msg.data.apply.settings.volume);
             } else {
                 apply_settings(msg.data.apply.settings,
                                msg.data.apply.has_time ? &msg.data.apply.local_time : nullptr);
@@ -549,7 +547,6 @@ void SystemController::display_preview_timer_cb(void *arg)
     update.persist = true;
     update.cancel_preview = true;
     update.preview_only = false;
-    update.volume_preview = false;
     self->request_settings_update(update);
 }
 
@@ -1080,7 +1077,6 @@ void SystemController::request_settings_update(const ClockSettings &settings,
     update.persist = true;
     update.cancel_preview = false;
     update.preview_only = false;
-    update.volume_preview = false;
     if (local_time) {
         update.local_time = *local_time;
     }
@@ -1196,19 +1192,6 @@ void SystemController::apply_display_preview(const BacklightProfile &profile)
         return;
     }
     apply_profile_to_display(profile);
-}
-
-void SystemController::apply_volume_preview(uint8_t volume)
-{
-    ClockSettings settings;
-    system_state_.get_settings(&settings);
-    settings.volume = volume;
-    system_state_.set_settings(settings);
-
-    AudioMessage amsg = {};
-    amsg.command = AudioCmd::SET_VOLUME;
-    amsg.param.volume = volume;
-    xQueueSend(audio_daemon_.get_queue(), &amsg, 0);
 }
 
 void SystemController::cancel_display_preview()
