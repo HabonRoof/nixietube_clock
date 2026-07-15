@@ -8917,6 +8917,12 @@
 		(uuid "0024c4a3-5b82-4efc-af21-e340417d4416")
 	)
 	(junction
+		(at 234.95 41.91)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "03b922df-7e7c-4cd0-9eba-d005dfa03dfa")
+	)
+	(junction
 		(at 355.6 29.21)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -9007,12 +9013,6 @@
 		(uuid "24da87c9-4e5a-44cf-bf73-6a16dee79010")
 	)
 	(junction
-		(at 234.95 44.45)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "2746634a-4ee1-4f2a-9155-e49d19ec4dfc")
-	)
-	(junction
 		(at 63.5 34.29)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -9053,6 +9053,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "43303f32-d293-4444-8f3d-5975487f804b")
+	)
+	(junction
+		(at 234.95 34.29)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "445cf0a2-fbe1-48ec-b560-d685d1f63286")
 	)
 	(junction
 		(at 133.35 26.67)
@@ -9197,6 +9203,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "85d1dc10-df90-4852-8447-27c5b7155f10")
+	)
+	(junction
+		(at 224.79 34.29)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "8645ed71-b8b2-4087-9179-cb3bb9e26165")
 	)
 	(junction
 		(at 76.2 52.07)
@@ -9723,16 +9735,6 @@
 			(type default)
 		)
 		(uuid "04b9b38c-a0f1-4a65-9610-e18b69e6aade")
-	)
-	(wire
-		(pts
-			(xy 234.95 44.45) (xy 234.95 55.88)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "04d8cb1b-235b-4b80-b35f-d63faf345e23")
 	)
 	(wire
 		(pts
@@ -10536,16 +10538,6 @@
 	)
 	(wire
 		(pts
-			(xy 234.95 41.91) (xy 234.95 44.45)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "32ffdfc3-f939-4c97-9cb8-c9975c7befa3")
-	)
-	(wire
-		(pts
 			(xy 316.23 39.37) (xy 316.23 38.1)
 		)
 		(stroke
@@ -10783,6 +10775,16 @@
 			(type default)
 		)
 		(uuid "42334cc6-a371-4dbe-894b-213921bbdf53")
+	)
+	(wire
+		(pts
+			(xy 234.95 41.91) (xy 234.95 44.45)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "423880d1-c97c-4e17-88a2-03aaae5be8c5")
 	)
 	(wire
 		(pts
@@ -11123,6 +11125,16 @@
 			(type default)
 		)
 		(uuid "5a348803-d8e2-4a75-b747-4d444f524ac6")
+	)
+	(wire
+		(pts
+			(xy 224.79 34.29) (xy 224.79 39.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5af7f56b-37a2-4551-bcc1-ef7ba83041c2")
 	)
 	(wire
 		(pts
@@ -13706,6 +13718,16 @@
 	)
 	(wire
 		(pts
+			(xy 224.79 44.45) (xy 224.79 54.61)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e97d43e2-cd57-4040-a61d-a463e77372ca")
+	)
+	(wire
+		(pts
 			(xy 363.22 193.04) (xy 369.57 193.04)
 		)
 		(stroke
@@ -14043,6 +14065,16 @@
 			(type default)
 		)
 		(uuid "fd5b4485-b9d4-448e-8ed8-02ebf8ccecd5")
+	)
+	(wire
+		(pts
+			(xy 234.95 34.29) (xy 234.95 41.91)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fe42d987-f73c-46db-a0f9-ab572c79767c")
 	)
 	(wire
 		(pts
@@ -16584,7 +16616,7 @@
 	)
 	(symbol
 		(lib_id "power:GNDPWR")
-		(at 234.95 55.88 0)
+		(at 224.79 54.61 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -16592,7 +16624,7 @@
 		(dnp no)
 		(uuid "119decb8-464e-437b-9b2b-b94e3d58a603")
 		(property "Reference" "#PWR086"
-			(at 234.95 60.96 0)
+			(at 224.79 59.69 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16601,7 +16633,7 @@
 			)
 		)
 		(property "Value" "PGND1"
-			(at 234.95 60.198 0)
+			(at 224.79 58.928 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16609,7 +16641,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 234.95 57.15 0)
+			(at 224.79 55.88 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16618,7 +16650,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 234.95 57.15 0)
+			(at 224.79 55.88 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16627,7 +16659,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GNDPWR\" , global ground"
-			(at 234.95 55.88 0)
+			(at 224.79 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19375,6 +19407,84 @@
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
 					(reference "#PWR02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C_Small")
+		(at 224.79 41.91 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "3ef50c5c-ffbf-46d2-87bf-f2b50294133d")
+		(property "Reference" "C2"
+			(at 227.33 40.6463 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10u"
+			(at 228.092 42.672 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_Tantalum_SMD:CP_EIA-2012-12_Kemet-R"
+			(at 224.79 41.91 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 224.79 41.91 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "10uF/10V"
+			(at 224.79 41.91 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC PN" "C129234"
+			(at 224.79 41.91 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "82975af9-bd05-4627-8f6b-ebc04d7e8d05")
+		)
+		(pin "2"
+			(uuid "e86e91f0-7e6b-449e-aab3-b62138cff070")
+		)
+		(instances
+			(project "main_board"
+				(path "/62950e93-3f98-4dee-9256-8213caa98ee7"
+					(reference "C2")
 					(unit 1)
 				)
 			)
@@ -22399,7 +22509,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+		(property "Footprint" "Capacitor_Tantalum_SMD:CP_EIA-2012-12_Kemet-R"
 			(at 248.92 78.74 0)
 			(effects
 				(font
@@ -22417,7 +22527,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "10uF/25V"
+		(property "Description" "10uF/10V"
 			(at 248.92 78.74 0)
 			(effects
 				(font
@@ -22426,7 +22536,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C6119932"
+		(property "LCSC PN" "C129234"
 			(at 248.92 78.74 0)
 			(effects
 				(font
