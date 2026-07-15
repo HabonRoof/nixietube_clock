@@ -18,6 +18,7 @@ struct ParsedSettingsUpdate {
     bool persist;
     bool cancel_preview;
     bool preview_only;
+    bool volume_preview;
     BacklightProfile preview_profile;
 };
 

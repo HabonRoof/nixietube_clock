@@ -430,6 +430,7 @@ bool WebServer::apply_settings_update(const ParsedSettingsUpdate &update)
     msg.persist = update.persist;
     msg.cancel_preview = update.cancel_preview;
     msg.preview_only = update.preview_only;
+    msg.volume_preview = update.volume_preview;
     msg.preview_profile = update.preview_profile;
     system_controller_.request_settings_update(msg);
     return true;

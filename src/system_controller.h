@@ -104,6 +104,7 @@ private:
     void cycle_profile();
     void apply_profile_to_display(const BacklightProfile &profile);
     void apply_display_preview(const BacklightProfile &profile);
+    void apply_volume_preview(uint8_t volume);
     void cancel_display_preview();
     void apply_hibernate_peek_to_display(const ClockSettings &settings);
     bool is_alarm_audio_active() const;

@@ -98,7 +98,7 @@ Maximum POST body size: **4096 bytes**.
 
 Send only the groups you want to change. Unknown keys are rejected.
 
-`persist` defaults to `true`. When `persist` is `false`, only a `display` preview may be sent; settings are applied to the hardware immediately but **not** written to NVS. After **2 seconds** without a newer preview, the device automatically restores the active saved profile on the hardware.
+`persist` defaults to `true`. When `persist` is `false`, only a `display` or `audio` preview may be sent (not both); settings are applied to the hardware immediately but **not** written to NVS. For `display`, after **2 seconds** without a newer preview, the device automatically restores the active saved profile on the hardware. For `audio`, volume is applied live with no auto-restore timer.
 
 ### Examples
 
@@ -111,6 +111,15 @@ Live display preview (RAM only, not saved):
 }
 ```
 
+Live volume preview (hardware only, not saved):
+
+```json
+{
+  "audio": { "volume": 20 },
+  "persist": false
+}
+```
+
 Discard an active web preview immediately and restore the committed active profile:
 
 ```json
@@ -119,7 +128,7 @@ Discard an active web preview immediately and restore the committed active profi
 }
 ```
 
-Set volume only:
+Set volume only (persists to NVS):
 
 ```json
 { "audio": { "volume": 20 } }
@@ -172,6 +181,7 @@ On the device, switch the active profile with **button 2** (not the web UI).
 - Each preview restarts a **2 second** device-side timer; when the timer expires without a newer preview, the active saved profile is restored on the hardware (form values stay so Save can still commit).
 - **Save 1–4** commits the preview to a profile slot with `persist: true` and clears the preview timer.
 - Leaving the Light tab or closing the browser cancels the preview via `preview.cancel` and restores the active saved profile (and the form from the last committed display).
+- The volume slider sends `persist: false` while dragging (hardware volume only), and writes NVS with `persist: true` on pointer up.
 
 ## `GET /api/time`
 
