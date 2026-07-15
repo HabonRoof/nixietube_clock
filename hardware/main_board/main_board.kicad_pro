@@ -690,6 +690,10 @@
     [
       "23960838-3dbf-4684-acd4-edccf335cc3f",
       "Gasgauge"
+    ],
+    [
+      "529bf63b-1ea4-4ef4-8d8a-4c1847b02979",
+      "HV_boost"
     ]
   ],
   "text_variables": {}

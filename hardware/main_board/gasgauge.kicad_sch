@@ -1063,7 +1063,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "00a6db7b-a8a0-4d82-b959-4b0a31644ce0")
-		(property "Reference" "R15"
+		(property "Reference" "R75"
 			(at 120.65 95.25 0)
 			(effects
 				(font
@@ -1135,7 +1135,7 @@
 		(instances
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/23960838-3dbf-4684-acd4-edccf335cc3f"
-					(reference "R15")
+					(reference "R75")
 					(unit 1)
 				)
 			)
@@ -1271,7 +1271,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "6191a449-81ac-4b57-8d2f-620826bd0145")
-		(property "Reference" "R22"
+		(property "Reference" "R72"
 			(at 96.52 72.39 90)
 			(effects
 				(font
@@ -1341,7 +1341,7 @@
 		(instances
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/23960838-3dbf-4684-acd4-edccf335cc3f"
-					(reference "R22")
+					(reference "R72")
 					(unit 1)
 				)
 			)
@@ -1356,7 +1356,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "6e6ae81d-8aff-42f0-aa62-099d3b350f2a")
-		(property "Reference" "C15"
+		(property "Reference" "C32"
 			(at 177.546 86.106 0)
 			(effects
 				(font
@@ -1428,7 +1428,7 @@
 		(instances
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/23960838-3dbf-4684-acd4-edccf335cc3f"
-					(reference "C15")
+					(reference "C32")
 					(unit 1)
 				)
 			)
@@ -1444,7 +1444,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "8bd69965-aff7-47dd-9b26-cfbbe4bacb4c")
-		(property "Reference" "C12"
+		(property "Reference" "C27"
 			(at 107.95 90.1762 0)
 			(effects
 				(font
@@ -1516,7 +1516,7 @@
 		(instances
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/23960838-3dbf-4684-acd4-edccf335cc3f"
-					(reference "C12")
+					(reference "C27")
 					(unit 1)
 				)
 			)
@@ -1532,7 +1532,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "901a0077-9240-4e9b-9e9f-af7542a30339")
-		(property "Reference" "R19"
+		(property "Reference" "R76"
 			(at 162.56 77.47 0)
 			(effects
 				(font
@@ -1604,7 +1604,7 @@
 		(instances
 			(project "main_board"
 				(path "/62950e93-3f98-4dee-9256-8213caa98ee7/23960838-3dbf-4684-acd4-edccf335cc3f"
-					(reference "R19")
+					(reference "R76")
 					(unit 1)
 				)
 			)
