@@ -612,6 +612,7 @@ void SystemController::check_alarm()
         return;
     }
 
+    // TODO: check the INT pin of DS3231
     rtc_.clear_alarm1_flag();
 
     uint16_t track = settings.alarm_track;
@@ -1290,7 +1291,7 @@ void SystemController::handle_button_press(uint8_t button_id)
 {
     ESP_LOGI(TAG, "Button pressed: %u", button_id);
 
-    if (hibernate_state_ == HibernateState::Hibernating) {
+    if (hibernate_state_ == HibernateState::Hibernating && !alarm_audio_active_) {
         peek_from_hibernate();
         return;
     }
