@@ -19202,7 +19202,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_XH_S2B-XH-A_1x02_P2.50mm_Horizontal"
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-SM4-TB_1x02-1MP_P2.00mm_Vertical"
 			(at 144.78 237.49 0)
 			(effects
 				(font
@@ -19229,7 +19229,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C19270574"
+		(property "LCSC PN" ""
 			(at 144.78 242.57 0)
 			(effects
 				(font
@@ -21947,7 +21947,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_XH_S2B-XH-A_1x02_P2.50mm_Horizontal"
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-SM4-TB_1x02-1MP_P2.00mm_Vertical"
 			(at 167.64 88.9 0)
 			(effects
 				(font
@@ -21974,7 +21974,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C240819"
+		(property "LCSC PN" "C3029431"
 			(at 167.64 88.9 0)
 			(effects
 				(font
@@ -27633,6 +27633,15 @@
 			)
 		)
 		(property "Digikey PN" ""
+			(at 274.32 43.18 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC PN" "C23692981"
 			(at 274.32 43.18 0)
 			(effects
 				(font
