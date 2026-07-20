@@ -15798,7 +15798,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" ""
+		(property "LCSC PN" "C21189"
 			(at 256.54 201.93 90)
 			(effects
 				(font
@@ -18362,7 +18362,7 @@
 		(at 273.05 189.23 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "29f8507f-79bd-4813-a331-09bff0f9cb53")
@@ -19182,7 +19182,7 @@
 		(at 144.78 242.57 180)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(uuid "36cf85a2-5cf6-4bdc-aa71-cca63899f825")
@@ -21924,7 +21924,7 @@
 		(at 167.64 88.9 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
@@ -24368,6 +24368,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC PN" "C2845237"
+			(at 245.11 41.91 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "9"
 			(uuid "30429b68-961a-49ef-9d61-f5b8c9924207")
 		)
@@ -26578,6 +26587,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC PN" "C2071784"
+			(at 278.13 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "4"
 			(uuid "5c562442-25c0-4b9a-aaf1-e1f3c96dccd6")
 		)
@@ -26751,6 +26769,15 @@
 			)
 		)
 		(property "Digikey PN" ""
+			(at 309.88 25.4 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC PN" "C102991"
 			(at 309.88 25.4 0)
 			(effects
 				(font
@@ -27940,7 +27967,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" ""
+		(property "LCSC PN" "C25077"
 			(at 111.76 38.1 90)
 			(effects
 				(font
