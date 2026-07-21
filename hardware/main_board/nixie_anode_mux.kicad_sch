@@ -3638,7 +3638,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C23260"
+		(property "LCSC PN" "C4968"
 			(at 264.16 113.03 90)
 			(effects
 				(font
@@ -3962,7 +3962,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C23260"
+		(property "LCSC PN" "C4968"
 			(at 262.89 50.8 90)
 			(effects
 				(font
@@ -5188,7 +5188,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C23260"
+		(property "LCSC PN" "C4968"
 			(at 132.08 49.53 90)
 			(effects
 				(font
@@ -5796,7 +5796,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C23260"
+		(property "LCSC PN" "C4968"
 			(at 137.16 109.22 90)
 			(effects
 				(font
@@ -5970,7 +5970,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C23260"
+		(property "LCSC PN" "C4968"
 			(at 196.85 50.8 90)
 			(effects
 				(font
@@ -6758,7 +6758,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C23260"
+		(property "LCSC PN" "C4968"
 			(at 68.58 107.95 90)
 			(effects
 				(font
@@ -7490,7 +7490,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C23260"
+		(property "LCSC PN" "C4968"
 			(at 195.58 111.76 90)
 			(effects
 				(font
@@ -7954,7 +7954,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C23260"
+		(property "LCSC PN" "C4968"
 			(at 68.58 49.53 90)
 			(effects
 				(font

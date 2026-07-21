@@ -16702,7 +16702,7 @@
 		(at 55.88 236.22 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
@@ -18608,7 +18608,7 @@
 		(at 55.88 255.27 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "2e34e0a4-ee02-4ed1-8445-80a397c6c7d2")
@@ -22370,7 +22370,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C11616"
+		(property "LCSC PN" "C100463"
 			(at 265.43 38.1 0)
 			(effects
 				(font
@@ -23355,7 +23355,7 @@
 		(at 55.88 218.44 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
