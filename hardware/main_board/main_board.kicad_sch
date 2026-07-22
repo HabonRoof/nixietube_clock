@@ -19229,7 +19229,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" ""
+		(property "LCSC PN" "C3029431"
 			(at 144.78 242.57 0)
 			(effects
 				(font
@@ -19846,7 +19846,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C22855"
+		(property "LCSC PN" "C25850"
 			(at 105.41 63.5 90)
 			(effects
 				(font
@@ -20866,7 +20866,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C25804"
+		(property "LCSC PN" "C98220"
 			(at 316.23 50.8 0)
 			(effects
 				(font
@@ -21194,7 +21194,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C25804"
+		(property "LCSC PN" "C98220"
 			(at 300.99 36.83 0)
 			(effects
 				(font
@@ -22128,7 +22128,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C25896"
+		(property "LCSC PN" "C103064"
 			(at 26.67 125.73 0)
 			(effects
 				(font
@@ -23012,7 +23012,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C25804"
+		(property "LCSC PN" "C98220"
 			(at 309.88 36.83 0)
 			(effects
 				(font
@@ -24624,7 +24624,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C4147"
+		(property "LCSC PN" "C284722"
 			(at 265.43 48.26 0)
 			(effects
 				(font
@@ -24963,7 +24963,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C25804"
+		(property "LCSC PN" "C98220"
 			(at 322.58 55.88 0)
 			(effects
 				(font
@@ -26777,7 +26777,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C102991"
+		(property "LCSC PN" "C23141"
 			(at 309.88 25.4 0)
 			(effects
 				(font
@@ -26959,7 +26959,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "100nF"
+		(property "Value" "100n"
 			(at 363.22 50.8062 0)
 			(effects
 				(font
