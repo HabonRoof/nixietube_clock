@@ -20985,7 +20985,7 @@
 		(at 387.35 149.86 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
@@ -21035,7 +21035,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C5199872"
+		(property "LCSC PN" "C15849"
 			(at 387.35 149.86 0)
 			(effects
 				(font
@@ -23226,7 +23226,7 @@
 		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "3ca172e6-5267-49cc-a844-8791888f0863")
@@ -24949,7 +24949,7 @@
 		(at 361.95 149.86 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
@@ -26506,7 +26506,7 @@
 		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "6f98a182-8c60-41b7-a2c9-797a06020bed")
@@ -34252,6 +34252,15 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
+			(at 341.63 60.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC PN" "C15402"
 			(at 341.63 60.96 0)
 			(effects
 				(font
