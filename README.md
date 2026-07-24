@@ -51,8 +51,8 @@ Defined in `platformio.ini`:
 
 | Environment | Board | Use case |
 | :--- | :--- | :--- |
-| `esp32_s3_devkitc_1` (default) | ESP32-S3-DevKitC-1 | General development / bring-up |
-| `eps32_s3_nixie` | Custom `esp32-s3-nixie` (`boards/`) | Production Nixie clock board |
+| `esp32_s3_devkitc_1` | ESP32-S3-DevKitC-1 | General development / bring-up |
+| `esp32_s3_nixie` (default) | Custom `esp32-s3-nixie` (`boards/`) | Production Nixie clock board |
 
 Switch the active env in the PlatformIO status bar, or pass `-e <name>` on the CLI.
 
@@ -65,7 +65,7 @@ Switch the active env in the PlatformIO status bar, or pass `-e <name>` on the C
 | Serial monitor | `pio run -t monitor` | Serial Monitor (🔌) |
 | Build + flash + monitor | `pio run -t upload && pio run -t monitor` | Upload and Monitor |
 | Clean | `pio run -t clean` | Clean |
-| Build for Nixie board | `pio run -e eps32_s3_nixie` | Select `eps32_s3_nixie` env, then Build |
+| Build for Nixie board | `pio run -e esp32_s3_nixie` | Select `esp32_s3_nixie` env, then Build |
 
 Serial monitor is **115200 baud** (8N1). After connect you should see boot logs and the CLI prompt `nixie_clock> `.
 
@@ -95,7 +95,7 @@ If something fails to compile or upload, check:
 
 - Use USB Type-A to Type-C cable, the hardware is not support to connect C to C cable for uploading.
 - The board is in download mode / USB cable is data-capable.
-- The correct env is selected (`esp32_s3_devkitc_1` vs `eps32_s3_nixie`).
+- The correct env is selected (`esp32_s3_devkitc_1` vs `esp32_s3_nixie`).
 - Python can run `generate_git_version.py` from the project root.
 - Antivirus or missing udev/driver issues are not blocking the serial port (Windows often needs the CP2102 USB serial driver).
 
