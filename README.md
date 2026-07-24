@@ -1,12 +1,12 @@
 # Nixie Clock Firmware
 
-Open-source ESP-IDF firmware for a 6-tube Nixie clock powered by an ESP32-S3. The clock drives multiplexed IN-18 (or IN-4) tubes with RGB backlighting, audio playback, battery management, and a built-in web configuration UI.
+Open-source ESP-IDF firmware for a multiplexed Nixie clock powered by an ESP32-S3. Hardware display boards include IN-4 and IN-18 variants; at boot the firmware senses `DISPLAY_TYPE` (GPIO 19) and selects an IN-4 (6) or IN-14 (6/8) drive profile. RGB backlighting, audio playback, battery management, and a built-in web configuration UI are included.
 
 Whether you want to hack on display effects, add CLI tools, improve the web UI, or bring up new hardware, this guide will get you building with [PlatformIO](https://platformio.org/) quickly.
 
 ## Features
 
-- **6-tube display** — Multiplexed control via PCA9685 PWM drivers and a 74HC238 anode mux.
+- **Nixie display** — Multiplexed control via PCA9685 PWM drivers and a 74HC238 anode mux (tube count and chip count follow the detected display-board profile).
 - **RGB backlight** — WS2812 addressable LEDs (4 per tube) with static, breath, rainbow, and off effects.
 - **Audio** — DFPlayer Mini integration for sound effects and announcements.
 - **RTC** — DS3231 for precise timekeeping with periodic resync to ESP32 system time.
@@ -151,6 +151,8 @@ nixietube_clock/
 │   ├── system_state.*      # Thread-safe settings / battery / time + NVS
 │   ├── web_server.*        # Wi-Fi AP + HTTP API
 │   ├── web_page.*          # Embedded settings HTML/JS
+│   ├── settings_json.*     # ClockSettings ↔ nested JSON
+│   ├── web_json.*          # HTTP JSON body / response helpers
 │   ├── nixie_driver.*      # High-level tube multiplexing
 │   ├── led_driver.*        # High-level WS2812 control
 │   ├── audio_driver.*      # High-level DFPlayer wrapper
@@ -180,6 +182,9 @@ nixietube_clock/
 ├── hardware/               # KiCad schematics & PCBs (main, display, HV)
 ├── test/                   # Manual CLI tests and component experiments
 └── doc/                    # Datasheets, photos, architecture drawings
+    ├── web_api.md          # HTTP JSON API schemas
+    ├── state_machine.drawio  # Behavioral modes (keep in sync with firmware)
+    └── structure.drawio    # Early aspirational block diagram (outdated)
 ```
 
 ### Responsibility cheat sheet
@@ -205,19 +210,20 @@ Pin assignments are defined in `src/system_controller.cpp` and `lib/drivers/powe
 | :--- | :--- | :--- | :--- |
 | **I2C** | SDA | GPIO 6 | I2C data (DS3231, PCA9685, BQ25601, BQ27441) |
 | | SCL | GPIO 5 | I2C clock (400 kHz) |
-| **UART** | TX | GPIO 18 | Audio TX → DFPlayer RX |
-| | RX | GPIO 17 | Audio RX ← DFPlayer TX |
+| **UART** | TX | GPIO 42 | Audio TX → DFPlayer RX |
+| | RX | GPIO 41 | Audio RX ← DFPlayer TX |
 | **GPIO** | RTC_INT | GPIO 2 | DS3231 interrupt (active low) |
 | | BTN_0 | GPIO 8 | Alarm stop / pomodoro start / divergence re-trigger |
 | | BTN_1 | GPIO 12 | Display mode cycle |
 | | BTN_2 | GPIO 13 | Backlight profile cycle |
 | | PCA_OE | GPIO 4 | PCA9685 output enable (active low) |
 | | ANODE_A0–A2 | GPIO 9–11 | 74HC238 anode mux address lines |
+| | DISPLAY_TYPE | GPIO 19 | Analog strap for display-board type (ADC2 CH8) |
 | | HV_PWR | GPIO 15 | HV power rail enable (via `GpioPowerSwitch`) |
 | | DF_PWR | GPIO 16 | DFPlayer power rail enable (via `GpioPowerSwitch`) |
 | **RMT** | LED_DATA | GPIO 7 | WS2812 LED data line |
 
-KiCad schematics and PCB layouts for the main board, display boards (IN-18 / IN-4), and HV power supply live under `hardware/`.
+`DISPLAY_TYPE` strap voltages map to firmware profiles: ~0 V → IN-4 (6 tubes, 4× PCA9685); ~1.65 V → IN-14 (8 tubes, 5× PCA9685); ~3.3 V → IN-14 (6 tubes, 4× PCA9685). KiCad projects under `hardware/` include `display_board_in4` and `display_board_in18` (IN-18 boards use the matching strap / profile configured on the PCB).
 
 ## Architecture
 
@@ -431,7 +437,7 @@ See `test/test_cli/README.md` for a manual test plan and automated test script.
 
 | Driver | Role |
 | :--- | :--- |
-| `NixieDriver` | 4× PCA9685 chips driving 6 tubes with multiplexing |
+| `NixieDriver` | PCA9685 multiplexing; chip/tube count from `display_board_config` profile |
 | `LedDriver` | RMT-based WS2812 control |
 | `AudioDriver` | High-level DFPlayer Mini interface |
 | `Ds3231` | RTC read/write and temperature |

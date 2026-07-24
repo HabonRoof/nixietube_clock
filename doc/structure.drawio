@@ -1,9 +1,12 @@
 <mxfile host="65bd71144e">
-    <diagram id="CP2mIko9s5KVQNNWmQio" name="Page-1">
+    <diagram id="CP2mIko9s5KVQNNWmQio" name="Early aspirational (outdated)">
         <mxGraphModel dx="1895" dy="560" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
+                <mxCell id="outdated-note" value="OUTDATED — Early aspirational architecture.&lt;br&gt;For current design see README.md Architecture section and state_machine.drawio.&lt;br&gt;Not shipped: ALSDaemon, NTP, Human detect/LD2410C, BQ24711 (now BQ25601).&lt;br&gt;Evolved: Button→InputDaemon, WebServiceDaemon→WebServer; added CliDaemon, SystemState, PowerController." style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontFamily=Helvetica;fontStyle=1" vertex="1" parent="1">
+                    <mxGeometry x="-650" y="620" width="700" height="60" as="geometry"/>
+                </mxCell>
                 <mxCell id="3" value="SystemController" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-650" y="800" width="1170" height="40" as="geometry"/>
                 </mxCell>
