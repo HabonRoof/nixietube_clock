@@ -116,7 +116,7 @@ private:
     static constexpr uint8_t kCathodePoisonCtr = 15;
     static constexpr uint8_t kFadeStep = 51;
     static constexpr uint32_t kPomodoroWorkMs = 25 * 60 * 1000;
-    static constexpr uint32_t kPomodoroBreakMs = 1 * 60 * 1000;
+    static constexpr uint32_t kPomodoroBreakMs = 5 * 60 * 1000;
 
     INixieDriver &nixie_driver_;
     ILedDriver &led_driver_;
