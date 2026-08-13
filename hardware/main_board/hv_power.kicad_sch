@@ -3213,9 +3213,9 @@
 		(at 210.82 44.45 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(dnp yes)
+		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "3690483e-6581-4e98-8b98-416694bb6fae")
 		(property "Reference" "C34"
@@ -3265,6 +3265,7 @@
 		)
 		(property "LCSC PN" "C46867081"
 			(at 210.82 44.45 0)
+			(show_name yes)
 			(effects
 				(font
 					(size 1.27 1.27)
