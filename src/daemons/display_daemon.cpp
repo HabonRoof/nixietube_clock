@@ -22,6 +22,7 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver,
       effect_speed_(0.35f),
       base_backlight_{{0, 255, 255}, 255},
       base_nixie_brightness_(255),
+      ambient_scale_(255),
       last_digits_valid_(false),
       divergence_{},
       date_elapsed_ms_(0),
@@ -478,6 +479,9 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
         case DisplayCmd::SET_BACKLIGHT_BRIGHTNESS:
             base_backlight_.brightness = msg.data.brightness;
             break;
+        case DisplayCmd::SET_AMBIENT_SCALE:
+            ambient_scale_ = msg.data.brightness;
+            break;
         case DisplayCmd::SET_EFFECT:
             if (msg.data.effect_id == 1) {
                 current_effect_type_ = LedEffectType::BREATH;
@@ -528,7 +532,9 @@ void DisplayDaemon::turn_off_backlight()
 void DisplayDaemon::apply_backlight_to_all(const BackLightState &state)
 {
     HsvColor adjusted = state.color;
-    uint16_t scaled_value = static_cast<uint16_t>(adjusted.value) * state.brightness / 255;
+    const uint16_t effective_brightness =
+        static_cast<uint16_t>(state.brightness) * ambient_scale_ / 255;
+    uint16_t scaled_value = static_cast<uint16_t>(adjusted.value) * effective_brightness / 255;
     adjusted.value = static_cast<uint8_t>(std::min<uint16_t>(scaled_value, 255));
 
     RgbColor rgb = hsv_to_rgb(adjusted);

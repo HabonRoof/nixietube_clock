@@ -131,12 +131,16 @@ SystemState::SystemState()
       settings_(defaults()),
       battery_{},
       time_{},
+      ambient_{},
       reserved_{}
 {
     battery_.valid = false;
     battery_.updated_at = 0;
     time_.unix_utc = 0;
     time_.valid = false;
+    ambient_.lux = 0.0f;
+    ambient_.scale = 255;
+    ambient_.valid = false;
     std::memset(reserved_, 0, sizeof(reserved_));
 }
 
@@ -160,6 +164,7 @@ ClockSettings SystemState::defaults()
         .profiles = {},
         .active_profile_index = 0,
         .hibernation = {},
+        .auto_brightness_enabled = true,
     };
     init_profiles_from_backlight(&settings);
     init_default_hibernation(&settings);
@@ -262,6 +267,10 @@ bool SystemState::load()
         settings.volume = 15;
         needs_save = true;
     }
+    if (stored_version < 11) {
+        settings.auto_brightness_enabled = true;
+        needs_save = true;
+    }
     settings.version = kSettingsVersion;
 
     portENTER_CRITICAL(&mux_);
@@ -354,6 +363,25 @@ bool SystemState::get_time(TimeStatus *out) const
     return true;
 }
 
+void SystemState::update_ambient(const AmbientLightStatus &status)
+{
+    portENTER_CRITICAL(&mux_);
+    ambient_ = status;
+    portEXIT_CRITICAL(&mux_);
+}
+
+bool SystemState::get_ambient(AmbientLightStatus *out) const
+{
+    if (!out) {
+        return false;
+    }
+
+    portENTER_CRITICAL(&mux_);
+    *out = ambient_;
+    portEXIT_CRITICAL(&mux_);
+    return out->valid;
+}
+
 void SystemState::get_snapshot(SystemSnapshot *out) const
 {
     if (!out) {
@@ -364,5 +392,6 @@ void SystemState::get_snapshot(SystemSnapshot *out) const
     out->settings = settings_;
     out->battery = battery_;
     out->time = time_;
+    out->ambient = ambient_;
     portEXIT_CRITICAL(&mux_);
 }

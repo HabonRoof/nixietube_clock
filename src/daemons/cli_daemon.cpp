@@ -799,6 +799,29 @@ static int reboot_func(int argc, char **argv)
     return 0;
 }
 
+// --- Command: get_ambient ---
+static int get_ambient_func(int argc, char **argv)
+{
+    if (!g_system_state) {
+        printf("system state not ready\n");
+        return 1;
+    }
+
+    AmbientLightStatus ambient{};
+    if (!g_system_state->get_ambient(&ambient)) {
+        printf("Ambient light data not available\n");
+        return 1;
+    }
+
+    ClockSettings settings{};
+    g_system_state->get_settings(&settings);
+
+    printf("Ambient lux: %.1f\n", ambient.lux);
+    printf("Ambient scale: %u/255\n", ambient.scale);
+    printf("Auto brightness: %s\n", settings.auto_brightness_enabled ? "enabled" : "disabled");
+    return 0;
+}
+
 // --- Command: get_bq25601_status ---
 static int get_bq25601_status_func(int argc, char **argv)
 {
@@ -908,6 +931,7 @@ static int help_func(int argc, char **argv)
     printf("get_hw_version                                  Get hardware version\n");
     printf("get_fw_version                                  Get firmware version\n");
     printf("get_bq25601_status                             Get BQ25601 status register (REG08, REG01)\n");
+    printf("get_ambient                                     Get ambient light lux and scale\n");
     printf("enable_charging                                 Enable charging\n");
     printf("disable_charging                                Disable charging\n");
     printf("enable_hv                                       Enable HV power rail\n");
@@ -1123,6 +1147,18 @@ void CliDaemon::register_commands()
         .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&get_bq25601_status_cmd));
+
+    // Register: get_ambient
+    const esp_console_cmd_t get_ambient_cmd = {
+        .command = "get_ambient",
+        .help = "Get ambient light lux and auto-brightness scale",
+        .hint = NULL,
+        .func = &get_ambient_func,
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&get_ambient_cmd));
 
     // Register: enable_charging
     const esp_console_cmd_t enable_charging_cmd = {

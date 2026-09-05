@@ -133,6 +133,7 @@ private:
     float effect_speed_;
     BackLightState base_backlight_;
     uint8_t base_nixie_brightness_;
+    uint8_t ambient_scale_;
     std::array<uint8_t, 6> last_digits_{};
     bool last_digits_valid_;
     std::array<TubeTransitionState, 6> tube_transitions_{};

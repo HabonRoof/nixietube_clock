@@ -140,7 +140,7 @@ HardwareHandles SystemController::init_hardware()
     ESP_LOGI(TAG, "Initializing Hardware...");
     HardwareHandles handles = {};
 
-    // 1. Initialize I2C buses
+    // 1. Initialize I2C buses (I2C0: main board, I2C1: display board — DS3231 + LTR-303)
     init_i2c_master(kI2c0Port, kI2c0Sda, kI2c0Scl);
     init_i2c_master(kI2c1Port, kI2c1Sda, kI2c1Scl);
     handles.i2c0_port = kI2c0Port;
