@@ -20,7 +20,8 @@ class GasgaugeService;
 class ChargerController;
 
 struct HardwareHandles {
-    i2c_port_t i2c_port;
+    i2c_port_t i2c0_port; // GPIO6/5 — PCA9685, BQ25601, BQ27441
+    i2c_port_t i2c1_port; // GPIO18/17 — DS3231, LTR-303 (display)
     rmt_channel_handle_t led_rmt_channel;
     rmt_encoder_handle_t led_rmt_encoder;
     uart_port_t audio_uart_port;

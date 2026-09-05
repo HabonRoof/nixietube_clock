@@ -41,7 +41,7 @@ extern "C" void app_main(void)
     HardwareHandles hw_handles = SystemController::init_hardware();
     
     // Driver injection points
-    static Bq27441 gasgauge_driver(hw_handles.i2c_port);
+    static Bq27441 gasgauge_driver(hw_handles.i2c0_port);
     static GasgaugeService gasgauge_service(gasgauge_driver);
     static SystemState system_state;
 
@@ -50,7 +50,7 @@ extern "C" void app_main(void)
 
     static AudioDriver audio_driver(hw_handles.audio_uart_port);
     static GpioPowerSwitch power_switch_driver;
-    static Bq25601 charger_driver(hw_handles.i2c_port);
+    static Bq25601 charger_driver(hw_handles.i2c0_port);
 
     bool gasgauge_ready = false;
     if (!i2c_debug::kDisableGasgauge) {
@@ -100,7 +100,7 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(50));
 
     if (!i2c_debug::kDisablePca9685I2c) {
-        nixie_driver.nixie_scan_start(hw_handles.i2c_port);
+        nixie_driver.nixie_scan_start(hw_handles.i2c0_port);
     } else {
         ESP_LOGW(kLogTag, "PCA9685 I2C disabled (nixie scan not started)");
     }

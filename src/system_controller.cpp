@@ -99,11 +99,28 @@ static void build_time_to_tm(struct tm *out)
     out->tm_isdst = 0;
 }
 
-// Hardware Configuration
-constexpr i2c_port_t kI2cPort = I2C_NUM_0;
-constexpr gpio_num_t kI2cSda = static_cast<gpio_num_t>(6);
-constexpr gpio_num_t kI2cScl = static_cast<gpio_num_t>(5);
+// Hardware Configuration — two independent I2C buses (main_board J3 pinout).
+constexpr i2c_port_t kI2c0Port = I2C_NUM_0;
+constexpr gpio_num_t kI2c0Sda = GPIO_NUM_6;
+constexpr gpio_num_t kI2c0Scl = GPIO_NUM_5;
+constexpr i2c_port_t kI2c1Port = I2C_NUM_1;
+constexpr gpio_num_t kI2c1Sda = GPIO_NUM_18;
+constexpr gpio_num_t kI2c1Scl = GPIO_NUM_17;
 constexpr uint32_t kI2cClockHz = 400000;
+
+void init_i2c_master(i2c_port_t port, gpio_num_t sda, gpio_num_t scl)
+{
+    i2c_config_t i2c_conf = {};
+    i2c_conf.mode = I2C_MODE_MASTER;
+    i2c_conf.sda_io_num = sda;
+    i2c_conf.scl_io_num = scl;
+    i2c_conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+    i2c_conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+    i2c_conf.master.clk_speed = kI2cClockHz;
+    ESP_ERROR_CHECK(i2c_param_config(port, &i2c_conf));
+    ESP_ERROR_CHECK(i2c_driver_install(port, i2c_conf.mode, 0, 0, 0));
+    i2c_bus_init(port);
+}
 
 constexpr uart_port_t kUartPort = UART_NUM_1;
 constexpr gpio_num_t kUartTx = static_cast<gpio_num_t>(42);
@@ -123,19 +140,13 @@ HardwareHandles SystemController::init_hardware()
     ESP_LOGI(TAG, "Initializing Hardware...");
     HardwareHandles handles = {};
 
-    // 1. Initialize I2C
-    i2c_config_t i2c_conf = {};
-    i2c_conf.mode = I2C_MODE_MASTER;
-    i2c_conf.sda_io_num = kI2cSda;
-    i2c_conf.scl_io_num = kI2cScl;
-    i2c_conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-    i2c_conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-    i2c_conf.master.clk_speed = kI2cClockHz;
-    ESP_ERROR_CHECK(i2c_param_config(kI2cPort, &i2c_conf));
-    ESP_ERROR_CHECK(i2c_driver_install(kI2cPort, i2c_conf.mode, 0, 0, 0));
-    i2c_bus_init(kI2cPort);
-    handles.i2c_port = kI2cPort;
-    ESP_LOGI(TAG, "I2C Initialized");
+    // 1. Initialize I2C buses
+    init_i2c_master(kI2c0Port, kI2c0Sda, kI2c0Scl);
+    init_i2c_master(kI2c1Port, kI2c1Sda, kI2c1Scl);
+    handles.i2c0_port = kI2c0Port;
+    handles.i2c1_port = kI2c1Port;
+    ESP_LOGI(TAG, "I2C0 (GPIO%d/%d) and I2C1 (GPIO%d/%d) initialized",
+             kI2c0Sda, kI2c0Scl, kI2c1Sda, kI2c1Scl);
 
     // 2. Initialize UART
     uart_config_t uart_config = {};
@@ -231,7 +242,7 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       charger_controller_(charger_controller),
       queue_(nullptr),
       task_handle_(nullptr),
-      rtc_(kI2cPort),
+      rtc_(kI2c1Port),
       rtc_read_failures_(0),
       battery_read_failures_(0),
       gasgauge_ready_(gasgauge_ready_at_boot),

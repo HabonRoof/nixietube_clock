@@ -208,8 +208,10 @@ Pin assignments are defined in `src/system_controller.cpp` and `lib/drivers/powe
 
 | Peripheral | Pin Name | GPIO | Description |
 | :--- | :--- | :--- | :--- |
-| **I2C** | SDA | GPIO 6 | I2C data (DS3231, PCA9685, BQ25601, BQ27441) |
-| | SCL | GPIO 5 | I2C clock (400 kHz) |
+| **I2C0** | SDA | GPIO 6 | PCA9685 (display), BQ25601, BQ27441 |
+| | SCL | GPIO 5 | I2C0 clock (400 kHz) |
+| **I2C1** | SDA | GPIO 18 | DS3231 RTC, LTR-303 (display) |
+| | SCL | GPIO 17 | I2C1 clock (400 kHz) |
 | **UART** | TX | GPIO 42 | Audio TX → DFPlayer RX |
 | | RX | GPIO 41 | Audio RX ← DFPlayer TX |
 | **GPIO** | RTC_INT | GPIO 2 | DS3231 interrupt (active low) |
