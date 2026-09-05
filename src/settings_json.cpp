@@ -455,6 +455,7 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
     uint8_t transition = settings.profiles[active].nixie_transition;
     bool nixie_changed = false;
     int save_index = -1;
+    int active_index = -1;
 
     const cJSON *clock = field(root, "clock");
     if (clock) {
@@ -521,15 +522,26 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
     const cJSON *profiles = field(root, "profiles");
     if (profiles) {
         if (!require_nonempty_object(profiles, "profiles", error) ||
-            !reject_unknown(profiles, {"save_index"}, "profiles", error)) {
+            !reject_unknown(profiles, {"save_index", "active_index"}, "profiles", error)) {
             return false;
         }
         const cJSON *save = field(profiles, "save_index");
-        if (!save) {
-            return fail(error, "empty_update", "profiles", "save_index is required");
+        const cJSON *active_field = field(profiles, "active_index");
+        if (save && active_field) {
+            return fail(error, "invalid_value", "profiles",
+                        "provide save_index or active_index, not both");
         }
-        if (!read_integer(save, "profiles.save_index", 0, kBacklightProfileCount - 1, &save_index,
-                          error)) {
+        if (!save && !active_field) {
+            return fail(error, "empty_update", "profiles",
+                        "save_index or active_index is required");
+        }
+        if (save) {
+            if (!read_integer(save, "profiles.save_index", 0, kBacklightProfileCount - 1,
+                              &save_index, error)) {
+                return false;
+            }
+        } else if (!read_integer(active_field, "profiles.active_index", 0,
+                                 kBacklightProfileCount - 1, &active_index, error)) {
             return false;
         }
     }
@@ -564,6 +576,14 @@ bool parse_settings_update(const cJSON *root, const ClockSettings &current,
             .backlight_effect = settings.backlight_effect,
             .nixie_brightness = nixie_brightness, .nixie_transition = transition};
         settings.active_profile_index = static_cast<uint8_t>(save_index);
+    } else if (active_index >= 0) {
+        const BacklightProfile &profile = settings.profiles[active_index];
+        settings.active_profile_index = static_cast<uint8_t>(active_index);
+        settings.backlight_r = profile.r;
+        settings.backlight_g = profile.g;
+        settings.backlight_b = profile.b;
+        settings.backlight_brightness = profile.backlight_brightness;
+        settings.backlight_effect = profile.backlight_effect;
     } else if (nixie_changed) {
         settings.profiles[active].nixie_brightness = nixie_brightness;
         settings.profiles[active].nixie_transition = transition;

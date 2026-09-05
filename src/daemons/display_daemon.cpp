@@ -138,14 +138,14 @@ void DisplayDaemon::apply_pomodoro_backlight(PomodoroPhase phase)
 {
     const RgbColor rgb = (phase == PomodoroPhase::BREAK)
         ? RgbColor{0, 255, 0}
-        : RgbColor{255, 0, 0};
+        : RgbColor{255, 140, 0};
     base_backlight_.color = rgb_to_hsv(rgb);
 
     if (phase == PomodoroPhase::IDLE) {
         current_effect_type_ = LedEffectType::NONE;
     } else {
         current_effect_type_ = LedEffectType::BREATH;
-        effect_speed_ = 0.35f;
+        effect_speed_ = 0.175f;
     }
     effect_color_phase_ = 0.0f;
 }
