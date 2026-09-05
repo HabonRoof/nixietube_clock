@@ -1,4 +1,6 @@
 #include "web_server.h"
+#include "wifi_manager.h"
+#include "wifi_credentials.h"
 #include "system_controller.h"
 #include "system_state.h"
 #include "settings_json.h"
@@ -22,13 +24,9 @@
 namespace {
 static const char *kTag = "WebServer";
 
-constexpr const char *kApSsid = "NixieClock";
-constexpr const char *kApPass = "nixie2026";
 constexpr uint32_t kMaxConn = 2;
 
-
 httpd_handle_t g_http = nullptr;
-
 
 static esp_err_t index_get_handler(httpd_req_t *req)
 {
@@ -208,6 +206,7 @@ static esp_err_t audio_play_post_handler(httpd_req_t *req)
 static esp_err_t settings_post_handler(httpd_req_t *req)
 {
     auto *server = static_cast<WebServer *>(req->user_ctx);
+    server->wifi_manager().touch_http_activity();
     CJsonPtr request;
     if (receive_json_request(req, &request) != ESP_OK) {
         return ESP_FAIL;
@@ -231,14 +230,114 @@ static esp_err_t settings_post_handler(httpd_req_t *req)
     }
     return send_json_ok(req);
 }
+
+static esp_err_t ap_status_get_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+    server->wifi_manager().touch_http_activity();
+    WifiApStatus status = {};
+    server->wifi_manager().get_ap_status(&status);
+
+    CJsonPtr response(cJSON_CreateObject());
+    if (!response || !cJSON_AddBoolToObject(response.get(), "active", status.active) ||
+        !cJSON_AddNumberToObject(response.get(), "session_code", status.session_code) ||
+        !cJSON_AddStringToObject(response.get(), "ssid", status.ssid) ||
+        !cJSON_AddStringToObject(response.get(), "password", status.password) ||
+        !cJSON_AddNumberToObject(response.get(), "remaining_sec", status.remaining_sec) ||
+        !cJSON_AddNumberToObject(response.get(), "client_count", status.client_count)) {
+        return send_json_error(req, "500 Internal Server Error", "allocation_failed", nullptr,
+                               "failed to build ap status response");
+    }
+    return send_json_response(req, response.get());
+}
+
+static esp_err_t ap_stop_post_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+    server->wifi_manager().touch_http_activity();
+    server->wifi_manager().stop_config_ap();
+    return send_json_ok(req);
+}
+
+static esp_err_t wifi_get_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+    server->wifi_manager().touch_http_activity();
+    WifiStaCredentials creds = {};
+    server->wifi_manager().load_sta_credentials(&creds);
+
+    CJsonPtr response(cJSON_CreateObject());
+    if (!response || !cJSON_AddBoolToObject(response.get(), "configured", creds.configured) ||
+        !cJSON_AddStringToObject(response.get(), "ssid",
+                                 creds.configured ? creds.ssid : "")) {
+        return send_json_error(req, "500 Internal Server Error", "allocation_failed", nullptr,
+                               "failed to build wifi response");
+    }
+    return send_json_response(req, response.get());
+}
+
+static esp_err_t wifi_post_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+    server->wifi_manager().touch_http_activity();
+    CJsonPtr request;
+    if (receive_json_request(req, &request) != ESP_OK) {
+        return ESP_FAIL;
+    }
+
+    const cJSON *ssid_value = cJSON_GetObjectItemCaseSensitive(request.get(), "ssid");
+    const cJSON *pass_value = cJSON_GetObjectItemCaseSensitive(request.get(), "password");
+    if (!cJSON_IsString(ssid_value) || ssid_value->valuestring[0] == '\0') {
+        send_json_error(req, "400 Bad Request", "missing_field", "ssid", "ssid is required");
+        return ESP_FAIL;
+    }
+    const char *password = cJSON_IsString(pass_value) ? pass_value->valuestring : "";
+
+    if (!server->wifi_manager().set_sta_credentials(ssid_value->valuestring, password)) {
+        send_json_error(req, "500 Internal Server Error", "save_failed", nullptr,
+                        "failed to save wifi credentials");
+        return ESP_FAIL;
+    }
+    return send_json_ok(req);
+}
+
+static esp_err_t wifi_delete_handler(httpd_req_t *req)
+{
+    auto *server = static_cast<WebServer *>(req->user_ctx);
+    server->wifi_manager().touch_http_activity();
+    if (!server->wifi_manager().clear_sta_credentials()) {
+        send_json_error(req, "500 Internal Server Error", "clear_failed", nullptr,
+                        "failed to clear wifi credentials");
+        return ESP_FAIL;
+    }
+    return send_json_ok(req);
+}
+
+static esp_err_t ntp_status_get_handler(httpd_req_t *req)
+{
+    WifiNtpStatus status = {};
+    wifi_ntp_status_load(&status);
+
+    CJsonPtr response(cJSON_CreateObject());
+    if (!response || !cJSON_AddBoolToObject(response.get(), "configured", status.configured) ||
+        !cJSON_AddBoolToObject(response.get(), "last_success", status.last_ntp_success) ||
+        !cJSON_AddNumberToObject(response.get(), "last_ntp_unix",
+                                 static_cast<double>(status.last_ntp_unix))) {
+        return send_json_error(req, "500 Internal Server Error", "allocation_failed", nullptr,
+                               "failed to build ntp status response");
+    }
+    return send_json_response(req, response.get());
+}
 }
 
 WebServer::WebServer(SystemController &system_controller, SystemState &system_state,
-                     AudioDaemon &audio_daemon)
+                     AudioDaemon &audio_daemon, WifiManager &wifi_manager)
     : system_controller_(system_controller),
       system_state_(system_state),
       audio_daemon_(audio_daemon),
-      task_handle_(nullptr)
+      wifi_manager_(wifi_manager),
+      task_handle_(nullptr),
+      http_running_(false)
 {
 }
 
@@ -271,61 +370,22 @@ void WebServer::task_entry(void *param)
 
 void WebServer::run()
 {
-    ESP_LOGI(kTag, "Starting AP web server");
-    start_ap();
-    start_http();
+    ESP_LOGI(kTag, "Web server task started (config AP on demand)");
 
     while (true) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        const bool want_http = wifi_manager_.is_config_active();
+        if (want_http && !http_running_) {
+            if (start_http()) {
+                http_running_ = true;
+                ESP_LOGI(kTag, "HTTP server started");
+            }
+        } else if (!want_http && http_running_) {
+            stop_http();
+            http_running_ = false;
+            ESP_LOGI(kTag, "HTTP server stopped");
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
-}
-
-bool WebServer::start_ap()
-{
-    esp_err_t err = esp_netif_init();
-    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
-        ESP_ERROR_CHECK(err);
-    }
-    err = esp_event_loop_create_default();
-    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
-        ESP_ERROR_CHECK(err);
-    }
-
-    esp_netif_t *ap_netif = esp_netif_create_default_wifi_ap();
-    if (!ap_netif) {
-        ESP_LOGE(kTag, "Failed to create AP netif");
-        return false;
-    }
-    esp_netif_ip_info_t ip_info = {};
-    esp_netif_str_to_ip4("192.168.8.8", &ip_info.ip);
-    esp_netif_str_to_ip4("192.168.8.8", &ip_info.gw);
-    esp_netif_str_to_ip4("255.255.255.0", &ip_info.netmask);
-    esp_netif_dhcps_stop(ap_netif);
-    esp_netif_set_ip_info(ap_netif, &ip_info);
-    esp_netif_dhcps_start(ap_netif);
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-
-    wifi_config_t ap_config = {};
-    std::strncpy(reinterpret_cast<char *>(ap_config.ap.ssid), kApSsid, sizeof(ap_config.ap.ssid));
-    std::strncpy(reinterpret_cast<char *>(ap_config.ap.password), kApPass, sizeof(ap_config.ap.password));
-    ap_config.ap.ssid_len = std::strlen(kApSsid);
-    ap_config.ap.channel = 1;
-    ap_config.ap.max_connection = kMaxConn;
-    ap_config.ap.ssid_hidden = 0;
-    ap_config.ap.beacon_interval = 100;
-    ap_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
-    if (std::strlen(kApPass) == 0) {
-        ap_config.ap.authmode = WIFI_AUTH_OPEN;
-    }
-
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
-    ESP_LOGI(kTag, "AP started: SSID=%s channel=%u auth=%s", kApSsid, ap_config.ap.channel,
-             ap_config.ap.authmode == WIFI_AUTH_OPEN ? "OPEN" : "WPA/WPA2");
-    return true;
 }
 
 bool WebServer::start_http()
@@ -335,7 +395,7 @@ bool WebServer::start_http()
     }
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 10;
+    config.max_uri_handlers = 16;
     config.stack_size = 8192;
 
     if (httpd_start(&g_http, &config) != ESP_OK) {
@@ -392,6 +452,48 @@ bool WebServer::start_http()
         .user_ctx = this,
     };
 
+    httpd_uri_t ap_status_get = {
+        .uri = "/api/ap/status",
+        .method = HTTP_GET,
+        .handler = ap_status_get_handler,
+        .user_ctx = this,
+    };
+
+    httpd_uri_t ap_stop_post = {
+        .uri = "/api/ap/stop",
+        .method = HTTP_POST,
+        .handler = ap_stop_post_handler,
+        .user_ctx = this,
+    };
+
+    httpd_uri_t wifi_get = {
+        .uri = "/api/wifi",
+        .method = HTTP_GET,
+        .handler = wifi_get_handler,
+        .user_ctx = this,
+    };
+
+    httpd_uri_t wifi_post = {
+        .uri = "/api/wifi",
+        .method = HTTP_POST,
+        .handler = wifi_post_handler,
+        .user_ctx = this,
+    };
+
+    httpd_uri_t wifi_delete = {
+        .uri = "/api/wifi",
+        .method = HTTP_DELETE,
+        .handler = wifi_delete_handler,
+        .user_ctx = this,
+    };
+
+    httpd_uri_t ntp_status_get = {
+        .uri = "/api/ntp/status",
+        .method = HTTP_GET,
+        .handler = ntp_status_get_handler,
+        .user_ctx = this,
+    };
+
     httpd_register_uri_handler(g_http, &index_uri);
     httpd_register_uri_handler(g_http, &settings_get);
     httpd_register_uri_handler(g_http, &settings_post);
@@ -399,6 +501,12 @@ bool WebServer::start_http()
     httpd_register_uri_handler(g_http, &audio_tracks_get);
     httpd_register_uri_handler(g_http, &audio_status_get);
     httpd_register_uri_handler(g_http, &audio_play_post);
+    httpd_register_uri_handler(g_http, &ap_status_get);
+    httpd_register_uri_handler(g_http, &ap_stop_post);
+    httpd_register_uri_handler(g_http, &wifi_get);
+    httpd_register_uri_handler(g_http, &wifi_post);
+    httpd_register_uri_handler(g_http, &wifi_delete);
+    httpd_register_uri_handler(g_http, &ntp_status_get);
     return true;
 }
 
@@ -444,4 +552,9 @@ bool WebServer::get_time_status(struct tm *local_out, bool *time_valid, bool *os
 AudioDaemon &WebServer::audio_daemon()
 {
     return audio_daemon_;
+}
+
+WifiManager &WebServer::wifi_manager()
+{
+    return wifi_manager_;
 }

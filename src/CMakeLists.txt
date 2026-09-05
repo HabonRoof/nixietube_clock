@@ -12,4 +12,4 @@ idf_component_register(SRCS ${app_sources} ${driver_sources}
                                     "../lib/drivers/ws2812"
                                     "../lib/drivers/pca9685"
                        PRIV_REQUIRES espressif__cjson
-                       REQUIRES esp_adc driver)
+                       REQUIRES esp_adc driver esp_wifi esp_netif esp_http_server esp_event nvs_flash)

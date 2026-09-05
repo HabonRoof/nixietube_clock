@@ -10,7 +10,8 @@ Whether you want to hack on display effects, add CLI tools, improve the web UI, 
 - **RGB backlight** — WS2812 addressable LEDs (4 per tube) with static, breath, rainbow, and off effects.
 - **Audio** — DFPlayer Mini integration for sound effects and announcements.
 - **RTC** — DS3231 for precise timekeeping with periodic resync to ESP32 system time.
-- **Web UI** — Wi-Fi access point and HTTP server for settings and time configuration from a phone or laptop.
+- **Web UI** — On-demand config Wi-Fi AP (`NixieClock-XXXX` / `nixie2026`) with HTTP settings; long-press **button 1 + button 2** (3 s) to enter config mode.
+- **NTP sync** — Optional home WiFi credentials; daily ~06:00 local brief STA session writes NTP to DS3231 and verifies RTC error < 1 min (retries on failure).
 - **Buttons** — Debounced physical inputs for display mode, backlight profile, and interactive modes.
 - **Hibernate mode** — Scheduled daily window turns off tubes and LED backlight. Press any button for a 5-second clock preview (tubes at fixed brightness 50, LED off).
 - **Idle standby** — After 1 minute without button presses in clock mode, dim nixie and backlight brightness to 25% of the active profile; any button press restores full brightness.
@@ -89,7 +90,7 @@ The build embeds the current git commit hash via `generate_git_version.py` (`get
 
 1. Flash firmware and open the serial monitor.
 2. Type `help` at `nixie_clock> ` to list CLI commands.
-3. Optionally join the device Wi-Fi AP (`NixieClock` / `nixie2026`) and open `http://192.168.8.8/`.
+3. **Long-press button 1 + button 2** (3 s together) to open the config Wi-Fi AP. Nixie tubes show a 4-digit session code; join `NixieClock-XXXX` (password `nixie2026`) and open `http://192.168.8.8/`.
 
 If something fails to compile or upload, check:
 
@@ -299,7 +300,7 @@ Press **BTN_1** to cycle through display modes in this order:
 
 ### Input Daemon (`src/daemons/input_daemon.cpp`)
 
-Polls the three front-panel buttons every 20 ms with debounce / inter-press filtering, then posts press events to `SystemController`. Button pin map lives in `lib/include/button_config.h`.
+Polls the three front-panel buttons every 20 ms with debounce / inter-press filtering, then posts press events to `SystemController`. **Button 2** short press cycles backlight profiles; **long press button 1 + button 2** (3 s) opens or closes the config Wi-Fi AP. Pin map: `lib/include/button_config.h`.
 
 ### Audio Daemon (`src/daemons/audio_daemon.cpp`)
 
@@ -307,29 +308,34 @@ Handles asynchronous audio commands (play, stop, volume) and communicates with t
 
 ### Web Server (`src/web_server.cpp`, `src/web_page.cpp`)
 
-Starts a Wi-Fi access point and embedded HTTP server:
+On-demand config Wi-Fi AP and embedded HTTP server (active only in config mode):
 
 | Setting | Value |
 | :--- | :--- |
-| SSID | `NixieClock` |
+| Enter config | Long-press button 1 + button 2 for 3 s (same combo exits when AP is active) |
+| SSID | `NixieClock-XXXX` (random 4-digit code each session; shown on Nixie tubes) |
 | Password | `nixie2026` |
 | AP IP | `192.168.8.8` |
+| Timeout | 15 min max, or 2 min after all clients disconnect |
 
-Connect to the AP and open `http://192.168.8.8/` in a browser.
+Connect to the AP and open `http://192.168.8.8/`. Use **完成並關閉設定 WiFi** when done.
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
 | `/` | GET | Settings web UI |
-| `/api/settings` | GET | Current clock settings (JSON); see [doc/web_api.md](doc/web_api.md) |
-| `/api/settings` | POST | Apply partial settings update (JSON) |
-| `/api/time` | GET | Local time, RTC status, temperature (JSON) |
-| `/api/audio/tracks` | GET | SD card MP3 track list |
-| `/api/audio/status` | GET | Playback state |
-| `/api/audio/play` | POST | Toggle play/pause for a track |
+| `/api/settings` | GET/POST | Clock settings (JSON); see [doc/web_api.md](doc/web_api.md) |
+| `/api/ap/status` | GET | Config AP SSID, session code, remaining time |
+| `/api/ap/stop` | POST | Stop config AP (deauth + shutdown) |
+| `/api/wifi` | GET/POST/DELETE | Home WiFi for daily NTP sync |
+| `/api/ntp/status` | GET | Last NTP sync status |
+| `/api/time` | GET | Local time, RTC status, temperature |
+| `/api/audio/*` | GET/POST | MP3 tracks and playback |
 
-Full request/response schemas, field ranges, preview/cancel semantics, and migration notes from the legacy flat JSON API are documented in [doc/web_api.md](doc/web_api.md).
+Home WiFi credentials enable a brief daily STA session at **06:00 local** for NTP → DS3231 sync (always write, verify RTC within 1 min, retry up to 3×); WiFi is off the rest of the time.
 
-Configurable settings include timezone offset, alarm, backlight color/brightness/effect, nixie brightness/transition, volume, backlight profiles, and hibernation schedule. The web **Light** tab provides live display preview on the clock while dragging sliders; use **Save 1–4** to commit a profile. Switch profiles on the device with **button 2**.
+Full schemas: [doc/web_api.md](doc/web_api.md).
+
+Configurable settings include timezone offset, alarm, backlight, nixie brightness/transition, volume, profiles, hibernation, and home WiFi. The web **Light** tab provides live display preview; **Save 1–4** commits a profile. Short-press button 2 to switch profiles on the device.
 
 ### CLI Daemon (`src/daemons/cli_daemon.cpp`)
 

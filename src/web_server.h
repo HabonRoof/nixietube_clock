@@ -9,11 +9,13 @@
 
 class SystemController;
 class AudioDaemon;
+class WifiManager;
 
 class WebServer
 {
 public:
-    WebServer(SystemController &system_controller, SystemState &system_state, AudioDaemon &audio_daemon);
+    WebServer(SystemController &system_controller, SystemState &system_state, AudioDaemon &audio_daemon,
+              WifiManager &wifi_manager);
     ~WebServer();
 
     void start();
@@ -26,17 +28,19 @@ public:
                          time_t *unix_utc = nullptr);
 
     AudioDaemon &audio_daemon();
+    WifiManager &wifi_manager();
 
 private:
     static void task_entry(void *param);
     void run();
 
-    bool start_ap();
     bool start_http();
     void stop_http();
 
     SystemController &system_controller_;
     SystemState &system_state_;
     AudioDaemon &audio_daemon_;
+    WifiManager &wifi_manager_;
     TaskHandle_t task_handle_;
+    bool http_running_;
 };

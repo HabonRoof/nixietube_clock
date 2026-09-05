@@ -55,6 +55,12 @@ public:
     bool get_time_status(struct tm *local_out, bool *time_valid, bool *osf, float *temperature,
                          time_t *unix_utc = nullptr);
 
+    bool apply_ntp_utc(time_t ntp_utc, int *drift_sec_out = nullptr);
+
+    void enter_wifi_config_ui(uint16_t session_code);
+    void on_wifi_config_client_connected();
+    void exit_wifi_config_ui();
+
     // Battery protection caps charge at 80% SOC to extend cell life.
     // Reserved for Web UI wiring (refactor/webui); defaults to disabled.
     void set_battery_protection_enabled(bool enabled);
@@ -66,6 +72,12 @@ private:
         Normal,
         Peek,
         Hibernating
+    };
+
+    enum class WifiConfigPhase : uint8_t
+    {
+        WaitingClient,
+        ClientConnected,
     };
 
     static void task_entry(void *param);
@@ -136,6 +148,10 @@ private:
     TickType_t next_auto_cathode_;
     bool display_preview_active_;
     BacklightProfile display_preview_;
+    bool wifi_config_ui_active_;
+    WifiConfigPhase wifi_config_phase_;
+    DisplayMode display_mode_before_wifi_config_;
+    HibernateState hibernate_state_before_wifi_config_;
 
     std::atomic<bool> battery_protection_enabled_;
     bool battery_protection_charging_paused_;
@@ -150,4 +166,5 @@ private:
     static constexpr uint32_t kIdleStandbyMs = 60000;
     static constexpr float standby_brightness_factor = 0.25f;
     static constexpr uint32_t kAutoCathodeIntervalMs = 15 * 60 * 1000;
+    static constexpr uint8_t kWifiConfigNixieBrightness = 200;
 };
