@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <ctime>
 #include "freertos/FreeRTOS.h"
+#include "auto_brightness.h"
 
 // Bump whenever the layout/meaning of ClockSettings changes. NVS load uses
 // this to migrate (rather than discard) older persisted blobs.
@@ -64,7 +65,7 @@ struct TimeStatus {
 
 struct AmbientLightStatus {
     float lux;
-    uint8_t scale;
+    uint16_t scale;
     bool valid;
 };
 
@@ -97,6 +98,16 @@ public:
     void update_ambient(const AmbientLightStatus &status);
     bool get_ambient(AmbientLightStatus *out) const;
 
+    void set_auto_brightness_calibration(const AutoBrightnessCalibration &cal);
+    bool get_auto_brightness_calibration(AutoBrightnessCalibration *out) const;
+    bool save_auto_brightness_calibration();
+
+    void set_auto_brightness_suppressed(bool suppressed);
+    bool is_auto_brightness_suppressed() const;
+
+    void request_auto_brightness_self_cal();
+    bool consume_auto_brightness_self_cal_request();
+
     void get_snapshot(SystemSnapshot *out) const;
 
 private:
@@ -105,5 +116,8 @@ private:
     BatteryStatus battery_;
     TimeStatus time_;
     AmbientLightStatus ambient_;
-    uint8_t reserved_[8];
+    AutoBrightnessCalibration auto_brightness_cal_;
+    bool auto_brightness_suppressed_;
+    bool auto_brightness_self_cal_requested_;
+    uint8_t reserved_[6];
 };

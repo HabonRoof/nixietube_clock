@@ -22,7 +22,7 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver,
       effect_speed_(0.35f),
       base_backlight_{{0, 255, 255}, 255},
       base_nixie_brightness_(255),
-      ambient_scale_(255),
+      ambient_factor_(kAmbientFullScale),
       last_digits_valid_(false),
       divergence_{},
       date_elapsed_ms_(0),
@@ -60,6 +60,101 @@ void DisplayDaemon::start()
 QueueHandle_t DisplayDaemon::get_queue() const
 {
     return queue_;
+}
+
+uint8_t DisplayDaemon::scaled_nixie_brightness(uint8_t base) const
+{
+    const uint32_t scaled =
+        (static_cast<uint32_t>(base) * static_cast<uint32_t>(ambient_factor_)) / kAmbientFullScale;
+    return static_cast<uint8_t>(std::min<uint32_t>(scaled, 255));
+}
+
+uint8_t DisplayDaemon::get_effective_backlight_brightness() const
+{
+    const uint32_t scaled = (static_cast<uint32_t>(base_backlight_.brightness) *
+                             static_cast<uint32_t>(ambient_factor_)) /
+                            kAmbientFullScale;
+    return static_cast<uint8_t>(std::min<uint32_t>(scaled, 255));
+}
+
+uint8_t DisplayDaemon::get_effective_nixie_brightness() const
+{
+    return scaled_nixie_brightness(base_nixie_brightness_);
+}
+
+void DisplayDaemon::apply_effective_nixie_brightness()
+{
+    nixie_driver_.set_brightness(get_effective_nixie_brightness());
+}
+
+uint8_t DisplayDaemon::effect_id_from_type(LedEffectType type) const
+{
+    switch (type) {
+        case LedEffectType::BREATH:
+            return 1;
+        case LedEffectType::RAINBOW:
+            return 2;
+        case LedEffectType::OFF:
+            return 3;
+        case LedEffectType::NONE:
+        default:
+            return 0;
+    }
+}
+
+LedEffectType DisplayDaemon::effect_type_from_id(uint8_t effect_id) const
+{
+    switch (effect_id) {
+        case 1:
+            return LedEffectType::BREATH;
+        case 2:
+            return LedEffectType::RAINBOW;
+        case 3:
+            return LedEffectType::OFF;
+        default:
+            return LedEffectType::NONE;
+    }
+}
+
+void DisplayDaemon::capture_cal_snapshot(DisplayCalSnapshot *out) const
+{
+    if (!out) {
+        return;
+    }
+    out->backlight = base_backlight_;
+    out->nixie_brightness = base_nixie_brightness_;
+    out->ambient_factor = ambient_factor_;
+    out->effect_id = effect_id_from_type(current_effect_type_);
+    out->effect_speed = effect_speed_;
+}
+
+void DisplayDaemon::restore_cal_snapshot(const DisplayCalSnapshot &snap)
+{
+    DisplayMessage dmsg{};
+
+    dmsg.command = DisplayCmd::SET_EFFECT;
+    dmsg.data.effect_id = snap.effect_id;
+    process_message(dmsg);
+    effect_speed_ = snap.effect_speed;
+
+    const RgbColor rgb = hsv_to_rgb(snap.backlight.color);
+    dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
+    dmsg.data.color.r = rgb.red;
+    dmsg.data.color.g = rgb.green;
+    dmsg.data.color.b = rgb.blue;
+    process_message(dmsg);
+
+    dmsg.command = DisplayCmd::SET_BACKLIGHT_BRIGHTNESS;
+    dmsg.data.brightness = snap.backlight.brightness;
+    process_message(dmsg);
+
+    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+    dmsg.data.brightness = snap.nixie_brightness;
+    process_message(dmsg);
+
+    dmsg.command = DisplayCmd::SET_AMBIENT_SCALE;
+    dmsg.data.ambient_factor = snap.ambient_factor;
+    process_message(dmsg);
 }
 
 void DisplayDaemon::task_entry(void *param)
@@ -470,7 +565,7 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             break;
         case DisplayCmd::SET_NIXIE_BRIGHTNESS:
             base_nixie_brightness_ = msg.data.brightness;
-            nixie_driver_.set_brightness(msg.data.brightness);
+            apply_effective_nixie_brightness();
             break;
         case DisplayCmd::SET_NIXIE_TRANSITION:
             current_nixie_transition_ =
@@ -489,7 +584,8 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             base_backlight_.brightness = msg.data.brightness;
             break;
         case DisplayCmd::SET_AMBIENT_SCALE:
-            ambient_scale_ = msg.data.brightness;
+            ambient_factor_ = msg.data.ambient_factor;
+            apply_effective_nixie_brightness();
             break;
         case DisplayCmd::SET_EFFECT:
             if (msg.data.effect_id == 1) {
@@ -520,7 +616,7 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
             if (base_nixie_brightness_ == 0) {
                 base_nixie_brightness_ = 200;
             }
-            nixie_driver_.set_brightness(base_nixie_brightness_);
+            apply_effective_nixie_brightness();
             base_backlight_.color = rgb_to_hsv(RgbColor{120, 255, 120});
             base_backlight_.brightness = 200;
             current_effect_type_ = LedEffectType::BREATH;
@@ -573,7 +669,7 @@ void DisplayDaemon::apply_backlight_to_all(const BackLightState &state)
 {
     HsvColor adjusted = state.color;
     const uint16_t effective_brightness =
-        static_cast<uint16_t>(state.brightness) * ambient_scale_ / 255;
+        static_cast<uint16_t>(state.brightness) * ambient_factor_ / kAmbientFullScale;
     uint16_t scaled_value = static_cast<uint16_t>(adjusted.value) * effective_brightness / 255;
     adjusted.value = static_cast<uint8_t>(std::min<uint16_t>(scaled_value, 255));
 

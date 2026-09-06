@@ -7,6 +7,7 @@
 namespace {
 constexpr const char *kNamespace = "clock_cfg";
 constexpr const char *kBlobKey = "settings";
+constexpr const char *kAlsCalKey = "als_cal";
 // Size of persisted ClockSettings before profiles were added (v4).
 constexpr size_t kSettingsV4Size = offsetof(ClockSettings, profiles);
 
@@ -132,6 +133,9 @@ SystemState::SystemState()
       battery_{},
       time_{},
       ambient_{},
+      auto_brightness_cal_(auto_brightness_calibration_defaults()),
+      auto_brightness_suppressed_(false),
+      auto_brightness_self_cal_requested_(false),
       reserved_{}
 {
     battery_.valid = false;
@@ -139,7 +143,7 @@ SystemState::SystemState()
     time_.unix_utc = 0;
     time_.valid = false;
     ambient_.lux = 0.0f;
-    ambient_.scale = 255;
+    ambient_.scale = kAmbientFullScale;
     ambient_.valid = false;
     std::memset(reserved_, 0, sizeof(reserved_));
 }
@@ -280,6 +284,42 @@ bool SystemState::load()
     if (needs_save) {
         save_settings();
     }
+
+    AutoBrightnessCalibration cal = auto_brightness_calibration_defaults();
+    nvs_handle_t cal_handle;
+    err = nvs_open(kNamespace, NVS_READONLY, &cal_handle);
+    if (err == ESP_OK) {
+        size_t cal_size = sizeof(cal);
+        if (nvs_get_blob(cal_handle, kAlsCalKey, &cal, &cal_size) == ESP_OK && cal_size > 0) {
+            if (cal.version < kAutoBrightnessCalVersion) {
+                cal.als_gain = 0;
+                cal.version = kAutoBrightnessCalVersion;
+                needs_save = true;
+            }
+            if (cal_size >= sizeof(AutoBrightnessCalibration)) {
+                portENTER_CRITICAL(&mux_);
+                auto_brightness_cal_ = cal;
+                portEXIT_CRITICAL(&mux_);
+            } else {
+                AutoBrightnessCalibration merged = auto_brightness_calibration_defaults();
+                std::memcpy(&merged, &cal, cal_size);
+                if (merged.version < kAutoBrightnessCalVersion) {
+                    merged.als_gain = 0;
+                    merged.version = kAutoBrightnessCalVersion;
+                }
+                portENTER_CRITICAL(&mux_);
+                auto_brightness_cal_ = merged;
+                portEXIT_CRITICAL(&mux_);
+                needs_save = true;
+            }
+        }
+        nvs_close(cal_handle);
+    }
+
+    if (needs_save) {
+        save_auto_brightness_calibration();
+    }
+
     return true;
 }
 
@@ -380,6 +420,77 @@ bool SystemState::get_ambient(AmbientLightStatus *out) const
     *out = ambient_;
     portEXIT_CRITICAL(&mux_);
     return out->valid;
+}
+
+void SystemState::set_auto_brightness_calibration(const AutoBrightnessCalibration &cal)
+{
+    portENTER_CRITICAL(&mux_);
+    auto_brightness_cal_ = cal;
+    portEXIT_CRITICAL(&mux_);
+}
+
+bool SystemState::get_auto_brightness_calibration(AutoBrightnessCalibration *out) const
+{
+    if (!out) {
+        return false;
+    }
+
+    portENTER_CRITICAL(&mux_);
+    *out = auto_brightness_cal_;
+    portEXIT_CRITICAL(&mux_);
+    return true;
+}
+
+bool SystemState::save_auto_brightness_calibration()
+{
+    AutoBrightnessCalibration cal{};
+    if (!get_auto_brightness_calibration(&cal)) {
+        return false;
+    }
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(kNamespace, NVS_READWRITE, &handle);
+    if (err != ESP_OK) {
+        return false;
+    }
+
+    err = nvs_set_blob(handle, kAlsCalKey, &cal, sizeof(cal));
+    if (err == ESP_OK) {
+        err = nvs_commit(handle);
+    }
+    nvs_close(handle);
+    return err == ESP_OK;
+}
+
+void SystemState::set_auto_brightness_suppressed(bool suppressed)
+{
+    portENTER_CRITICAL(&mux_);
+    auto_brightness_suppressed_ = suppressed;
+    portEXIT_CRITICAL(&mux_);
+}
+
+bool SystemState::is_auto_brightness_suppressed() const
+{
+    portENTER_CRITICAL(&mux_);
+    const bool suppressed = auto_brightness_suppressed_;
+    portEXIT_CRITICAL(&mux_);
+    return suppressed;
+}
+
+void SystemState::request_auto_brightness_self_cal()
+{
+    portENTER_CRITICAL(&mux_);
+    auto_brightness_self_cal_requested_ = true;
+    portEXIT_CRITICAL(&mux_);
+}
+
+bool SystemState::consume_auto_brightness_self_cal_request()
+{
+    portENTER_CRITICAL(&mux_);
+    const bool requested = auto_brightness_self_cal_requested_;
+    auto_brightness_self_cal_requested_ = false;
+    portEXIT_CRITICAL(&mux_);
+    return requested;
 }
 
 void SystemState::get_snapshot(SystemSnapshot *out) const

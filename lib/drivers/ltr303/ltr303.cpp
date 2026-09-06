@@ -1,6 +1,7 @@
 #include "ltr303.h"
 #include "i2c_bus.h"
 #include "esp_log.h"
+#include <algorithm>
 
 static const char *TAG = "LTR303";
 
@@ -16,11 +17,8 @@ constexpr uint8_t kRegAlsStatus = 0x8C;
 constexpr uint8_t kPartId = 0xA0;
 constexpr uint8_t kManufacId = 0x05;
 
-// Active mode, ALS gain x1.
-constexpr uint8_t kAlsContrActiveGain1x = 0x01;
-// 100 ms integration, 2000 ms measurement rate (0.5 Hz).
+constexpr uint8_t kAlsContrActive = 0x01;
 constexpr uint8_t kAlsMeasRate100ms2000ms = 0x28;
-
 constexpr uint8_t kStatusDataValid = 0x04;
 
 } // namespace
@@ -28,6 +26,52 @@ constexpr uint8_t kStatusDataValid = 0x04;
 Ltr303::Ltr303(i2c_port_t port, uint8_t address)
     : port_(port), address_(address)
 {
+}
+
+bool Ltr303::write_als_control()
+{
+    const uint8_t value =
+        kAlsContrActive | (static_cast<uint8_t>(gain_) << 2);
+    return write_register(kRegAlsContr, value);
+}
+
+bool Ltr303::set_gain(Ltr303Gain gain)
+{
+    if (!ready_) {
+        return false;
+    }
+    gain_ = gain;
+    if (!write_als_control()) {
+        ESP_LOGE(TAG, "Failed to set ALS gain");
+        return false;
+    }
+    ESP_LOGI(TAG, "ALS gain set to %s", gain_label(gain_));
+    return true;
+}
+
+bool Ltr303::is_saturated(const Ltr303Sample &sample)
+{
+    return sample.ch0 >= kSaturationThreshold || sample.ch1 >= kSaturationThreshold;
+}
+
+const char *Ltr303::gain_label(Ltr303Gain gain)
+{
+    switch (gain) {
+        case Ltr303Gain::X1:
+            return "1x";
+        case Ltr303Gain::X2:
+            return "2x";
+        case Ltr303Gain::X4:
+            return "4x";
+        case Ltr303Gain::X8:
+            return "8x";
+        case Ltr303Gain::X48:
+            return "48x";
+        case Ltr303Gain::X96:
+            return "96x";
+        default:
+            return "?x";
+    }
 }
 
 bool Ltr303::init()
@@ -45,7 +89,8 @@ bool Ltr303::init()
         return false;
     }
 
-    if (!write_register(kRegAlsContr, kAlsContrActiveGain1x)) {
+    gain_ = Ltr303Gain::X1;
+    if (!write_als_control()) {
         ESP_LOGE(TAG, "Failed to set ALS control");
         ready_ = false;
         return false;
@@ -57,13 +102,13 @@ bool Ltr303::init()
     }
 
     ready_ = true;
-    ESP_LOGI(TAG, "LTR-303 initialized");
+    ESP_LOGI(TAG, "LTR-303 initialized (gain %s)", gain_label(gain_));
     return true;
 }
 
-bool Ltr303::read_raw_lux(float *lux_out)
+bool Ltr303::read_channels(Ltr303Sample *sample_out)
 {
-    if (!lux_out || !ready_) {
+    if (!sample_out || !ready_) {
         return false;
     }
 
@@ -85,7 +130,21 @@ bool Ltr303::read_raw_lux(float *lux_out)
     const uint16_t ch0 = static_cast<uint16_t>(data[2]) |
                          (static_cast<uint16_t>(data[3]) << 8);
 
-    *lux_out = compute_lux(ch0, ch1);
+    const float sum = static_cast<float>(ch0) + static_cast<float>(ch1);
+    sample_out->ch0 = ch0;
+    sample_out->ch1 = ch1;
+    sample_out->ratio = sum > 0.0f ? static_cast<float>(ch1) / sum : 0.0f;
+    sample_out->lux = compute_lux(ch0, ch1);
+    return true;
+}
+
+bool Ltr303::read_raw_lux(float *lux_out)
+{
+    Ltr303Sample sample{};
+    if (!read_channels(&sample)) {
+        return false;
+    }
+    *lux_out = sample.lux;
     return true;
 }
 

@@ -122,6 +122,7 @@ private:
     bool is_alarm_audio_active() const;
     static DisplayMode next_display_mode(DisplayMode mode);
     static uint8_t scale_standby_brightness(uint8_t value);
+    void update_auto_brightness_suppress();
 
     DisplayDaemon &display_daemon_;
     AudioDaemon &audio_daemon_;

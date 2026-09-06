@@ -105,7 +105,7 @@ extern "C" void app_main(void)
     if (!i2c_debug::kDisableALS && hw_handles.i2c1_port < I2C_NUM_MAX) {
         static Ltr303 ltr303_instance(hw_handles.i2c1_port);
         ltr303 = &ltr303_instance;
-        static AlsDaemon als_daemon_instance(*ltr303, display_daemon, nixie_driver, system_state);
+        static AlsDaemon als_daemon_instance(*ltr303, display_daemon, system_state);
         als_daemon = &als_daemon_instance;
     }
 
@@ -136,6 +136,7 @@ extern "C" void app_main(void)
     input_daemon.start();
     if (ltr303 != nullptr && als_daemon != nullptr) {
         if (ltr303->init()) {
+            als_daemon->apply_stored_sensor_gain();
             als_daemon->start();
         } else {
             ESP_LOGW(kLogTag, "LTR-303 probe failed; ALS daemon not started");

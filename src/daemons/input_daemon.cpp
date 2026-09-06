@@ -201,7 +201,6 @@ void InputDaemon::loop()
         }
 
         clear_ap_combo_if_released();
-        poll_als();
         vTaskDelay(pdMS_TO_TICKS(kPollMs));
     }
 }
@@ -217,9 +216,4 @@ void InputDaemon::post_button_pressed(uint8_t button_id)
     msg.data.button_id = button_id;
     xQueueSend(system_queue_, &msg, 0);
     ESP_LOGI(TAG, "Button %u pressed", button_id);
-}
-
-void InputDaemon::poll_als()
-{
-    // Stub for future LTR-303ALS-01 integration.
 }

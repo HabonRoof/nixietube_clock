@@ -115,6 +115,7 @@ struct DisplayMessage
         } color;
         HsvColor hsv;
         uint8_t brightness;
+        uint16_t ambient_factor;
         uint8_t effect_id; // 0: static, 1: breath, 2: rainbow, 3: off
         uint8_t transition_id; // 0: instant, 1: fade
     } data;

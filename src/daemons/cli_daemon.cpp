@@ -1,5 +1,7 @@
 #include "daemons/cli_daemon.h"
 #include "daemons/audio_daemon.h"
+#include "auto_brightness.h"
+#include "ltr303/ltr303.h"
 #include "dfplayer_mini.h"
 #include "message_types.h"
 #include "gasgauge_service.h"
@@ -802,6 +804,8 @@ static int reboot_func(int argc, char **argv)
 // --- Command: get_ambient ---
 static int get_ambient_func(int argc, char **argv)
 {
+    (void)argc;
+    (void)argv;
     if (!g_system_state) {
         printf("system state not ready\n");
         return 1;
@@ -813,12 +817,94 @@ static int get_ambient_func(int argc, char **argv)
         return 1;
     }
 
+    AutoBrightnessCalibration cal{};
+    g_system_state->get_auto_brightness_calibration(&cal);
+
     ClockSettings settings{};
     g_system_state->get_settings(&settings);
 
     printf("Ambient lux: %.1f\n", ambient.lux);
-    printf("Ambient scale: %u/255\n", ambient.scale);
+    printf("Ambient factor: %u/1024\n", ambient.scale);
+    printf("Calibration lux_min: %.2f lux_max: %.2f\n", cal.lux_min, cal.lux_max);
+    printf("Coupling k_led: %.4f k_nixie: %.4f\n", cal.k_led, cal.k_nixie);
+    printf("ALS gain: %s\n", Ltr303::gain_label(ltr303_gain_from_storage(cal.als_gain)));
+    printf("Calibration mode: %s\n",
+           cal.mode == AutoBrightnessCalMode::Manual ? "manual" : "auto");
     printf("Auto brightness: %s\n", settings.auto_brightness_enabled ? "enabled" : "disabled");
+    printf("Auto brightness suppressed: %s\n",
+           g_system_state->is_auto_brightness_suppressed() ? "yes" : "no");
+    return 0;
+}
+
+struct cal_ambient_args {
+    struct arg_str *mode;
+    struct arg_end *end;
+};
+
+static struct cal_ambient_args cal_ambient_args;
+
+static int cal_ambient_func(int argc, char **argv)
+{
+    (void)argc;
+    if (!g_system_state) {
+        printf("system state not ready\n");
+        return 1;
+    }
+
+    int nerrors = arg_parse(argc, argv, (void **)&cal_ambient_args);
+    if (nerrors > 0) {
+        arg_print_errors(stdout, cal_ambient_args.end, "cal_ambient");
+        return 1;
+    }
+
+    if (cal_ambient_args.mode->count == 0) {
+        printf("Usage: cal_ambient dark|bright|reset|self\n");
+        return 1;
+    }
+
+    const char *mode = cal_ambient_args.mode->sval[0];
+    AutoBrightnessCalibration cal{};
+    g_system_state->get_auto_brightness_calibration(&cal);
+
+    if (strcmp(mode, "reset") == 0) {
+        cal = auto_brightness_calibration_defaults();
+        g_system_state->set_auto_brightness_calibration(cal);
+        g_system_state->save_auto_brightness_calibration();
+        printf("Ambient calibration reset to auto-learn defaults\n");
+        return 0;
+    }
+
+    if (strcmp(mode, "self") == 0) {
+        g_system_state->request_auto_brightness_self_cal();
+        printf("Self-cal queued: dark room, ~10s avg per step (baseline, white LED, nixie)\n");
+        printf("Watch serial log for ch0/ch1/lux per step and selected gain\n");
+        return 0;
+    }
+
+    AmbientLightStatus ambient{};
+    if (!g_system_state->get_ambient(&ambient)) {
+        printf("Ambient light data not available; wait for ALS reading\n");
+        return 1;
+    }
+
+    cal.mode = AutoBrightnessCalMode::Manual;
+    if (strcmp(mode, "dark") == 0) {
+        cal.lux_min = ambient.lux;
+        printf("Recorded lux_min=%.2f\n", cal.lux_min);
+    } else if (strcmp(mode, "bright") == 0) {
+        cal.lux_max = ambient.lux;
+        printf("Recorded lux_max=%.2f\n", cal.lux_max);
+    } else {
+        printf("Unknown mode: %s (use dark|bright|reset|self)\n", mode);
+        return 1;
+    }
+
+    if (cal.lux_max <= cal.lux_min + 10.0f) {
+        cal.lux_max = cal.lux_min + 10.0f;
+    }
+
+    g_system_state->set_auto_brightness_calibration(cal);
+    g_system_state->save_auto_brightness_calibration();
     return 0;
 }
 
@@ -931,7 +1017,8 @@ static int help_func(int argc, char **argv)
     printf("get_hw_version                                  Get hardware version\n");
     printf("get_fw_version                                  Get firmware version\n");
     printf("get_bq25601_status                             Get BQ25601 status register (REG08, REG01)\n");
-    printf("get_ambient                                     Get ambient light lux and scale\n");
+    printf("get_ambient                                     Get ambient light lux and factor\n");
+    printf("cal_ambient dark|bright|reset|self              3-step self-cal in dark room\n");
     printf("enable_charging                                 Enable charging\n");
     printf("disable_charging                                Disable charging\n");
     printf("enable_hv                                       Enable HV power rail\n");
@@ -1159,6 +1246,19 @@ void CliDaemon::register_commands()
         .context = nullptr,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&get_ambient_cmd));
+
+    cal_ambient_args.mode = arg_str1(NULL, NULL, "<mode>", "dark, bright, reset, or self");
+    cal_ambient_args.end = arg_end(2);
+    const esp_console_cmd_t cal_ambient_cmd = {
+        .command = "cal_ambient",
+        .help = "Calibrate ambient light lux range or LED coupling",
+        .hint = NULL,
+        .func = &cal_ambient_func,
+        .argtable = &cal_ambient_args,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cal_ambient_cmd));
 
     // Register: enable_charging
     const esp_console_cmd_t enable_charging_cmd = {

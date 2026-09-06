@@ -8,6 +8,7 @@
 #include "nixie_driver.h"
 #include "led_driver.h"
 #include "system_state.h"
+#include "auto_brightness.h"
 
 enum class LedEffectType
 {
@@ -71,6 +72,15 @@ struct PomodoroState
     uint32_t last_displayed_s = UINT32_MAX;
 };
 
+struct DisplayCalSnapshot
+{
+    BackLightState backlight;
+    uint8_t nixie_brightness;
+    uint16_t ambient_factor;
+    uint8_t effect_id;
+    float effect_speed;
+};
+
 class DisplayDaemon
 {
 public:
@@ -80,6 +90,10 @@ public:
     void start();
     void set_system_queue(QueueHandle_t queue);
     QueueHandle_t get_queue() const;
+    uint8_t get_effective_backlight_brightness() const;
+    uint8_t get_effective_nixie_brightness() const;
+    void capture_cal_snapshot(DisplayCalSnapshot *out) const;
+    void restore_cal_snapshot(const DisplayCalSnapshot &snap);
 
 private:
     static void task_entry(void *param);
@@ -109,6 +123,10 @@ private:
     void run_rainbow_effect(uint32_t dt_ms);
     void turn_off_backlight();
     void apply_backlight_to_all(const BackLightState &state);
+    void apply_effective_nixie_brightness();
+    uint8_t scaled_nixie_brightness(uint8_t base) const;
+    uint8_t effect_id_from_type(LedEffectType type) const;
+    LedEffectType effect_type_from_id(uint8_t effect_id) const;
 
     static constexpr uint32_t kAutoReturnDisplayMs = 10000;
     static constexpr uint32_t kDivergenceJumpMs = 1500;
@@ -133,7 +151,7 @@ private:
     float effect_speed_;
     BackLightState base_backlight_;
     uint8_t base_nixie_brightness_;
-    uint8_t ambient_scale_;
+    uint16_t ambient_factor_;
     std::array<uint8_t, 6> last_digits_{};
     bool last_digits_valid_;
     std::array<TubeTransitionState, 6> tube_transitions_{};

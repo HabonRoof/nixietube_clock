@@ -726,6 +726,7 @@ void SystemController::enter_hibernation_mode()
     dmsg.data.effect_id = 3;
     xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
     ESP_LOGI(TAG, "Entering hibernation mode,turn off LED baclkight and tube");
+    update_auto_brightness_suppress();
 }
 
 void SystemController::peek_from_hibernate()
@@ -745,6 +746,7 @@ void SystemController::peek_from_hibernate()
     hibernate_state_ = HibernateState::Peek;
     hibernation_peek_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kHibernationPeekMs);
     ESP_LOGI(TAG, "Hibernate: display awake for %u s", kHibernationPeekMs / 1000U);
+    update_auto_brightness_suppress();
 }
 
 void SystemController::restore_user_profile()
@@ -754,6 +756,7 @@ void SystemController::restore_user_profile()
     const BacklightProfile &profile =
         settings.profiles[settings.active_profile_index % kBacklightProfileCount];
     apply_profile_to_display(profile);
+    update_auto_brightness_suppress();
 }
 
 void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
@@ -780,6 +783,7 @@ void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
             hibernate_window_active_ = false;
             note_user_activity();
             ESP_LOGI(TAG, "Hibernate: normal operation");
+            update_auto_brightness_suppress();
         }
         return;
     }
@@ -820,6 +824,14 @@ void SystemController::check_hibernation()
 uint8_t SystemController::scale_standby_brightness(uint8_t value)
 {
     return static_cast<uint8_t>(value * standby_brightness_factor + 0.5f);
+}
+
+void SystemController::update_auto_brightness_suppress()
+{
+    const bool suppress = wifi_config_ui_active_ ||
+                          hibernate_state_ != HibernateState::Normal ||
+                          current_display_mode_ == DisplayMode::POMODORO;
+    system_state_.set_auto_brightness_suppressed(suppress);
 }
 
 void SystemController::note_user_activity()
@@ -1291,6 +1303,7 @@ void SystemController::return_to_clock_mode()
     push_local_time_now();
     note_user_activity();
     ESP_LOGI(TAG, "Auto-return to clock mode");
+    update_auto_brightness_suppress();
 }
 
 void SystemController::cycle_display_mode()
@@ -1315,6 +1328,7 @@ void SystemController::cycle_display_mode()
         note_user_activity();
     }
     ESP_LOGI(TAG, "Display mode cycled to %u", static_cast<unsigned>(current_display_mode_));
+    update_auto_brightness_suppress();
 }
 
 void SystemController::cycle_profile()
@@ -1503,6 +1517,7 @@ void SystemController::enter_wifi_config_ui(uint16_t session_code)
     current_display_mode_ = DisplayMode::CONFIG_CODE;
     ESP_LOGI(TAG, "WiFi config UI: session code %04u%s", session_code,
              first_entry ? "" : " (refresh)");
+    update_auto_brightness_suppress();
 }
 
 void SystemController::on_wifi_config_client_connected()
@@ -1560,4 +1575,5 @@ void SystemController::exit_wifi_config_ui()
         xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
     }
     ESP_LOGI(TAG, "WiFi config UI exited");
+    update_auto_brightness_suppress();
 }
