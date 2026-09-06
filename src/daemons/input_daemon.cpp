@@ -69,15 +69,36 @@ void InputDaemon::task_entry(void *param)
     daemon->loop();
 }
 
-bool InputDaemon::ap_combo_blocks_buttons() const
+bool InputDaemon::ap_combo_blocks_button(uint8_t button_id) const
 {
-    return ap_config_combo_.tracking || ap_config_combo_.action_fired;
+    if (ap_config_combo_.tracking) {
+        return true;
+    }
+
+    if (ap_config_combo_.action_fired &&
+        (button_id == kButtonModeCycle || button_id == kButtonProfileCycle)) {
+        return true;
+    }
+
+    return false;
+}
+
+void InputDaemon::clear_ap_combo_if_released()
+{
+    if (!ap_config_combo_.action_fired) {
+        return;
+    }
+
+    if (!debounce_[kButtonModeCycle].stable_pressed &&
+        !debounce_[kButtonProfileCycle].stable_pressed) {
+        ap_config_combo_.action_fired = false;
+    }
 }
 
 bool InputDaemon::process_profile_button(uint8_t button_id, bool raw_pressed, bool prev_stable)
 {
     (void)button_id;
-    if (ap_combo_blocks_buttons()) {
+    if (ap_combo_blocks_button(kButtonProfileCycle)) {
         return false;
     }
 
@@ -94,9 +115,6 @@ void InputDaemon::process_ap_config_combo(bool mode_pressed, bool profile_presse
 
     if (!both_pressed) {
         ap_config_combo_.tracking = false;
-        if (!mode_pressed && !profile_pressed) {
-            ap_config_combo_.action_fired = false;
-        }
         return;
     }
 
@@ -170,7 +188,7 @@ void InputDaemon::loop()
                 continue;
             }
 
-            if (ap_combo_blocks_buttons()) {
+            if (ap_combo_blocks_button(i)) {
                 continue;
             }
 
@@ -182,6 +200,7 @@ void InputDaemon::loop()
             }
         }
 
+        clear_ap_combo_if_released();
         poll_als();
         vTaskDelay(pdMS_TO_TICKS(kPollMs));
     }
