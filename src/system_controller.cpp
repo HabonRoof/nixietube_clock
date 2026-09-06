@@ -1,6 +1,7 @@
 #include "system_controller.h"
 #include "button_config.h"
 #include "esp_log.h"
+#include <cmath>
 #include <ctime>
 #include <cstdio>
 #include <cstring>
@@ -9,6 +10,7 @@
 #include "gasgauge_service.h"
 #include "charger_controller.h"
 #include "i2c_debug_config.h"
+#include "wifi_credentials.h"
 #include "i2c_bus.h"
 #include "driver/i2c.h"
 #include "driver/uart.h"
@@ -260,6 +262,10 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       next_auto_cathode_(0),
       display_preview_active_(false),
       display_preview_{},
+      wifi_config_ui_active_(false),
+      wifi_config_phase_(WifiConfigPhase::WaitingClient),
+      display_mode_before_wifi_config_(DisplayMode::CLOCK_HHMMSS),
+      hibernate_state_before_wifi_config_(HibernateState::Normal),
       battery_protection_enabled_(false),
       battery_protection_charging_paused_(false)
 {
@@ -475,7 +481,32 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
         }
     }
 
-    if (hibernate_state_ == HibernateState::Hibernating) {
+    if (wifi_config_ui_active_) {
+        DisplayMessage dmsg = {};
+        dmsg.command = DisplayCmd::SET_BACKLIGHT_COLOR;
+        dmsg.data.color.r = settings.backlight_r;
+        dmsg.data.color.g = settings.backlight_g;
+        dmsg.data.color.b = settings.backlight_b;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+        dmsg.command = DisplayCmd::SET_BACKLIGHT_BRIGHTNESS;
+        dmsg.data.brightness = settings.backlight_brightness;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+        dmsg.command = DisplayCmd::SET_EFFECT;
+        dmsg.data.effect_id = settings.backlight_effect;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+        dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+        dmsg.data.brightness =
+            settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_brightness;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+        dmsg.command = DisplayCmd::SET_NIXIE_TRANSITION;
+        dmsg.data.transition_id =
+            settings.profiles[settings.active_profile_index % kBacklightProfileCount].nixie_transition;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    } else if (hibernate_state_ == HibernateState::Hibernating) {
         // Keep the display off while hibernation is active.
     } else if (hibernate_state_ == HibernateState::Peek) {
         apply_hibernate_peek_to_display(settings);
@@ -675,6 +706,10 @@ void SystemController::push_local_time_now()
 
 void SystemController::enter_hibernation_mode()
 {
+    if (wifi_config_ui_active_) {
+        return;
+    }
+
     standby_active_ = false;
 
     current_display_mode_ = DisplayMode::OFF;
@@ -723,6 +758,10 @@ void SystemController::restore_user_profile()
 
 void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
 {
+    if (wifi_config_ui_active_) {
+        return;
+    }
+
     ClockSettings settings;
     system_state_.get_settings(&settings);
     const bool in_window = hibernate_is_active(settings, hour, minute);
@@ -763,6 +802,10 @@ void SystemController::evaluate_hibernate_schedule(uint8_t hour, uint8_t minute)
 
 void SystemController::check_hibernation()
 {
+    if (wifi_config_ui_active_) {
+        return;
+    }
+
     if (hibernate_state_ != HibernateState::Peek) {
         return;
     }
@@ -1320,6 +1363,10 @@ void SystemController::handle_button_press(uint8_t button_id)
 
     note_user_activity();
 
+    if (wifi_config_ui_active_) {
+        return;
+    }
+
     if (button_id == kButtonAlarmStop) {
         if (is_alarm_audio_active()) {
             stop_alarm_audio();
@@ -1354,4 +1401,163 @@ void SystemController::handle_button_press(uint8_t button_id)
         }
         cycle_profile();
     }
+}
+
+bool SystemController::apply_ntp_utc(time_t ntp_utc, int *drift_sec_out)
+{
+    if (i2c_debug::kDisableDs3231Rtc) {
+        return false;
+    }
+
+    static constexpr int kMaxVerifyDriftSec = 60;
+    static constexpr int kMaxAttempts = 3;
+    static constexpr TickType_t kRtcSettleDelay = pdMS_TO_TICKS(50);
+
+    int last_drift = 0;
+    for (int attempt = 1; attempt <= kMaxAttempts; ++attempt) {
+        struct tm utc_tm = {};
+        gmtime_r(&ntp_utc, &utc_tm);
+        if (!rtc_.set_time(&utc_tm)) {
+            ESP_LOGW(TAG, "NTP apply attempt %d/%d: RTC write failed", attempt, kMaxAttempts);
+            vTaskDelay(kRtcSettleDelay);
+            continue;
+        }
+
+        struct timeval tv = {.tv_sec = ntp_utc, .tv_usec = 0};
+        settimeofday(&tv, nullptr);
+        vTaskDelay(kRtcSettleDelay);
+
+        struct tm rtc_tm = {};
+        if (!rtc_.get_time(&rtc_tm)) {
+            ESP_LOGW(TAG, "NTP apply attempt %d/%d: RTC readback failed", attempt, kMaxAttempts);
+            continue;
+        }
+        rtc_tm.tm_isdst = 0;
+        const time_t rtc_utc = tm_to_utc_epoch(&rtc_tm);
+        last_drift =
+            static_cast<int>(std::llabs(static_cast<long long>(ntp_utc - rtc_utc)));
+
+        if (last_drift < kMaxVerifyDriftSec) {
+            if (drift_sec_out) {
+                *drift_sec_out = last_drift;
+            }
+            publish_time_status(true);
+            rtc_read_failures_ = 0;
+
+            ClockSettings settings{};
+            system_state_.get_settings(&settings);
+            settings.rtc_calibrated = true;
+            system_state_.set_settings(settings);
+            system_state_.save_settings();
+
+            ESP_LOGI(TAG, "NTP applied UTC %lld verified drift=%d s (attempt %d)",
+                     static_cast<long long>(ntp_utc), last_drift, attempt);
+            return true;
+        }
+
+        ESP_LOGW(TAG, "NTP verify drift=%d s >= %d s (attempt %d/%d)", last_drift,
+                 kMaxVerifyDriftSec, attempt, kMaxAttempts);
+    }
+
+    if (drift_sec_out) {
+        *drift_sec_out = last_drift;
+    }
+    ESP_LOGE(TAG, "NTP apply failed after %d attempts (last drift=%d s)", kMaxAttempts,
+             last_drift);
+    return false;
+}
+
+void SystemController::enter_wifi_config_ui(uint16_t session_code)
+{
+    const bool first_entry = !wifi_config_ui_active_;
+    if (first_entry) {
+        wifi_config_ui_active_ = true;
+        display_mode_before_wifi_config_ = current_display_mode_;
+        hibernate_state_before_wifi_config_ = hibernate_state_;
+        if (hibernate_state_ == HibernateState::Hibernating ||
+            hibernate_state_ == HibernateState::Peek) {
+            hibernate_state_ = HibernateState::Normal;
+        }
+    }
+
+    wifi_config_phase_ = WifiConfigPhase::WaitingClient;
+
+    ClockSettings settings{};
+    system_state_.get_settings(&settings);
+    const BacklightProfile &profile =
+        settings.profiles[settings.active_profile_index % kBacklightProfileCount];
+    uint8_t nixie_brightness = profile.nixie_brightness;
+    if (nixie_brightness == 0) {
+        nixie_brightness = kWifiConfigNixieBrightness;
+    }
+
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::SET_NIXIE_BRIGHTNESS;
+    dmsg.data.brightness = nixie_brightness;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    dmsg.command = DisplayCmd::ENTER_WIFI_CONFIG;
+    dmsg.data.number = session_code;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    current_display_mode_ = DisplayMode::CONFIG_CODE;
+    ESP_LOGI(TAG, "WiFi config UI: session code %04u%s", session_code,
+             first_entry ? "" : " (refresh)");
+}
+
+void SystemController::on_wifi_config_client_connected()
+{
+    if (!wifi_config_ui_active_) {
+        return;
+    }
+
+    wifi_config_phase_ = WifiConfigPhase::ClientConnected;
+
+    ClockSettings settings{};
+    system_state_.get_settings(&settings);
+    apply_settings(settings, nullptr);
+    return_to_clock_mode();
+    ESP_LOGI(TAG, "WiFi config: client connected, showing clock with profile backlight");
+}
+
+void SystemController::exit_wifi_config_ui()
+{
+    if (!wifi_config_ui_active_) {
+        return;
+    }
+    wifi_config_ui_active_ = false;
+    wifi_config_phase_ = WifiConfigPhase::WaitingClient;
+
+    const HibernateState saved_hibernate = hibernate_state_before_wifi_config_;
+    hibernate_state_before_wifi_config_ = HibernateState::Normal;
+
+    DisplayMessage dmsg = {};
+    dmsg.command = DisplayCmd::EXIT_WIFI_CONFIG;
+    xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+
+    ClockSettings settings{};
+    system_state_.get_settings(&settings);
+    time_t now_utc = 0;
+    time(&now_utc);
+    const time_t local = now_utc + static_cast<time_t>(settings.tz_offset_hours) * 3600;
+    struct tm local_tm = {};
+    gmtime_r(&local, &local_tm);
+    const bool in_hibernate_window =
+        hibernate_is_active(settings, static_cast<uint8_t>(local_tm.tm_hour),
+                            static_cast<uint8_t>(local_tm.tm_min));
+
+    if (saved_hibernate == HibernateState::Hibernating && in_hibernate_window) {
+        hibernate_state_ = HibernateState::Hibernating;
+        hibernate_window_active_ = true;
+        enter_hibernation_mode();
+    } else if (display_mode_before_wifi_config_ == DisplayMode::CLOCK_HHMMSS ||
+               display_mode_before_wifi_config_ == DisplayMode::DATE_YYMMDD) {
+        return_to_clock_mode();
+    } else {
+        current_display_mode_ = display_mode_before_wifi_config_;
+        dmsg.command = DisplayCmd::SET_MODE;
+        dmsg.data.mode = display_mode_before_wifi_config_;
+        xQueueSend(display_daemon_.get_queue(), &dmsg, 0);
+    }
+    ESP_LOGI(TAG, "WiFi config UI exited");
 }

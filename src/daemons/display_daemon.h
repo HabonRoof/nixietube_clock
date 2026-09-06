@@ -142,4 +142,9 @@ private:
     CathodePoisoningState cathode_;
     PomodoroState pomodoro_;
     bool auto_return_requested_;
+    bool wifi_config_ui_active_;
+    BackLightState wifi_config_saved_backlight_;
+    LedEffectType wifi_config_saved_effect_;
+    float wifi_config_saved_effect_speed_;
+    DisplayMode wifi_config_saved_mode_;
 };

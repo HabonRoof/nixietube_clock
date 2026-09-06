@@ -28,7 +28,11 @@ DisplayDaemon::DisplayDaemon(INixieDriver &nixie_driver, ILedDriver &led_driver,
       date_elapsed_ms_(0),
       cathode_{},
       pomodoro_{},
-      auto_return_requested_(false)
+      auto_return_requested_(false),
+      wifi_config_ui_active_(false),
+      wifi_config_saved_effect_(LedEffectType::BREATH),
+      wifi_config_saved_effect_speed_(0.35f),
+      wifi_config_saved_mode_(DisplayMode::CLOCK_HHMMSS)
 {
     queue_ = xQueueCreate(10, sizeof(DisplayMessage));
 }
@@ -390,6 +394,8 @@ void DisplayDaemon::loop()
             update_nixie_transitions(20);
         } else if (current_mode_ == DisplayMode::CLOCK_HHMMSS) {
             update_nixie_transitions(20);
+        } else if (current_mode_ == DisplayMode::CONFIG_CODE) {
+            update_nixie_transitions(20);
         }
 
         update_effects(20);
@@ -403,7 +409,7 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
 {
     switch (msg.command) {
         case DisplayCmd::UPDATE_TIME:
-            if (current_mode_ == DisplayMode::OFF) {
+            if (current_mode_ == DisplayMode::OFF || current_mode_ == DisplayMode::CONFIG_CODE) {
                 break;
             }
             if (current_mode_ == DisplayMode::CLOCK_HHMMSS ||
@@ -424,6 +430,9 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
                 last_digits_valid_ = false;
             }
             if (current_mode_ == DisplayMode::MANUAL_DISPLAY) {
+                reset_tube_transitions();
+                nixie_driver_.display_number(manual_number_);
+            } else if (current_mode_ == DisplayMode::CONFIG_CODE) {
                 reset_tube_transitions();
                 nixie_driver_.display_number(manual_number_);
             } else if (current_mode_ == DisplayMode::DIVERGENCE_METER) {
@@ -495,6 +504,37 @@ void DisplayDaemon::process_message(const DisplayMessage &msg)
                 current_effect_type_ = LedEffectType::NONE;
             }
             effect_color_phase_ = 0.0f;
+            break;
+        case DisplayCmd::ENTER_WIFI_CONFIG:
+            if (!wifi_config_ui_active_) {
+                wifi_config_saved_backlight_ = base_backlight_;
+                wifi_config_saved_effect_ = current_effect_type_;
+                wifi_config_saved_effect_speed_ = effect_speed_;
+                wifi_config_saved_mode_ = current_mode_;
+                wifi_config_ui_active_ = true;
+            }
+            manual_number_ = msg.data.number;
+            current_mode_ = DisplayMode::CONFIG_CODE;
+            reset_tube_transitions();
+            nixie_driver_.display_number(manual_number_);
+            if (base_nixie_brightness_ == 0) {
+                base_nixie_brightness_ = 200;
+            }
+            nixie_driver_.set_brightness(base_nixie_brightness_);
+            base_backlight_.color = rgb_to_hsv(RgbColor{120, 255, 120});
+            base_backlight_.brightness = 200;
+            current_effect_type_ = LedEffectType::BREATH;
+            effect_speed_ = 0.5f;
+            effect_color_phase_ = 0.0f;
+            break;
+        case DisplayCmd::EXIT_WIFI_CONFIG:
+            if (wifi_config_ui_active_) {
+                base_backlight_ = wifi_config_saved_backlight_;
+                current_effect_type_ = wifi_config_saved_effect_;
+                effect_speed_ = wifi_config_saved_effect_speed_;
+                effect_color_phase_ = 0.0f;
+                wifi_config_ui_active_ = false;
+            }
             break;
         default:
             break;

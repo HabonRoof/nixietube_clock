@@ -1,6 +1,6 @@
 # Web API
 
-HTTP JSON API served by the Nixie clock when connected to its Wi-Fi access point (`NixieClock` / `192.168.8.8`).
+HTTP JSON API served when the Nixie clock config Wi-Fi AP is active (`NixieClock-XXXX` / `192.168.8.8`). Enter config mode with a **3 s long-press on button 1 + button 2 together**.
 
 All JSON endpoints use `Content-Type: application/json`. Successful mutations return `{"ok": true}`. Errors return HTTP 4xx/5xx with:
 
@@ -30,6 +30,61 @@ Maximum POST body size: **4096 bytes**.
 | `/api/audio/tracks` | GET | MP3 track list from SD card |
 | `/api/audio/status` | GET | Current playback state |
 | `/api/audio/play` | POST | Toggle play/pause for a track |
+| `/api/ap/status` | GET | Config AP active flag, SSID, password, session code, remaining seconds |
+| `/api/ap/stop` | POST | Deauth connected clients and stop config AP |
+| `/api/wifi` | GET | Home WiFi SSID (configured flag; password never returned) |
+| `/api/wifi` | POST | Save home WiFi credentials to NVS |
+| `/api/wifi` | DELETE | Clear home WiFi credentials |
+| `/api/ntp/status` | GET | Last NTP sync timestamp and success flag |
+
+## `GET /api/ap/status`
+
+```json
+{
+  "active": true,
+  "session_code": 3847,
+  "ssid": "NixieClock-3847",
+  "password": "nixie2026",
+  "remaining_sec": 842,
+  "client_count": 1
+}
+```
+
+## `POST /api/ap/stop`
+
+Stops the config AP after deauthenticating connected stations. Response: `{"ok": true}`.
+
+## `GET /api/wifi`
+
+```json
+{
+  "configured": true,
+  "ssid": "MyHomeWiFi"
+}
+```
+
+## `POST /api/wifi`
+
+```json
+{
+  "ssid": "MyHomeWiFi",
+  "password": "secret"
+}
+```
+
+## `DELETE /api/wifi`
+
+Clears stored home WiFi credentials. NTP scheduled sync is skipped until reconfigured.
+
+## `GET /api/ntp/status`
+
+```json
+{
+  "configured": true,
+  "last_success": true,
+  "last_ntp_unix": 1736123456
+}
+```
 
 ## `GET /api/settings`
 

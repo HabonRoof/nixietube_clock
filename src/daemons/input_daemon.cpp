@@ -1,5 +1,6 @@
 #include "daemons/input_daemon.h"
 #include "system_controller.h"
+#include "wifi_manager.h"
 #include "message_types.h"
 #include "button_config.h"
 #include "driver/gpio.h"
@@ -11,11 +12,13 @@ static constexpr uint32_t kPollMs = 20;
 static constexpr uint32_t kDebounceMs = 50;
 static constexpr uint32_t kInterPressMs = 200;
 
-InputDaemon::InputDaemon(SystemController &system_controller)
+InputDaemon::InputDaemon(SystemController &system_controller, WifiManager *wifi_manager)
     : system_controller_(system_controller),
+      wifi_manager_(wifi_manager),
       system_queue_(nullptr),
       task_handle_(nullptr),
       debounce_{},
+      ap_config_combo_{},
       tick_ms_(0)
 {
     for (auto &state : debounce_) {
@@ -24,6 +27,9 @@ InputDaemon::InputDaemon(SystemController &system_controller)
         state.change_ms = 0;
         state.last_fire_ms = 0;
     }
+    ap_config_combo_.tracking = false;
+    ap_config_combo_.action_fired = false;
+    ap_config_combo_.press_start_ms = 0;
 }
 
 InputDaemon::~InputDaemon()
@@ -54,13 +60,75 @@ void InputDaemon::init_gpio()
     cfg.pull_up_en = GPIO_PULLUP_ENABLE;
     cfg.pull_down_en = GPIO_PULLDOWN_DISABLE;
     ESP_ERROR_CHECK(gpio_config(&cfg));
-    ESP_LOGI(TAG, "Button GPIO initialized (poll %u ms)", kPollMs);
+    ESP_LOGI(TAG, "Button GPIO initialized (poll %u ms, AP combo %u ms)", kPollMs, kLongPressMs);
 }
 
 void InputDaemon::task_entry(void *param)
 {
     auto *daemon = static_cast<InputDaemon *>(param);
     daemon->loop();
+}
+
+bool InputDaemon::ap_combo_blocks_buttons() const
+{
+    return ap_config_combo_.tracking || ap_config_combo_.action_fired;
+}
+
+bool InputDaemon::process_profile_button(uint8_t button_id, bool raw_pressed, bool prev_stable)
+{
+    (void)button_id;
+    if (ap_combo_blocks_buttons()) {
+        return false;
+    }
+
+    if (!raw_pressed && prev_stable) {
+        return true;
+    }
+
+    return false;
+}
+
+void InputDaemon::process_ap_config_combo(bool mode_pressed, bool profile_pressed)
+{
+    const bool both_pressed = mode_pressed && profile_pressed;
+
+    if (!both_pressed) {
+        ap_config_combo_.tracking = false;
+        if (!mode_pressed && !profile_pressed) {
+            ap_config_combo_.action_fired = false;
+        }
+        return;
+    }
+
+    if (!ap_config_combo_.tracking) {
+        ap_config_combo_.tracking = true;
+        ap_config_combo_.action_fired = false;
+        ap_config_combo_.press_start_ms = tick_ms_;
+        return;
+    }
+
+    if (ap_config_combo_.action_fired) {
+        return;
+    }
+
+    if ((tick_ms_ - ap_config_combo_.press_start_ms) < kLongPressMs) {
+        return;
+    }
+
+    ap_config_combo_.action_fired = true;
+    if (!wifi_manager_) {
+        return;
+    }
+
+    if (wifi_manager_->is_config_active()) {
+        wifi_manager_->stop_config_ap();
+        ESP_LOGI(TAG, "BTN_%u+BTN_%u long press: exit WiFi config AP", kButtonModeCycle,
+                 kButtonProfileCycle);
+    } else {
+        wifi_manager_->enter_config_mode();
+        ESP_LOGI(TAG, "BTN_%u+BTN_%u long press: enter WiFi config AP", kButtonModeCycle,
+                 kButtonProfileCycle);
+    }
 }
 
 void InputDaemon::loop()
@@ -70,41 +138,53 @@ void InputDaemon::loop()
     while (true) {
         tick_ms_ += kPollMs;
 
+        bool prev_stable[kButtonCount] = {};
         for (uint8_t i = 0; i < kButtonCount; ++i) {
             const bool raw_pressed = gpio_get_level(kButtonPins[i]) == 0;
-            if (process_debounce(i, raw_pressed, tick_ms_)) {
-                post_button_pressed(i);
+            DebounceState &state = debounce_[i];
+
+            if (raw_pressed != state.last_raw_pressed) {
+                state.last_raw_pressed = raw_pressed;
+                state.change_ms = tick_ms_;
+            }
+
+            prev_stable[i] = state.stable_pressed;
+            if (raw_pressed != state.stable_pressed && (tick_ms_ - state.change_ms) >= kDebounceMs) {
+                state.stable_pressed = raw_pressed;
+            }
+        }
+
+        process_ap_config_combo(debounce_[kButtonModeCycle].stable_pressed,
+                                debounce_[kButtonProfileCycle].stable_pressed);
+
+        for (uint8_t i = 0; i < kButtonCount; ++i) {
+            DebounceState &state = debounce_[i];
+
+            if (i == kButtonProfileCycle) {
+                if (process_profile_button(i, state.stable_pressed, prev_stable[i])) {
+                    if ((tick_ms_ - state.last_fire_ms) >= kInterPressMs) {
+                        state.last_fire_ms = tick_ms_;
+                        post_button_pressed(i);
+                    }
+                }
+                continue;
+            }
+
+            if (ap_combo_blocks_buttons()) {
+                continue;
+            }
+
+            if (state.stable_pressed && !prev_stable[i]) {
+                if ((tick_ms_ - state.last_fire_ms) >= kInterPressMs) {
+                    state.last_fire_ms = tick_ms_;
+                    post_button_pressed(i);
+                }
             }
         }
 
         poll_als();
         vTaskDelay(pdMS_TO_TICKS(kPollMs));
     }
-}
-
-bool InputDaemon::process_debounce(uint8_t button_id, bool raw_pressed, uint32_t now_ms)
-{
-    DebounceState &state = debounce_[button_id];
-
-    if (raw_pressed != state.last_raw_pressed) {
-        state.last_raw_pressed = raw_pressed;
-        state.change_ms = now_ms;
-    }
-
-    const bool prev_stable = state.stable_pressed;
-    if (raw_pressed != state.stable_pressed &&
-        (now_ms - state.change_ms) >= kDebounceMs) {
-        state.stable_pressed = raw_pressed;
-    }
-
-    if (state.stable_pressed && !prev_stable) {
-        if ((now_ms - state.last_fire_ms) >= kInterPressMs) {
-            state.last_fire_ms = now_ms;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 void InputDaemon::post_button_pressed(uint8_t button_id)

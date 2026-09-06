@@ -19,6 +19,8 @@
 #include "daemons/cli_daemon.h"
 #include "daemons/input_daemon.h"
 #include "web_server.h"
+#include "wifi_manager.h"
+#include "ntp_scheduler.h"
 #include "nvs_flash.h"
 #include "i2c_debug_config.h"
 #include "driver/i2c.h"
@@ -86,7 +88,8 @@ extern "C" void app_main(void)
                                               gasgauge_ready,
                                               &charger_controller);
     display_daemon.set_system_queue(system_controller.get_queue());
-    static InputDaemon input_daemon(system_controller);
+    static WifiManager wifi_manager;
+    static InputDaemon input_daemon(system_controller, &wifi_manager);
 
     ClockSettings settings;
     system_state.get_settings(&settings);
@@ -94,7 +97,8 @@ extern "C" void app_main(void)
 
     static CliDaemon cli_daemon(system_controller, charger_controller, gasgauge_service,
                                 power_controller, system_state, audio_daemon);
-    static WebServer web_server(system_controller, system_state, audio_daemon);
+    static WebServer web_server(system_controller, system_state, audio_daemon, wifi_manager);
+    static NtpScheduler ntp_scheduler(wifi_manager, system_state);
 
     static Ltr303 *ltr303 = nullptr;
     static AlsDaemon *als_daemon = nullptr;
@@ -120,6 +124,15 @@ extern "C" void app_main(void)
     display_daemon.start();
     audio_daemon.start();
     system_controller.start();
+    wifi_manager.set_config_callbacks(
+        [&system_controller](uint16_t code) { system_controller.enter_wifi_config_ui(code); },
+        [&system_controller]() { system_controller.on_wifi_config_client_connected(); },
+        [&system_controller]() { system_controller.exit_wifi_config_ui(); });
+    wifi_manager.set_ntp_apply_callback([&system_controller](time_t utc) {
+        return system_controller.apply_ntp_utc(utc, nullptr);
+    });
+    wifi_manager.start();
+    ntp_scheduler.start();
     input_daemon.start();
     if (ltr303 != nullptr && als_daemon != nullptr) {
         if (ltr303->init()) {

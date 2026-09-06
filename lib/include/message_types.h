@@ -81,6 +81,8 @@ enum class DisplayCmd : uint8_t
     SET_NIXIE_BRIGHTNESS,
     SET_NIXIE_TRANSITION,
     POMODORO_START,
+    ENTER_WIFI_CONFIG,
+    EXIT_WIFI_CONFIG,
 };
 
 enum class DisplayMode : uint8_t
@@ -91,6 +93,7 @@ enum class DisplayMode : uint8_t
     DIVERGENCE_METER,
     CATHODE_POISONING,
     MANUAL_DISPLAY,
+    CONFIG_CODE,
     OFF
 };
 
