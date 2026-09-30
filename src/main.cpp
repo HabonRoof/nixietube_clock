@@ -13,6 +13,7 @@
 #include "bq27441/bq27441.h"
 #include "power_switch/gpio_power_switch.h"
 #include "bq25601/bq25601.h"
+#include "husb238/husb238.h"
 #include "power_controller.h"
 #include "system_controller.h"
 #include "system_state.h"
@@ -55,6 +56,7 @@ extern "C" void app_main(void)
 
     static AudioDriver audio_driver(hw_handles.audio_uart_port);
     static GpioPowerSwitch power_switch_driver;
+    static Husb238 husb238(hw_handles.i2c0_port);
     static Bq25601 charger_driver(hw_handles.i2c0_port);
 
     bool gasgauge_ready = false;
@@ -75,7 +77,7 @@ extern "C" void app_main(void)
     }
 
     static DisplayDaemon display_daemon(nixie_driver, led_driver, system_state);
-    static PowerController power_controller(power_switch_driver);
+    static PowerController power_controller(power_switch_driver, &husb238);
 
     system_state.load();
     ClockSettings boot_settings = SystemState::defaults();
@@ -110,8 +112,9 @@ extern "C" void app_main(void)
     }
 
     ESP_LOGI(kLogTag, "Starting Daemons...");
-    power_controller.init();
-    power_controller.set_hv_enabled(true);
+    if (power_controller.init()) {
+        power_controller.bring_up_hv();
+    }
     power_controller.set_dfplayer_enabled(true);
     vTaskDelay(pdMS_TO_TICKS(50));
 

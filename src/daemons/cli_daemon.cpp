@@ -981,6 +981,17 @@ static int disable_hv_func(int argc, char **argv)
     return 0;
 }
 
+// --- Command: pd_status ---
+static int pd_status_func(int argc, char **argv)
+{
+    if (!g_power_controller) {
+        printf("power controller not ready\n");
+        return 1;
+    }
+    printf("%s\n", g_power_controller->pd_status_message());
+    return g_power_controller->pd_bringup_ok() ? 0 : 1;
+}
+
 // --- Command: enable_df_power ---
 static int enable_df_power_func(int argc, char **argv)
 {
@@ -1023,6 +1034,7 @@ static int help_func(int argc, char **argv)
     printf("disable_charging                                Disable charging\n");
     printf("enable_hv                                       Enable HV power rail\n");
     printf("disable_hv                                      Disable HV power rail\n");
+    printf("pd_status                                       Show HUSB238 12V PDO bring-up status\n");
     printf("enable_df_power                                 Enable DFPlayer power rail\n");
     printf("disable_df_power                                Disable DFPlayer power rail\n");
     printf("dftool list                                     List mp3/ folder tracks on SD card\n");
@@ -1308,6 +1320,17 @@ void CliDaemon::register_commands()
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&disable_hv_cmd));
 
+    const esp_console_cmd_t pd_status_cmd = {
+        .command = "pd_status",
+        .help = "Show HUSB238 12V PDO bring-up status",
+        .hint = NULL,
+        .func = &pd_status_func,
+        .argtable = NULL,
+        .func_w_context = nullptr,
+        .context = nullptr,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&pd_status_cmd));
+
     // Register: enable_df_power
     const esp_console_cmd_t enable_df_power_cmd = {
         .command = "enable_df_power",
@@ -1365,7 +1388,7 @@ void CliDaemon::register_commands()
 void CliDaemon::loop()
 {
     register_commands();
-    
+
     // Remove welcome message to not interference debug output
     // printf("\n"
     //        "Welcome to Nixie Clock CLI\n"
