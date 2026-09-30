@@ -42,3 +42,8 @@ bool ChargerController::set_charge_current_ma(uint16_t current_ma)
 {
     return driver_.set_charge_current_ma(current_ma);
 }
+
+bool ChargerController::input_ovp_allows_12v() const
+{
+    return driver_.input_ovp_allows_12v();
+}

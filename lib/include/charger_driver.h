@@ -27,5 +27,9 @@ public:
     virtual bool enable_charging() = 0;
     virtual bool disable_charging() = 0;
     virtual bool set_charge_current_ma(uint16_t current_ma) = 0;
+
+    // True only after REG06 OVP was written and read back as the 14V step,
+    // which is the only BQ25601 threshold that accepts a 12V input.
+    virtual bool input_ovp_allows_12v() const = 0;
 };
 

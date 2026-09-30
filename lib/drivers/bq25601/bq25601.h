@@ -17,6 +17,7 @@ public:
     bool enable_charging() override;
     bool disable_charging() override;
     bool set_charge_current_ma(uint16_t current_ma) override;
+    bool input_ovp_allows_12v() const override;
 
     bool set_vac_ovp_mv(uint16_t ovp_mv);
 
@@ -28,7 +29,9 @@ private:
 
     uint8_t encode_ichg(uint16_t current_ma) const;
     uint8_t encode_vac_ovp(uint16_t ovp_mv) const;
+    static uint16_t decode_vac_ovp_mv(uint8_t code);
 
     i2c_port_t port_;
     uint8_t address_;
+    bool ovp_allows_12v_ = false;
 };

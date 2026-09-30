@@ -16,6 +16,7 @@ public:
     bool enable_charging();
     bool disable_charging();
     bool set_charge_current_ma(uint16_t current_ma);
+    bool input_ovp_allows_12v() const;
 
 private:
     IChargerDriver &driver_;

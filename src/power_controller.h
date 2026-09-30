@@ -12,6 +12,8 @@ public:
     bool init();
     // HV boost stays off until a 12V PD contract is established.
     bool bring_up_hv();
+    // Leave the HUSB238 5V default in place and keep the HV boost off.
+    void keep_default_5v(const char *reason);
     bool set_hv_enabled(bool enabled);
     bool set_dfplayer_enabled(bool enabled);
 

@@ -21,6 +21,8 @@ static constexpr uint32_t kAttachWaitMs = 500;
 static constexpr uint32_t kCapabilityWaitMs = 500;
 static constexpr uint32_t kContractWaitMs = 1000;
 static constexpr uint32_t kPollMs = 50;
+static constexpr uint32_t kRequestAttempts = 5;
+static constexpr uint32_t kRetryIntervalMs = 1000;
 
 Husb238::Husb238(i2c_port_t port, uint8_t address)
     : port_(port),
@@ -107,6 +109,30 @@ bool Husb238::twelve_volt_contract(Husb238Contract &contract)
 }
 
 Husb238RequestResult Husb238::request_12v(Husb238Contract &contract)
+{
+    Husb238RequestResult result = Husb238RequestResult::I2cFail;
+    for (uint32_t attempt = 1; attempt <= kRequestAttempts; ++attempt) {
+        result = request_12v_once(contract);
+        if (result == Husb238RequestResult::Success ||
+            result == Husb238RequestResult::NotAdvertised) {
+            return result;
+        }
+        if (attempt == kRequestAttempts) {
+            break;
+        }
+        ESP_LOGW(TAG, "12V request attempt %u/%u failed (%s), retry in 1s",
+                 static_cast<unsigned>(attempt),
+                 static_cast<unsigned>(kRequestAttempts),
+                 result_name(result));
+        vTaskDelay(pdMS_TO_TICKS(kRetryIntervalMs));
+    }
+
+    ESP_LOGW(TAG, "12V request failed after %u attempts, staying at default 5V",
+             static_cast<unsigned>(kRequestAttempts));
+    return result;
+}
+
+Husb238RequestResult Husb238::request_12v_once(Husb238Contract &contract)
 {
     contract = {};
     if (!read_contract(contract)) {

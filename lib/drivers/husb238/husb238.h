@@ -76,6 +76,7 @@ private:
     bool attached(Husb238Contract &contract);
     bool twelve_volt_advertised(Husb238Contract &contract);
     bool twelve_volt_contract(Husb238Contract &contract);
+    Husb238RequestResult request_12v_once(Husb238Contract &contract);
 
     i2c_port_t port_;
     uint8_t address_;

@@ -43,7 +43,7 @@ bool PowerController::bring_up_hv()
     if (result != Husb238RequestResult::Success) {
         char message[sizeof(pd_status_)];
         snprintf(message, sizeof(message),
-                 "HUSB238: 12V PDO failed (%s, now %s, %s), HV boost left off",
+                 "HUSB238: 12V PDO failed (%s, now %s, %s), staying at 5V, HV off",
                  Husb238::result_name(result),
                  Husb238::voltage_name(contract.voltage),
                  Husb238::response_name(contract.response));
@@ -62,6 +62,12 @@ bool PowerController::bring_up_hv()
              Husb238::current_name(contract.current_code));
     publish_pd_status(true, message);
     return true;
+}
+
+void PowerController::keep_default_5v(const char *reason)
+{
+    set_hv_enabled(false);
+    publish_pd_status(false, reason);
 }
 
 bool PowerController::set_hv_enabled(bool enabled)

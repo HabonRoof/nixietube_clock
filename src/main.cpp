@@ -112,8 +112,18 @@ extern "C" void app_main(void)
     }
 
     ESP_LOGI(kLogTag, "Starting Daemons...");
+    // BQ25601 powers up with VAC OVP at 5.5V. Confirm the 14V step, which is
+    // what accepts 12V, before HUSB238 is allowed to leave the default 5V PDO.
+    if (!charger_controller.init()) {
+        ESP_LOGW(kLogTag, "BQ25601 init failed");
+    }
     if (power_controller.init()) {
-        power_controller.bring_up_hv();
+        if (charger_controller.input_ovp_allows_12v()) {
+            power_controller.bring_up_hv();
+        } else {
+            power_controller.keep_default_5v(
+                "BQ25601 OVP readback failed, 12V PDO not requested, staying at 5V, HV off");
+        }
     }
     power_controller.set_dfplayer_enabled(true);
     vTaskDelay(pdMS_TO_TICKS(50));
@@ -148,8 +158,6 @@ extern "C" void app_main(void)
     } else if (i2c_debug::kDisableALS) {
         ESP_LOGW(kLogTag, "ALS disabled");
     }
-    vTaskDelay(pdMS_TO_TICKS(100));
-    charger_controller.init();
     vTaskDelay(pdMS_TO_TICKS(100));
     cli_daemon.start();
     vTaskDelay(pdMS_TO_TICKS(100));
