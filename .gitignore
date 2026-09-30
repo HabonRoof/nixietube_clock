@@ -18,3 +18,4 @@ hardware/**/*.kicad_sch-bak
 hardware/**/*.kicad_pro-bak
 hardware/**/*.kicad_prl
 hardware/**/*fp-info-cache
+managed_components/
