@@ -13,6 +13,39 @@
 namespace {
 constexpr const char *kTag = "WifiManager";
 
+bool wifi_call_ok(esp_err_t err, const char *what)
+{
+    if (err == ESP_OK) {
+        return true;
+    }
+    ESP_LOGE(kTag, "%s failed: %s", what, esp_err_to_name(err));
+    return false;
+}
+
+bool configure_ap_address(esp_netif_t *ap_netif)
+{
+    esp_netif_ip_info_t ip_info = {};
+    if (esp_netif_str_to_ip4("192.168.8.8", &ip_info.ip) != ESP_OK ||
+        esp_netif_str_to_ip4("192.168.8.8", &ip_info.gw) != ESP_OK ||
+        esp_netif_str_to_ip4("255.255.255.0", &ip_info.netmask) != ESP_OK) {
+        ESP_LOGE(kTag, "Invalid config AP address");
+        return false;
+    }
+
+    esp_err_t err = esp_netif_dhcps_stop(ap_netif);
+    if (err != ESP_OK && err != ESP_ERR_ESP_NETIF_DHCP_ALREADY_STOPPED) {
+        return wifi_call_ok(err, "esp_netif_dhcps_stop");
+    }
+    if (!wifi_call_ok(esp_netif_set_ip_info(ap_netif, &ip_info), "esp_netif_set_ip_info")) {
+        return false;
+    }
+    err = esp_netif_dhcps_start(ap_netif);
+    if (err != ESP_OK && err != ESP_ERR_ESP_NETIF_DHCP_ALREADY_STARTED) {
+        return wifi_call_ok(err, "esp_netif_dhcps_start");
+    }
+    return true;
+}
+
 portMUX_TYPE g_event_mux = portMUX_INITIALIZER_UNLOCKED;
 WifiManager *g_wifi_manager = nullptr;
 
@@ -38,6 +71,10 @@ WifiManager::WifiManager()
       client_aid_count_(0),
       handlers_registered_(false),
       ap_netif_(nullptr),
+      sta_netif_(nullptr),
+      ap_stop_handler_(nullptr),
+      sta_stop_handler_(nullptr),
+      wifi_stopped_sem_(nullptr),
       ntp_done_sem_(nullptr),
       command_queue_(nullptr)
 {
@@ -54,6 +91,18 @@ WifiManager::~WifiManager()
         vQueueDelete(command_queue_);
         command_queue_ = nullptr;
     }
+    if (ap_stop_handler_) {
+        esp_event_handler_instance_unregister(WIFI_EVENT, WIFI_EVENT_AP_STOP, ap_stop_handler_);
+        ap_stop_handler_ = nullptr;
+    }
+    if (sta_stop_handler_) {
+        esp_event_handler_instance_unregister(WIFI_EVENT, WIFI_EVENT_STA_STOP, sta_stop_handler_);
+        sta_stop_handler_ = nullptr;
+    }
+    if (wifi_stopped_sem_) {
+        vSemaphoreDelete(wifi_stopped_sem_);
+        wifi_stopped_sem_ = nullptr;
+    }
     if (ntp_done_sem_) {
         vSemaphoreDelete(ntp_done_sem_);
         ntp_done_sem_ = nullptr;
@@ -67,7 +116,12 @@ void WifiManager::start()
         return;
     }
     command_queue_ = xQueueCreate(4, sizeof(CommandMsg));
+    wifi_stopped_sem_ = xSemaphoreCreateBinary();
     ntp_done_sem_ = xSemaphoreCreateBinary();
+    if (!command_queue_ || !wifi_stopped_sem_ || !ntp_done_sem_) {
+        ESP_LOGE(kTag, "Failed to create WiFi manager queues");
+        return;
+    }
     g_wifi_manager = this;
     xTaskCreate(task_entry, "wifi_mgr", 8192, this, 4, &task_handle_);
 }
@@ -91,7 +145,11 @@ bool WifiManager::enter_config_mode()
         return false;
     }
     CommandMsg msg = {Command::EnterConfig};
-    return xQueueSend(command_queue_, &msg, pdMS_TO_TICKS(100)) == pdTRUE;
+    if (xQueueSend(command_queue_, &msg, pdMS_TO_TICKS(100)) != pdTRUE) {
+        ESP_LOGW(kTag, "Config AP command dropped");
+        return false;
+    }
+    return true;
 }
 
 void WifiManager::stop_config_ap()
@@ -100,7 +158,9 @@ void WifiManager::stop_config_ap()
         return;
     }
     CommandMsg msg = {Command::StopConfig};
-    xQueueSend(command_queue_, &msg, pdMS_TO_TICKS(100));
+    if (xQueueSend(command_queue_, &msg, pdMS_TO_TICKS(100)) != pdTRUE) {
+        ESP_LOGW(kTag, "Config AP stop command dropped");
+    }
 }
 
 void WifiManager::request_ntp_sync()
@@ -231,30 +291,39 @@ bool WifiManager::ensure_wifi_init()
 {
     esp_err_t err = esp_netif_init();
     if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
-        ESP_ERROR_CHECK(err);
+        return wifi_call_ok(err, "esp_netif_init");
     }
     err = esp_event_loop_create_default();
     if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
-        ESP_ERROR_CHECK(err);
+        return wifi_call_ok(err, "esp_event_loop_create_default");
     }
 
     if (!handlers_registered_) {
-        ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
-                                                            &WifiManager::wifi_event_handler, this,
-                                                            nullptr));
-        ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
-                                                            &WifiManager::ip_event_handler, this,
-                                                            nullptr));
+        esp_event_handler_instance_t wifi_inst = nullptr;
+        esp_event_handler_instance_t ip_inst = nullptr;
+        err = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                                  &WifiManager::wifi_event_handler, this, &wifi_inst);
+        if (err != ESP_OK) {
+            return wifi_call_ok(err, "WIFI_EVENT handler register");
+        }
+        err = esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                                  &WifiManager::ip_event_handler, this, &ip_inst);
+        if (err != ESP_OK) {
+            esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_inst);
+            return wifi_call_ok(err, "IP_EVENT handler register");
+        }
         handlers_registered_ = true;
     }
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     err = esp_wifi_init(&cfg);
     if (err != ESP_OK && err != ESP_ERR_WIFI_INIT_STATE) {
-        ESP_LOGE(kTag, "esp_wifi_init: %s", esp_err_to_name(err));
-        return false;
+        return wifi_call_ok(err, "esp_wifi_init");
     }
-    return true;
+
+    // Pairing credentials are ephemeral. Keeping them out of the Wi-Fi driver's
+    // NVS avoids a flash write while the nixie scan is running.
+    return wifi_call_ok(esp_wifi_set_storage(WIFI_STORAGE_RAM), "esp_wifi_set_storage(RAM)");
 }
 
 void WifiManager::generate_session()
@@ -278,9 +347,89 @@ esp_netif_t *WifiManager::ensure_ap_netif()
     return ap_netif_;
 }
 
+esp_netif_t *WifiManager::ensure_sta_netif()
+{
+    if (sta_netif_) {
+        return sta_netif_;
+    }
+
+    sta_netif_ = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (sta_netif_) {
+        return sta_netif_;
+    }
+
+    sta_netif_ = esp_netif_create_default_wifi_sta();
+    return sta_netif_;
+}
+
+void WifiManager::wifi_stopped_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
+                                       void *event_data)
+{
+    (void)event_base;
+    (void)event_id;
+    (void)event_data;
+    auto *mgr = static_cast<WifiManager *>(arg);
+    if (mgr->wifi_stopped_sem_) {
+        xSemaphoreGive(mgr->wifi_stopped_sem_);
+    }
+}
+
+bool WifiManager::install_stop_handlers_last()
+{
+    if (ap_stop_handler_) {
+        esp_event_handler_instance_unregister(WIFI_EVENT, WIFI_EVENT_AP_STOP, ap_stop_handler_);
+        ap_stop_handler_ = nullptr;
+    }
+    if (sta_stop_handler_) {
+        esp_event_handler_instance_unregister(WIFI_EVENT, WIFI_EVENT_STA_STOP, sta_stop_handler_);
+        sta_stop_handler_ = nullptr;
+    }
+
+    esp_err_t err = esp_event_handler_instance_register(
+        WIFI_EVENT, WIFI_EVENT_AP_STOP, &WifiManager::wifi_stopped_handler, this, &ap_stop_handler_);
+    if (!wifi_call_ok(err, "AP stop handler register")) {
+        return false;
+    }
+    err = esp_event_handler_instance_register(
+        WIFI_EVENT, WIFI_EVENT_STA_STOP, &WifiManager::wifi_stopped_handler, this, &sta_stop_handler_);
+    if (!wifi_call_ok(err, "STA stop handler register")) {
+        return false;
+    }
+    return true;
+}
+
+bool WifiManager::await_wifi_stopped()
+{
+    if (!wifi_stopped_sem_) {
+        ESP_LOGE(kTag, "WiFi stop semaphore missing");
+        return false;
+    }
+
+    const bool handlers_ok = install_stop_handlers_last();
+    xSemaphoreTake(wifi_stopped_sem_, 0);
+
+    const esp_err_t err = esp_wifi_stop();
+    if (err == ESP_ERR_WIFI_NOT_STARTED || err == ESP_ERR_WIFI_NOT_INIT) {
+        return true;
+    }
+    if (!wifi_call_ok(err, "esp_wifi_stop")) {
+        return false;
+    }
+    if (!handlers_ok) {
+        ESP_LOGE(kTag, "WiFi stop was requested but the stop event was not observed");
+        return false;
+    }
+    if (xSemaphoreTake(wifi_stopped_sem_, pdMS_TO_TICKS(1000)) != pdTRUE) {
+        ESP_LOGE(kTag, "Timed out waiting for WiFi stop");
+        return false;
+    }
+    return true;
+}
+
 bool WifiManager::start_config_ap()
 {
     if (!ensure_wifi_init()) {
+        ESP_LOGE(kTag, "Config AP cancelled");
         return false;
     }
 
@@ -288,32 +437,36 @@ bool WifiManager::start_config_ap()
 
     esp_netif_t *ap_netif = ensure_ap_netif();
     if (!ap_netif) {
-        ESP_LOGE(kTag, "Failed to get/create AP netif");
+        shutdown_wifi();
+        ESP_LOGE(kTag, "Config AP cancelled: AP netif missing");
         return false;
     }
 
-    esp_netif_ip_info_t ip_info = {};
-    esp_netif_str_to_ip4("192.168.8.8", &ip_info.ip);
-    esp_netif_str_to_ip4("192.168.8.8", &ip_info.gw);
-    esp_netif_str_to_ip4("255.255.255.0", &ip_info.netmask);
-    esp_netif_dhcps_stop(ap_netif);
-    esp_netif_set_ip_info(ap_netif, &ip_info);
-    esp_netif_dhcps_start(ap_netif);
-
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+    if (!configure_ap_address(ap_netif)) {
+        shutdown_wifi();
+        ESP_LOGE(kTag, "Config AP cancelled");
+        return false;
+    }
 
     wifi_config_t ap_config = {};
     std::strncpy(reinterpret_cast<char *>(ap_config.ap.ssid), config_ssid_,
                  sizeof(ap_config.ap.ssid));
     std::strncpy(reinterpret_cast<char *>(ap_config.ap.password), kApPass,
                  sizeof(ap_config.ap.password));
-    ap_config.ap.ssid_len = std::strlen(config_ssid_);
+    ap_config.ap.ssid_len = static_cast<uint8_t>(std::strlen(config_ssid_));
     ap_config.ap.channel = 1;
     ap_config.ap.max_connection = 2;
     ap_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+    ap_config.ap.beacon_interval = 100;
+    ap_config.ap.dtim_period = 1;
 
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
+    if (!wifi_call_ok(esp_wifi_set_mode(WIFI_MODE_AP), "esp_wifi_set_mode(AP)") ||
+        !wifi_call_ok(esp_wifi_set_config(WIFI_IF_AP, &ap_config), "esp_wifi_set_config(AP)") ||
+        !wifi_call_ok(esp_wifi_start(), "esp_wifi_start(AP)")) {
+        shutdown_wifi();
+        ESP_LOGE(kTag, "Config AP cancelled");
+        return false;
+    }
 
     client_count_ = 0;
     client_aid_count_ = 0;
@@ -348,13 +501,17 @@ void WifiManager::deauth_all_clients()
     }
 }
 
-void WifiManager::shutdown_wifi()
+bool WifiManager::shutdown_wifi()
 {
-    esp_wifi_stop();
+    const bool stopped = await_wifi_stopped();
+    if (!stopped) {
+        ESP_LOGE(kTag, "WiFi radio was not confirmed stopped");
+    }
     state_ = WifiManagerState::Off;
     client_count_ = 0;
     client_aid_count_ = 0;
     idle_timer_active_ = false;
+    return stopped;
 }
 
 void WifiManager::exit_config_ap_internal(bool invoke_callback)
@@ -364,8 +521,9 @@ void WifiManager::exit_config_ap_internal(bool invoke_callback)
     }
     deauth_all_clients();
     vTaskDelay(pdMS_TO_TICKS(100));
-    shutdown_wifi();
-    ESP_LOGI(kTag, "Config AP stopped");
+    if (shutdown_wifi()) {
+        ESP_LOGI(kTag, "Config AP stopped");
+    }
     if (invoke_callback && on_config_exit_) {
         on_config_exit_();
     }
@@ -400,8 +558,10 @@ bool WifiManager::run_sta_ntp_sync_blocking()
         return false;
     }
 
-    esp_netif_create_default_wifi_sta();
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    if (!ensure_sta_netif()) {
+        ESP_LOGE(kTag, "NTP cancelled: STA netif missing");
+        return false;
+    }
 
     wifi_config_t sta_config = {};
     std::strncpy(reinterpret_cast<char *>(sta_config.sta.ssid), creds.ssid,
@@ -409,12 +569,23 @@ bool WifiManager::run_sta_ntp_sync_blocking()
     std::strncpy(reinterpret_cast<char *>(sta_config.sta.password), creds.password,
                  sizeof(sta_config.sta.password));
     sta_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
+
+    if (!wifi_call_ok(esp_wifi_set_mode(WIFI_MODE_STA), "esp_wifi_set_mode(STA)") ||
+        !wifi_call_ok(esp_wifi_set_config(WIFI_IF_STA, &sta_config), "esp_wifi_set_config(STA)") ||
+        !wifi_call_ok(esp_wifi_start(), "esp_wifi_start(STA)")) {
+        shutdown_wifi();
+        ESP_LOGE(kTag, "NTP cancelled");
+        return false;
+    }
 
     xSemaphoreTake(ntp_done_sem_, 0);
     state_ = WifiManagerState::StaNtpSync;
-    ESP_ERROR_CHECK(esp_wifi_start());
-    ESP_ERROR_CHECK(esp_wifi_connect());
+    if (!wifi_call_ok(esp_wifi_connect(), "esp_wifi_connect")) {
+        shutdown_wifi();
+        wifi_ntp_status_save(0, false);
+        ESP_LOGE(kTag, "NTP cancelled");
+        return false;
+    }
 
     if (xSemaphoreTake(ntp_done_sem_, pdMS_TO_TICKS(kStaConnectTimeoutMs)) != pdTRUE) {
         ESP_LOGW(kTag, "STA connect timeout");
@@ -440,7 +611,10 @@ bool WifiManager::run_sta_ntp_sync_blocking()
     }
     esp_sntp_stop();
 
-    esp_wifi_disconnect();
+    const esp_err_t disc = esp_wifi_disconnect();
+    if (disc != ESP_OK && disc != ESP_ERR_WIFI_NOT_STARTED && disc != ESP_ERR_WIFI_NOT_INIT) {
+        ESP_LOGW(kTag, "esp_wifi_disconnect: %s", esp_err_to_name(disc));
+    }
     shutdown_wifi();
 
     if (!ntp_ok) {
