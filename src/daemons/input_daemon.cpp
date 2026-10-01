@@ -120,7 +120,11 @@ void InputDaemon::process_ap_config_combo(bool mode_pressed, bool profile_presse
 
     if (!ap_config_combo_.tracking) {
         ap_config_combo_.tracking = true;
-        ap_config_combo_.action_fired = false;
+        // A bounce while the combo is still held must not arm a second 3 s press.
+        // action_fired clears only after both buttons are released.
+        if (ap_config_combo_.action_fired) {
+            return;
+        }
         ap_config_combo_.press_start_ms = tick_ms_;
         return;
     }

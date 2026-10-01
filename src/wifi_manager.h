@@ -78,12 +78,18 @@ private:
     static void ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
                                  void *event_data);
 
+    static void wifi_stopped_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
+                                     void *event_data);
+
     void run();
     bool ensure_wifi_init();
     bool start_config_ap();
     void deauth_all_clients();
-    void shutdown_wifi();
+    bool shutdown_wifi();
+    bool install_stop_handlers_last();
+    bool await_wifi_stopped();
     esp_netif_t *ensure_ap_netif();
+    esp_netif_t *ensure_sta_netif();
     void handle_config_timeout();
     void handle_idle_timeout();
     bool run_sta_ntp_sync_blocking();
@@ -105,6 +111,10 @@ private:
     uint8_t client_aid_count_;
     bool handlers_registered_;
     esp_netif_t *ap_netif_;
+    esp_netif_t *sta_netif_;
+    esp_event_handler_instance_t ap_stop_handler_;
+    esp_event_handler_instance_t sta_stop_handler_;
+    SemaphoreHandle_t wifi_stopped_sem_;
     SemaphoreHandle_t ntp_done_sem_;
 
     ConfigEnterFn on_config_enter_;
