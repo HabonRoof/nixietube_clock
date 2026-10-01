@@ -215,7 +215,6 @@ HardwareHandles SystemController::init_hardware()
             .invert_out = 0,
             .with_dma = 0,
             .allow_pd = 0,
-            .init_level = 0,
         },
     };
     ESP_ERROR_CHECK(rmt_new_tx_channel(&rmt_config, &handles.led_rmt_channel));
