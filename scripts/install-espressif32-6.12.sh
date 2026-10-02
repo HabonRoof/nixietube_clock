@@ -100,8 +100,21 @@ if [[ -z "${platform_json}" ]]; then
 fi
 
 platform_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "${platform_json}")"
-fw_version="$(tr -d '[:space:]' < "${PIO_PACKAGES}/framework-espidf/version.txt")"
 fw_pkg="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "${PIO_PACKAGES}/framework-espidf/.piopm")"
+cmake_version="$(python3 - "${PIO_PACKAGES}/framework-espidf/tools/cmake/version.cmake" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+parts = dict(re.findall(r"set\(IDF_VERSION_(MAJOR|MINOR|PATCH) (\d+)\)", text))
+print(f"{parts['MAJOR']}.{parts['MINOR']}.{parts['PATCH']}")
+PY
+)"
+# PlatformIO writes version.txt on the first build when the package omits it.
+# Create it here so the install matches a local framework that already has 5.5.0.
+version_file="${PIO_PACKAGES}/framework-espidf/version.txt"
+if [[ ! -f "${version_file}" ]]; then
+  printf '%s\n' "${cmake_version}" > "${version_file}"
+fi
+fw_version="$(tr -d '[:space:]' < "${version_file}")"
 
 echo "espressif32 platform: ${platform_version}"
 echo "framework-espidf package: ${fw_pkg}"
@@ -111,8 +124,8 @@ if [[ "${platform_version}" != "6.12.0" ]]; then
   echo "Expected espressif32 6.12.0, found ${platform_version}" >&2
   exit 1
 fi
-if [[ "${fw_version}" != "5.5.0" ]]; then
-  echo "Expected ESP-IDF 5.5.0, found ${fw_version}" >&2
+if [[ "${fw_version}" != "5.5.0" || "${cmake_version}" != "5.5.0" ]]; then
+  echo "Expected ESP-IDF 5.5.0, found version.txt=${fw_version} cmake=${cmake_version}" >&2
   exit 1
 fi
 if [[ "${fw_pkg}" != 3.50500.* ]]; then
