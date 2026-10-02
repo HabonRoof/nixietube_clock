@@ -1,4 +1,7 @@
 .pio
+# PlatformIO stores config in sdkconfig.<env>. A root sdkconfig is not
+# used by this project; an older copy was an ESP-IDF 6.1 / esp32 leftover.
+/sdkconfig
 **/.DS_Store
 .vscode/.browse.c_cpp.db*
 .vscode/c_cpp_properties.json

@@ -23,7 +23,15 @@ Whether you want to hack on display effects, add CLI tools, improve the web UI, 
 
 ## Developing with PlatformIO
 
-This project uses **PlatformIO + ESP-IDF**. You can work from VS Code / Cursor or from the CLI.
+This project uses **PlatformIO + ESP-IDF 5.5.0**. You can work from VS Code / Cursor or from the CLI.
+
+The supported platform is **`espressif32` 6.12.0** (`platform = espressif32@6.12.0` in `platformio.ini`). That release installs `framework-espidf` 3.50500.0, whose `version.txt` is ESP-IDF **5.5.0**. Environment-specific configs `sdkconfig.esp32_s3_nixie` and `sdkconfig.esp32_s3_devkitc_1`, plus `dependencies.lock`, match that IDF. A fresh machine or a Cursor cloud agent should install this exact stack:
+
+```bash
+bash scripts/install-espressif32-6.12.sh
+```
+
+The script installs PlatformIO Core when `~/.platformio/penv` is missing, removes an installed `espressif32` 7.x platform and the ESP-IDF 6.1 package (`framework-espidf` 4.60100.0, `version.txt` 6.1.0) when those are present, then installs `platformio/espressif32@6.12.0` together with `framework-espidf` 3.50500.0 and checks that the framework `version.txt` is `5.5.0`. The Cursor cloud environment for this repo is saved in the dashboard (there is no `.cursor/environment.json`); use the same script as that environment's `install` command. See `AGENTS.md`.
 
 ### 1. Install tools
 
