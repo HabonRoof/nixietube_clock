@@ -71,6 +71,19 @@ fi
 echo "Installing platformio/espressif32@6.12.0"
 pio pkg install -g -p "platformio/espressif32@6.12.0"
 
+# `pio pkg install -p` does not pull optional framework/toolchain packages.
+# ESP-IDF builds need these; versions match platform-espressif32 6.12.0.
+echo "Installing framework-espidf 3.50500.0 (ESP-IDF 5.5.0) and IDF 5.5 toolchains"
+pio pkg install -g -t "platformio/framework-espidf@3.50500.0"
+pio pkg install -g -t "platformio/toolchain-xtensa-esp-elf@14.2.0+20241119"
+pio pkg install -g -t "platformio/toolchain-riscv32-esp@14.2.0+20241119"
+pio pkg install -g -t "platformio/tool-cmake@~3.30.0"
+pio pkg install -g -t "platformio/tool-ninja@^1.7.0"
+pio pkg install -g -t "platformio/toolchain-esp32ulp@~1.23800.0"
+pio pkg install -g -t "platformio/tool-esp-rom-elfs@0.0.1+20241011"
+pio pkg install -g -t "espressif/tool-xtensa-esp-elf-gdb@~12.1.0"
+pio pkg install -g -t "espressif/tool-riscv32-esp-elf-gdb@~12.1.0"
+
 platform_json=""
 for candidate in \
   "${PIO_PLATFORMS}/espressif32/platform.json" \

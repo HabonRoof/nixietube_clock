@@ -31,7 +31,7 @@ The supported platform is **`espressif32` 6.12.0** (`platform = espressif32@6.12
 bash scripts/install-espressif32-6.12.sh
 ```
 
-The script installs PlatformIO Core when `~/.platformio/penv` is missing, removes an installed `espressif32` 7.x platform and the ESP-IDF 6.1 package (`framework-espidf` 4.60100.0, `version.txt` 6.1.0) when those are present, then installs `platformio/espressif32@6.12.0` and checks that the framework `version.txt` is `5.5.0`. The Cursor cloud environment for this repo is saved in the dashboard (there is no `.cursor/environment.json`); use the same script as that environment's `install` command. See `AGENTS.md`.
+The script installs PlatformIO Core when `~/.platformio/penv` is missing, removes an installed `espressif32` 7.x platform and the ESP-IDF 6.1 package (`framework-espidf` 4.60100.0, `version.txt` 6.1.0) when those are present, then installs `platformio/espressif32@6.12.0` together with `framework-espidf` 3.50500.0 and checks that the framework `version.txt` is `5.5.0`. The Cursor cloud environment for this repo is saved in the dashboard (there is no `.cursor/environment.json`); use the same script as that environment's `install` command. See `AGENTS.md`.
 
 ### 1. Install tools
 
