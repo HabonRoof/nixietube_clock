@@ -113,10 +113,10 @@ extern "C" void app_main(void)
     audio_daemon.start();
     system_controller.start();
     wifi_manager.set_config_callbacks(
-        [&system_controller](uint16_t code) { system_controller.enter_wifi_config_ui(code); },
-        [&system_controller]() { system_controller.on_wifi_config_client_connected(); },
-        [&system_controller]() { system_controller.exit_wifi_config_ui(); });
-    wifi_manager.set_ntp_apply_callback([&system_controller](time_t utc) {
+        [](uint16_t code) { system_controller.enter_wifi_config_ui(code); },
+        []() { system_controller.on_wifi_config_client_connected(); },
+        []() { system_controller.exit_wifi_config_ui(); });
+    wifi_manager.set_ntp_apply_callback([](time_t utc) {
         return system_controller.apply_ntp_utc(utc, nullptr);
     });
     wifi_manager.start();
