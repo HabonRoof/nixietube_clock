@@ -43685,7 +43685,7 @@
 				(justify mirror)
 			)
 		)
-		(property "LCSC PN" ""
+		(property "LCSC PN" "C17168"
 			(at 0 0 270)
 			(unlocked yes)
 			(layer "B.Fab")
