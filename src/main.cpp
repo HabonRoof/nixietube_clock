@@ -24,7 +24,7 @@
 #include "ntp_scheduler.h"
 #include "nvs_flash.h"
 #include "i2c_debug_config.h"
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 #include "ltr303/ltr303.h"
 #include "daemons/als_daemon.h"
 

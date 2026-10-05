@@ -5,7 +5,9 @@
 static const char *TAG = "DS3231";
 
 Ds3231::Ds3231(i2c_port_t port, uint8_t address)
-    : port_(port), address_(address)
+    : port_(port),
+      dev_(i2c_bus_add_device(port, address)),
+      address_(address)
 {
 }
 
@@ -178,32 +180,11 @@ bool Ds3231::write_register(uint8_t reg, uint8_t val)
 bool Ds3231::read_registers(uint8_t reg, uint8_t *data, size_t len)
 {
     I2cBusLock lock(port_);
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, reg, true);
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_READ, true);
-    if (len > 1) {
-        i2c_master_read(cmd, data, len - 1, I2C_MASTER_ACK);
-    }
-    i2c_master_read_byte(cmd, data + len - 1, I2C_MASTER_NACK);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(1000));
-    i2c_cmd_link_delete(cmd);
-    return ret == ESP_OK;
+    return i2c_bus_read(dev_, reg, data, len, 1000) == ESP_OK;
 }
 
 bool Ds3231::write_registers(uint8_t reg, const uint8_t *data, size_t len)
 {
     I2cBusLock lock(port_);
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, reg, true);
-    i2c_master_write(cmd, const_cast<uint8_t*>(data), len, true);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(1000));
-    i2c_cmd_link_delete(cmd);
-    return ret == ESP_OK;
+    return i2c_bus_write(dev_, reg, data, len, 1000) == ESP_OK;
 }

@@ -37,7 +37,7 @@ static constexpr uint16_t kVacOvpMvByCode[] = {5500, 6500, 10500, 14000};
 
 Bq25601::Bq25601(i2c_port_t port, uint8_t address)
     : port_(port),
-      address_(address)
+      dev_(i2c_bus_add_device(port, address))
 {
 }
 
@@ -173,31 +173,13 @@ bool Bq25601::set_vac_ovp_mv(uint16_t ovp_mv)
 bool Bq25601::read_reg(uint8_t reg, uint8_t *val)
 {
     I2cBusLock lock(port_);
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, reg, true);
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_READ, true);
-    i2c_master_read_byte(cmd, val, I2C_MASTER_NACK);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-    i2c_cmd_link_delete(cmd);
-    return ret == ESP_OK;
+    return i2c_bus_read(dev_, reg, val, 1, 100) == ESP_OK;
 }
 
 bool Bq25601::write_reg(uint8_t reg, uint8_t val)
 {
     I2cBusLock lock(port_);
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (address_ << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, reg, true);
-    i2c_master_write_byte(cmd, val, true);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-    i2c_cmd_link_delete(cmd);
-    return ret == ESP_OK;
+    return i2c_bus_write(dev_, reg, &val, 1, 100) == ESP_OK;
 }
 
 bool Bq25601::update_reg_bits(uint8_t reg, uint8_t mask, uint8_t value)

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <cstddef>
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 #include "driver/gpio.h"
 
 class Pca9685
@@ -22,5 +22,5 @@ private:
     bool write_registers(uint8_t reg, const uint8_t *data, size_t length);
 
     i2c_port_t port_;
-    uint8_t address_;
+    i2c_master_dev_handle_t dev_;
 };

@@ -34,7 +34,8 @@ esp_err_t i2c_retry(Fn fn)
 } // namespace
 
 Bq27441::Bq27441(i2c_port_t port)
-    : port_(port)
+    : port_(port),
+      dev_(i2c_bus_add_device(port, kI2cAddress))
 {
 }
 
@@ -65,32 +66,14 @@ esp_err_t Bq27441::i2c_read_byte(uint8_t reg, uint8_t *val)
     }
 
     return i2c_retry([&]() {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write_byte(cmd, reg, true);
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_READ, true);
-        i2c_master_read_byte(cmd, val, I2C_MASTER_NACK);
-        i2c_master_stop(cmd);
-        esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-        i2c_cmd_link_delete(cmd);
-        return ret;
+        return i2c_bus_read(dev_, reg, val, 1, 100);
     });
 }
 
 esp_err_t Bq27441::i2c_write_byte(uint8_t reg, uint8_t val)
 {
     return i2c_retry([&]() {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write_byte(cmd, reg, true);
-        i2c_master_write_byte(cmd, val, true);
-        i2c_master_stop(cmd);
-        esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-        i2c_cmd_link_delete(cmd);
-        return ret;
+        return i2c_bus_write(dev_, reg, &val, 1, 100);
     });
 }
 
@@ -102,17 +85,7 @@ esp_err_t Bq27441::i2c_read_word(uint8_t reg, uint16_t *val)
 
     uint8_t data[2];
     esp_err_t ret = i2c_retry([&]() {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write_byte(cmd, reg, true);
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_READ, true);
-        i2c_master_read(cmd, data, 2, I2C_MASTER_LAST_NACK);
-        i2c_master_stop(cmd);
-        esp_err_t err = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-        i2c_cmd_link_delete(cmd);
-        return err;
+        return i2c_bus_read(dev_, reg, data, sizeof(data), 100);
     });
 
     if (ret == ESP_OK) {
@@ -129,15 +102,7 @@ esp_err_t Bq27441::i2c_write_word(uint8_t reg, uint16_t val)
     };
 
     return i2c_retry([&]() {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write_byte(cmd, reg, true);
-        i2c_master_write(cmd, data, 2, true);
-        i2c_master_stop(cmd);
-        esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-        i2c_cmd_link_delete(cmd);
-        return ret;
+        return i2c_bus_write(dev_, reg, data, sizeof(data), 100);
     });
 }
 
@@ -148,20 +113,7 @@ esp_err_t Bq27441::i2c_read_bytes(uint8_t reg, uint8_t *buf, size_t len)
     }
 
     return i2c_retry([&]() {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write_byte(cmd, reg, true);
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (kI2cAddress << 1) | I2C_MASTER_READ, true);
-        if (len > 1) {
-            i2c_master_read(cmd, buf, len - 1, I2C_MASTER_ACK);
-        }
-        i2c_master_read_byte(cmd, buf + len - 1, I2C_MASTER_NACK);
-        i2c_master_stop(cmd);
-        esp_err_t ret = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(100));
-        i2c_cmd_link_delete(cmd);
-        return ret;
+        return i2c_bus_read(dev_, reg, buf, len, 100);
     });
 }
 

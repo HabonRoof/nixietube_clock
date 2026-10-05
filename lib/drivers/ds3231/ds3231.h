@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <ctime>
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 #include "driver/gpio.h"
 
 class Ds3231
@@ -37,5 +37,6 @@ private:
     bool write_registers(uint8_t reg, const uint8_t *data, size_t len);
 
     i2c_port_t port_;
+    i2c_master_dev_handle_t dev_;
     uint8_t address_;
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gasgauge_driver.h"
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 
 class Bq27441 : public IGasgaugeDriver
 {
@@ -46,5 +46,6 @@ private:
     esp_err_t i2c_read_bytes(uint8_t reg, uint8_t *buf, size_t len);
 
     i2c_port_t port_;
+    i2c_master_dev_handle_t dev_;
     bool ready_ = false;
 };

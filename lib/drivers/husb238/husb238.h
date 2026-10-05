@@ -1,6 +1,6 @@
 #pragma once
 
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 
 #include <cstdint>
 
@@ -79,5 +79,5 @@ private:
     Husb238RequestResult request_12v_once(Husb238Contract &contract);
 
     i2c_port_t port_;
-    uint8_t address_;
+    i2c_master_dev_handle_t dev_;
 };

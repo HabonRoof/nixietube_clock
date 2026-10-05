@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 
 struct Ltr303Sample
 {
@@ -45,7 +45,7 @@ private:
     bool write_als_control();
 
     i2c_port_t port_;
-    uint8_t address_;
+    i2c_master_dev_handle_t dev_;
     Ltr303Gain gain_ = Ltr303Gain::X1;
     bool ready_ = false;
 };

@@ -1,6 +1,5 @@
 #include "pca9685.h"
 #include "i2c_bus.h"
-#include "freertos/FreeRTOS.h"
 
 namespace
 {
@@ -19,7 +18,7 @@ constexpr float kOscillatorHz = 25000000.0f;
 } // namespace
 
 Pca9685::Pca9685(i2c_port_t port, uint8_t address)
-    : port_(port), address_(address)
+    : port_(port), dev_(i2c_bus_add_device(port, address))
 {
 }
 
@@ -121,13 +120,5 @@ bool Pca9685::write_register(uint8_t reg, uint8_t value)
 bool Pca9685::write_registers(uint8_t reg, const uint8_t *data, size_t length)
 {
     I2cBusLock lock(port_);
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, static_cast<uint8_t>(address_ << 1), true);
-    i2c_master_write_byte(cmd, reg, true);
-    i2c_master_write(cmd, const_cast<uint8_t *>(data), length, true);
-    i2c_master_stop(cmd);
-    esp_err_t result = i2c_master_cmd_begin(port_, cmd, pdMS_TO_TICKS(50));
-    i2c_cmd_link_delete(cmd);
-    return result == ESP_OK;
+    return i2c_bus_write(dev_, reg, data, length, 50) == ESP_OK;
 }

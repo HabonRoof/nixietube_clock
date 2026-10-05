@@ -12,7 +12,6 @@
 #include "i2c_debug_config.h"
 #include "wifi_credentials.h"
 #include "i2c_bus.h"
-#include "driver/i2c.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
 #include "display_board_config.h"
@@ -112,16 +111,7 @@ constexpr uint32_t kI2cClockHz = 400000;
 
 void init_i2c_master(i2c_port_t port, gpio_num_t sda, gpio_num_t scl)
 {
-    i2c_config_t i2c_conf = {};
-    i2c_conf.mode = I2C_MODE_MASTER;
-    i2c_conf.sda_io_num = sda;
-    i2c_conf.scl_io_num = scl;
-    i2c_conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-    i2c_conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-    i2c_conf.master.clk_speed = kI2cClockHz;
-    ESP_ERROR_CHECK(i2c_param_config(port, &i2c_conf));
-    ESP_ERROR_CHECK(i2c_driver_install(port, i2c_conf.mode, 0, 0, 0));
-    i2c_bus_init(port);
+    i2c_bus_init(port, sda, scl, kI2cClockHz);
 }
 
 constexpr uart_port_t kUartPort = UART_NUM_1;
@@ -215,6 +205,7 @@ HardwareHandles SystemController::init_hardware()
             .invert_out = 0,
             .with_dma = 0,
             .allow_pd = 0,
+            .init_level = 0,
         },
     };
     ESP_ERROR_CHECK(rmt_new_tx_channel(&rmt_config, &handles.led_rmt_channel));

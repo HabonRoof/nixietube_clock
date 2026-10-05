@@ -1,7 +1,7 @@
 #pragma once
 
 #include "charger_driver.h"
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 
 class Bq25601 : public IChargerDriver
 {
@@ -32,6 +32,6 @@ private:
     static uint16_t decode_vac_ovp_mv(uint8_t code);
 
     i2c_port_t port_;
-    uint8_t address_;
+    i2c_master_dev_handle_t dev_;
     bool ovp_allows_12v_ = false;
 };
