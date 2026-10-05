@@ -1,0 +1,33 @@
+{
+  "unit": "mm",
+  "clock_assembly": [
+    260,
+    80.1185436249,
+    84
+  ],
+  "clock_scaled": false,
+  "cup": {
+    "diameter": 80,
+    "height": 90,
+    "width_with_handle": 105,
+    "reference": "https://kinto-europe.com/products/27635",
+    "geometry": "generic dimensional approximation, not manufacturer CAD"
+  },
+  "books": {
+    "A5": [
+      148,
+      210,
+      18
+    ],
+    "B6": [
+      128,
+      182,
+      22
+    ]
+  },
+  "shelf": [
+    1100,
+    320,
+    24
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "units": "mm (STL itself is unitless)",
+  "combined_facets": 2217752,
+  "bounds_mm": [
+    0.0,
+    0.0,
+    -7.0,
+    250.0,
+    60.0,
+    56.5
+  ],
+  "parts": [
+    {
+      "name": "OUTBOXX_B",
+      "facets": 22828,
+      "file": "OUTBOXX_B.stl"
+    },
+    {
+      "name": "OUTBOXX_F",
+      "facets": 3564,
+      "file": "OUTBOXX_F.stl"
+    },
+    {
+      "name": "main_board",
+      "facets": 363260,
+      "file": "main_board.stl"
+    },
+    {
+      "name": "display_board",
+      "facets": 315028,
+      "file": "display_board.stl"
+    },
+    {
+      "name": "N1_IN4",
+      "facets": 239390,
+      "file": "N1_IN4.stl"
+    },
+    {
+      "name": "N2_IN4",
+      "facets": 239018,
+      "file": "N2_IN4.stl"
+    },
+    {
+      "name": "N3_IN4",
+      "facets": 238796,
+      "file": "N3_IN4.stl"
+    },
+    {
+      "name": "N4_IN4",
+      "facets": 238154,
+      "file": "N4_IN4.stl"
+    },
+    {
+      "name": "N5_IN4",
+      "facets": 238154,
+      "file": "N5_IN4.stl"
+    },
+    {
+      "name": "N6_IN4",
+      "facets": 239256,
+      "file": "N6_IN4.stl"
+    },
+    {
+      "name": "N6_sockets",
+      "facets": 13384,
+      "file": "N6_sockets.stl"
+    },
+    {
+      "name": "N2_sockets",
+      "facets": 13384,
+      "file": "N2_sockets.stl"
+    },
+    {
+      "name": "N5_sockets",
+      "facets": 13384,
+      "file": "N5_sockets.stl"
+    },
+    {
+      "name": "N1_sockets",
+      "facets": 13384,
+      "file": "N1_sockets.stl"
+    },
+    {
+      "name": "N3_sockets",
+      "facets": 13384,
+      "file": "N3_sockets.stl"
+    },
+    {
+      "name": "N4_sockets",
+      "facets": 13384,
+      "file": "N4_sockets.stl"
+    }
+  ]
+}

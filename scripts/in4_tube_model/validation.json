@@ -1,0 +1,26 @@
+{
+  "valid": true,
+  "units": "mm",
+  "bounding_box_mm": [
+    30.000000450756,
+    30.000000450756,
+    41.00000022537769
+  ],
+  "objects": 59,
+  "solids": 134,
+  "source_volume_mm3": 4465.190630093369,
+  "reimport_volume_mm3": 4465.190372600196,
+  "relative_volume_tolerance": 1e-05,
+  "digit_order_bottom_to_top": [
+    "1",
+    "7",
+    "5",
+    "9",
+    "3",
+    "4",
+    "0",
+    "6",
+    "2",
+    "8"
+  ]
+}

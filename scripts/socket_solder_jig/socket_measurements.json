@@ -1,0 +1,19 @@
+{
+  "source": "User sketch Ideas.JPEG and preceding measurements, 2026-09-07",
+  "upper_barrel_od_mm": 1.6,
+  "maximum_od_mm": 1.7,
+  "bottom_od_mm": 1.5,
+  "reported_straight_length_mm": 7,
+  "installed_height_above_pcb_front_mm": 6.3,
+  "tail_to_remove_od_mm": 0.6,
+  "tail_to_remove_length_mm": 4.5,
+  "upper_end_to_tail_start_mm": null,
+  "note": "Sketch clarifies 5+2+3 mm segments. Taper length unspecified. Installed height 6.3 differs from shoulder-bottom datum 7.0; retain both. Tail length 4.5 vs 5 has no effect on guide; entire thin tail is removed.",
+  "upper_barrel_length_mm": 5,
+  "shoulder_length_mm": 2,
+  "lower_barrel_length_mm": 3,
+  "upper_end_to_lower_barrel_end_mm": 10,
+  "taper_length_mm": null,
+  "tail_length_sketch_mm": 5,
+  "tail_length_prior_text_mm": 4.5
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "digit": "1",
+    "layer_from_bottom": 1,
+    "z_mm": 10.0,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      3.0599999999999996,
+      17.26,
+      0.26000000000000156
+    ]
+  },
+  {
+    "digit": "7",
+    "layer_from_bottom": 2,
+    "z_mm": 11.65,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      8.66,
+      17.26,
+      0.26000000000000156
+    ]
+  },
+  {
+    "digit": "5",
+    "layer_from_bottom": 3,
+    "z_mm": 13.3,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      8.717218919384122,
+      17.251538410405114,
+      0.26000020000002166
+    ]
+  },
+  {
+    "digit": "9",
+    "layer_from_bottom": 4,
+    "z_mm": 14.95,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      8.43919496934225,
+      17.2600002,
+      0.2600002000000181
+    ]
+  },
+  {
+    "digit": "3",
+    "layer_from_bottom": 5,
+    "z_mm": 16.6,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      8.443729888672376,
+      17.19990582642363,
+      0.26000020000002877
+    ]
+  },
+  {
+    "digit": "4",
+    "layer_from_bottom": 6,
+    "z_mm": 18.25,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      9.059999999999999,
+      17.26,
+      0.259999999999998
+    ]
+  },
+  {
+    "digit": "0",
+    "layer_from_bottom": 7,
+    "z_mm": 19.9,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      8.860000200000004,
+      17.2600002,
+      0.2600002000000359
+    ]
+  },
+  {
+    "digit": "6",
+    "layer_from_bottom": 8,
+    "z_mm": 21.549999999999997,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      8.43919496934225,
+      17.2600002,
+      0.2600002000000359
+    ]
+  },
+  {
+    "digit": "2",
+    "layer_from_bottom": 9,
+    "z_mm": 23.2,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      8.724153944815694,
+      17.34925768248514,
+      0.2600002000000252
+    ]
+  },
+  {
+    "digit": "8",
+    "layer_from_bottom": 10,
+    "z_mm": 24.85,
+    "valid": true,
+    "solids": 1,
+    "bounds_mm": [
+      8.860000200000004,
+      17.2600002,
+      0.2600002000000252
+    ]
+  }
+]

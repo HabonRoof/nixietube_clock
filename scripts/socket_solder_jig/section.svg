@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="680" viewBox="0 0 1000 680">
+<rect width="1000" height="680" fill="#faf8f3"/>
+<g font-family="sans-serif" fill="#242e35"><text x="45" y="48" font-size="27">IN-4 socket 焊接治具 — 通孔板＋承托板</text><text x="45" y="78" font-size="16">截面示意／非等比例；採凸環貼板、露出 7 mm 的情境</text></g>
+<path d="M90 480H385V340H90Z M435 340H710V480H435Z" fill="#70838c"/>
+<rect x="90" y="480" width="620" height="85" fill="#3c4c54"/>
+<rect x="85" y="205" width="306" height="50" fill="#547864"/><rect x="429" y="205" width="286" height="50" fill="#547864"/>
+<path d="M393 170H427V255H438V315H430V480H390V315H382V255H393Z" fill="#c9a456" stroke="#69582c" stroke-width="2"/>
+<path d="M399 480V390Q410 378 421 390V480" fill="#faf8f3" stroke="#69582c" stroke-width="2"/>
+<path d="M393 170L410 150L427 170" fill="#c9a456"/>
+<path d="M410 150V112" stroke="#aa5140" stroke-width="3" stroke-dasharray="6 5"/>
+<g font-family="sans-serif" font-size="18" fill="#242e35">
+<text x="480" y="130">Ø0.6 細引線整段剪除</text><text x="480" y="180">剩餘 Ø1.5 下筒＋錐段</text>
+<text x="740" y="235">PCB 1.6 mm</text><text x="470" y="285">Ø1.7 凸環位於板外</text>
+<text x="475" y="370">4 mm 合成石通孔定位板</text><text x="475" y="400">試配孔 Ø1.64 mm</text>
+<text x="460" y="450">Ø1.6 上筒，長 5 mm</text><text x="280" y="530" fill="white">4 mm 耐熱承托底板</text>
+<text x="60" y="605">焊接面朝上；socket 開口朝下，頂端承靠底板。</text>
+<text x="60" y="637">PCB 以可調支柱調平；6.3 / 7 mm 高度差需空裝確認。</text>
+</g></svg>

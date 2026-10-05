@@ -1,0 +1,3218 @@
+[
+  {
+    "board": "main_board",
+    "ref": "SW3",
+    "fp": "habonroof_kicad_library:PTS645VK31LFS",
+    "value": "PTS645VK31LFS",
+    "bounds": [
+      -4.7,
+      4.7,
+      -4.1,
+      4.1
+    ],
+    "height": 7,
+    "kind": "switch",
+    "pads": [
+      [
+        -2.25,
+        -0.1,
+        1.6,
+        1.6
+      ],
+      [
+        2.25,
+        -0.1,
+        1.6,
+        1.6
+      ],
+      [
+        -3.5,
+        2.45,
+        2.2,
+        2.2
+      ],
+      [
+        3.5,
+        2.45,
+        2.2,
+        2.2
+      ]
+    ],
+    "source": "footprint silkscreen/courtyard envelope; height estimated",
+    "path": "main_board_SW3.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "SW2",
+    "fp": "habonroof_kicad_library:PTS645VK31LFS",
+    "value": "PTS645VK31LFS",
+    "bounds": [
+      -4.7,
+      4.7,
+      -4.1,
+      4.1
+    ],
+    "height": 7,
+    "kind": "switch",
+    "pads": [
+      [
+        -2.25,
+        -0.1,
+        1.6,
+        1.6
+      ],
+      [
+        2.25,
+        -0.1,
+        1.6,
+        1.6
+      ],
+      [
+        -3.5,
+        2.45,
+        2.2,
+        2.2
+      ],
+      [
+        3.5,
+        2.45,
+        2.2,
+        2.2
+      ]
+    ],
+    "source": "footprint silkscreen/courtyard envelope; height estimated",
+    "path": "main_board_SW2.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "SW1",
+    "fp": "habonroof_kicad_library:PTS645VK31LFS",
+    "value": "PTS645VK31LFS",
+    "bounds": [
+      -4.7,
+      4.7,
+      -4.1,
+      4.1
+    ],
+    "height": 7,
+    "kind": "switch",
+    "pads": [
+      [
+        -2.25,
+        -0.1,
+        1.6,
+        1.6
+      ],
+      [
+        2.25,
+        -0.1,
+        1.6,
+        1.6
+      ],
+      [
+        -3.5,
+        2.45,
+        2.2,
+        2.2
+      ],
+      [
+        3.5,
+        2.45,
+        2.2,
+        2.2
+      ]
+    ],
+    "source": "footprint silkscreen/courtyard envelope; height estimated",
+    "path": "main_board_SW1.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "U12",
+    "fp": "Package_DFN_QFN:Texas_VQFN-HR-12_2x2.5mm_P0.5mm_ThermalVias",
+    "value": "TPS2121",
+    "bounds": [
+      -1.0,
+      1.0,
+      -1.25,
+      1.25
+    ],
+    "height": 0.9,
+    "kind": "ic",
+    "pads": [
+      [
+        -0.675,
+        0.35,
+        1.05,
+        0.4
+      ],
+      [
+        -0.4,
+        0.35,
+        0.4,
+        0.4
+      ],
+      [
+        -0.675,
+        -0.35,
+        1.05,
+        0.4
+      ],
+      [
+        -0.4,
+        -0.35,
+        0.4,
+        0.4
+      ],
+      [
+        -0.75,
+        -1.15,
+        0.2,
+        0.6
+      ],
+      [
+        -0.25,
+        -1.15,
+        0.2,
+        0.6
+      ],
+      [
+        0.25,
+        -1.15,
+        0.2,
+        0.6
+      ],
+      [
+        0.75,
+        -1.15,
+        0.2,
+        0.6
+      ],
+      [
+        0.4,
+        -0.35,
+        0.4,
+        0.4
+      ],
+      [
+        0.675,
+        -0.35,
+        1.05,
+        0.4
+      ],
+      [
+        0.4,
+        0.35,
+        0.4,
+        0.4
+      ],
+      [
+        0.675,
+        0.35,
+        1.05,
+        0.4
+      ],
+      [
+        0.75,
+        1.15,
+        0.2,
+        0.6
+      ],
+      [
+        0.25,
+        1.15,
+        0.2,
+        0.6
+      ],
+      [
+        -0.25,
+        1.15,
+        0.2,
+        0.6
+      ],
+      [
+        -0.75,
+        1.15,
+        0.2,
+        0.6
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_U12.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "LS1",
+    "fp": "Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal",
+    "value": "Speaker",
+    "bounds": [
+      -3.95,
+      3.95,
+      -4.4,
+      3.2
+    ],
+    "height": 4.8,
+    "kind": "connector",
+    "pads": [
+      [
+        -1.0,
+        2.85,
+        1.0,
+        3.5
+      ],
+      [
+        1.0,
+        2.85,
+        1.0,
+        3.5
+      ],
+      [
+        -3.35,
+        -2.9,
+        1.5,
+        3.4
+      ],
+      [
+        3.35,
+        -2.9,
+        1.5,
+        3.4
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_LS1.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "U6",
+    "fp": "johnson:DFPlayer_mini",
+    "value": "DFPlayer_mini",
+    "bounds": [
+      -11.43,
+      11.43,
+      -7.62,
+      15.24
+    ],
+    "height": 5,
+    "kind": "module",
+    "pads": [
+      [
+        -8.89,
+        12.7,
+        1.9,
+        1.9
+      ],
+      [
+        -8.89,
+        10.16,
+        1.9,
+        1.9
+      ],
+      [
+        -8.89,
+        7.62,
+        1.9,
+        1.9
+      ],
+      [
+        -8.89,
+        5.08,
+        1.9,
+        1.9
+      ],
+      [
+        -8.89,
+        2.54,
+        1.9,
+        1.9
+      ],
+      [
+        -8.89,
+        0.0,
+        1.9,
+        1.9
+      ],
+      [
+        -8.89,
+        -2.54,
+        1.9,
+        1.9
+      ],
+      [
+        -8.89,
+        -5.08,
+        1.9,
+        1.9
+      ],
+      [
+        8.89,
+        -5.08,
+        1.9,
+        1.9
+      ],
+      [
+        8.89,
+        -2.54,
+        1.9,
+        1.9
+      ],
+      [
+        8.89,
+        0.0,
+        1.9,
+        1.9
+      ],
+      [
+        8.89,
+        2.54,
+        1.9,
+        1.9
+      ],
+      [
+        8.89,
+        5.08,
+        1.9,
+        1.9
+      ],
+      [
+        8.89,
+        7.62,
+        1.9,
+        1.9
+      ],
+      [
+        8.89,
+        10.16,
+        1.9,
+        1.9
+      ],
+      [
+        8.89,
+        12.7,
+        1.9,
+        1.9
+      ]
+    ],
+    "source": "DFRobot nominal 20x20 mm PCB; footprint pad datum; component height/headers estimated",
+    "path": "main_board_U6.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "U8",
+    "fp": "habonroof_kicad_library:VSON-10-HR-DLA",
+    "value": "TPS63802",
+    "bounds": [
+      -1.03,
+      1.07,
+      0.452949,
+      3.552949
+    ],
+    "height": 0.9,
+    "kind": "ic",
+    "pads": [
+      [
+        -0.9,
+        2.94,
+        0.6,
+        0.25
+      ],
+      [
+        -0.9,
+        2.44,
+        0.6,
+        0.25
+      ],
+      [
+        -0.9,
+        1.94,
+        0.6,
+        0.25
+      ],
+      [
+        -0.9,
+        1.44,
+        0.6,
+        0.25
+      ],
+      [
+        -0.9,
+        0.94,
+        0.6,
+        0.25
+      ],
+      [
+        0.75,
+        0.94,
+        0.9,
+        0.25
+      ],
+      [
+        0.75,
+        1.44,
+        0.9,
+        0.25
+      ],
+      [
+        0.55,
+        1.94,
+        1.3,
+        0.25
+      ],
+      [
+        0.75,
+        2.44,
+        0.9,
+        0.25
+      ],
+      [
+        0.75,
+        2.94,
+        0.9,
+        0.25
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_U8.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "J1",
+    "fp": "Connector_USB:USB_C_Receptacle_G-Switch_GT-USB-7051x",
+    "value": "USB_C_Receptacle_USB2.0_16P",
+    "bounds": [
+      -4.15,
+      4.15,
+      -2.15,
+      2.15
+    ],
+    "height": 3.2,
+    "kind": "usb",
+    "pads": [
+      [
+        -2.78,
+        0.76,
+        0.3,
+        1.0
+      ],
+      [
+        -1.99,
+        0.76,
+        0.3,
+        1.0
+      ],
+      [
+        -1.2,
+        0.76,
+        0.3,
+        1.0
+      ],
+      [
+        -0.41,
+        0.76,
+        0.3,
+        1.0
+      ],
+      [
+        0.38,
+        0.76,
+        0.3,
+        1.0
+      ],
+      [
+        1.17,
+        0.76,
+        0.3,
+        1.0
+      ],
+      [
+        1.96,
+        0.76,
+        0.3,
+        1.0
+      ],
+      [
+        2.75,
+        0.76,
+        0.3,
+        1.0
+      ],
+      [
+        2.75,
+        -0.76,
+        0.3,
+        1.0
+      ],
+      [
+        1.96,
+        -0.76,
+        0.3,
+        1.0
+      ],
+      [
+        1.17,
+        -0.76,
+        0.3,
+        1.0
+      ],
+      [
+        0.38,
+        -0.76,
+        0.3,
+        1.0
+      ],
+      [
+        -0.41,
+        -0.76,
+        0.3,
+        1.0
+      ],
+      [
+        -1.2,
+        -0.76,
+        0.3,
+        1.0
+      ],
+      [
+        -1.99,
+        -0.76,
+        0.3,
+        1.0
+      ],
+      [
+        -2.78,
+        -0.76,
+        0.3,
+        1.0
+      ],
+      [
+        -2.4,
+        -2.15,
+        1.1,
+        1.1
+      ],
+      [
+        -2.4,
+        2.15,
+        1.1,
+        1.1
+      ],
+      [
+        2.4,
+        -2.15,
+        1.1,
+        1.1
+      ],
+      [
+        2.4,
+        2.15,
+        1.1,
+        1.1
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_J1.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "L2",
+    "fp": "habonroof_kicad_library:Murata_201612E",
+    "value": "0.47u",
+    "bounds": [
+      -1.25,
+      1.25,
+      0.3,
+      2.3
+    ],
+    "height": 1.2,
+    "kind": "inductor",
+    "pads": [
+      [
+        -0.8,
+        1.3,
+        0.8,
+        1.8
+      ],
+      [
+        0.8,
+        1.3,
+        0.8,
+        1.8
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_L2.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "U14",
+    "fp": "Package_DFN_QFN:DHVQFN-16-1EP_2.5x3.5mm_P0.5mm_EP1x2mm",
+    "value": "74HC238",
+    "bounds": [
+      -1.25,
+      1.25,
+      -1.75,
+      1.75
+    ],
+    "height": 0.9,
+    "kind": "ic",
+    "pads": [
+      [
+        -0.25,
+        1.6875,
+        0.25,
+        0.825
+      ],
+      [
+        -1.1875,
+        1.25,
+        0.825,
+        0.25
+      ],
+      [
+        -1.1875,
+        0.75,
+        0.825,
+        0.25
+      ],
+      [
+        -1.1875,
+        0.25,
+        0.825,
+        0.25
+      ],
+      [
+        -1.1875,
+        -0.25,
+        0.825,
+        0.25
+      ],
+      [
+        -1.1875,
+        -0.75,
+        0.825,
+        0.25
+      ],
+      [
+        -1.1875,
+        -1.25,
+        0.825,
+        0.25
+      ],
+      [
+        -0.25,
+        -1.6875,
+        0.25,
+        0.825
+      ],
+      [
+        0.25,
+        -1.6875,
+        0.25,
+        0.825
+      ],
+      [
+        1.1875,
+        -1.25,
+        0.825,
+        0.25
+      ],
+      [
+        1.1875,
+        -0.75,
+        0.825,
+        0.25
+      ],
+      [
+        1.1875,
+        -0.25,
+        0.825,
+        0.25
+      ],
+      [
+        1.1875,
+        0.25,
+        0.825,
+        0.25
+      ],
+      [
+        1.1875,
+        0.75,
+        0.825,
+        0.25
+      ],
+      [
+        1.1875,
+        1.25,
+        0.825,
+        0.25
+      ],
+      [
+        0.25,
+        1.6875,
+        0.25,
+        0.825
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        2.0
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_U14.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "U10",
+    "fp": "Package_DFN_QFN:Texas_RWU0007A_VQFN-7_2x2mm_P0.5mm",
+    "value": "TPS61022",
+    "bounds": [
+      -1.0,
+      1.0,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "ic",
+    "pads": [
+      [
+        -0.625,
+        0.55,
+        1.15,
+        0.35
+      ],
+      [
+        -0.475,
+        0.0,
+        1.45,
+        0.2
+      ],
+      [
+        -0.625,
+        -0.55,
+        1.15,
+        0.35
+      ],
+      [
+        0.975,
+        -0.75,
+        0.45,
+        0.25
+      ],
+      [
+        0.975,
+        -0.25,
+        0.45,
+        0.25
+      ],
+      [
+        0.975,
+        0.25,
+        0.45,
+        0.25
+      ],
+      [
+        0.975,
+        0.75,
+        0.45,
+        0.25
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_U10.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "U15",
+    "fp": "Package_SON:WSON-12-1EP_3x2mm_P0.5mm_EP1x2.65",
+    "value": "LM5155",
+    "bounds": [
+      -1.0,
+      1.0,
+      -1.5,
+      1.5
+    ],
+    "height": 0.9,
+    "kind": "ic",
+    "pads": [
+      [
+        -0.95,
+        1.25,
+        0.5,
+        0.25
+      ],
+      [
+        -0.95,
+        0.75,
+        0.5,
+        0.25
+      ],
+      [
+        -0.95,
+        0.25,
+        0.5,
+        0.25
+      ],
+      [
+        -0.95,
+        -0.25,
+        0.5,
+        0.25
+      ],
+      [
+        -0.95,
+        -0.75,
+        0.5,
+        0.25
+      ],
+      [
+        -0.95,
+        -1.25,
+        0.5,
+        0.25
+      ],
+      [
+        0.95,
+        -1.25,
+        0.5,
+        0.25
+      ],
+      [
+        0.95,
+        -0.75,
+        0.5,
+        0.25
+      ],
+      [
+        0.95,
+        -0.25,
+        0.5,
+        0.25
+      ],
+      [
+        0.95,
+        0.25,
+        0.5,
+        0.25
+      ],
+      [
+        0.95,
+        0.75,
+        0.5,
+        0.25
+      ],
+      [
+        0.95,
+        1.25,
+        0.5,
+        0.25
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        2.65
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_U15.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "C34",
+    "fp": "KiCad_Library:Cap_THT_D8.0mm_L12mm_Horizontal",
+    "value": "10u/400v",
+    "bounds": [
+      -4.45,
+      4.45,
+      -0.9,
+      15.1
+    ],
+    "height": 8,
+    "kind": "capacitor",
+    "pads": [
+      [
+        -1.27,
+        0.0,
+        1.6,
+        1.6
+      ],
+      [
+        1.27,
+        0.0,
+        1.6,
+        1.6
+      ]
+    ],
+    "source": "footprint silkscreen/courtyard envelope; height estimated",
+    "path": "main_board_C34.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "U9",
+    "fp": "habonroof_kicad_library:NCH8200HV",
+    "value": "NCH2800HV",
+    "bounds": [
+      -9.25,
+      8.75,
+      -9.75,
+      7.25
+    ],
+    "height": 12,
+    "kind": "module",
+    "pads": [
+      [
+        -7.87,
+        5.87,
+        2.0,
+        2.0
+      ],
+      [
+        -7.87,
+        -1.75,
+        2.0,
+        2.0
+      ],
+      [
+        7.37,
+        5.87,
+        2.0,
+        2.0
+      ],
+      [
+        7.37,
+        -6.83,
+        2.0,
+        2.0
+      ]
+    ],
+    "source": "footprint silkscreen/courtyard envelope; height estimated",
+    "path": "main_board_U9.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "L4",
+    "fp": "KiCad_Library:PowerInductor_8mmx8.5mm",
+    "value": "PSPMAA0805-100M-ANP",
+    "bounds": [
+      -5.0,
+      5.0,
+      -4.5,
+      4.5
+    ],
+    "height": 5,
+    "kind": "inductor",
+    "pads": [
+      [
+        -3.45,
+        0.0,
+        2.4,
+        3.5
+      ],
+      [
+        3.45,
+        0.0,
+        2.4,
+        3.5
+      ]
+    ],
+    "source": "footprint silkscreen/courtyard envelope; height estimated",
+    "path": "main_board_L4.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "U3",
+    "fp": "Package_DFN_QFN:WDFN-10-1EP_3x3mm_P0.5mm_EP1.8x2.5mm",
+    "value": "HUSB238_002DD",
+    "bounds": [
+      -1.5,
+      1.5,
+      -1.5,
+      1.5
+    ],
+    "height": 0.9,
+    "kind": "ic",
+    "pads": [
+      [
+        -1.475,
+        1.0,
+        0.75,
+        0.25
+      ],
+      [
+        -1.475,
+        0.5,
+        0.75,
+        0.25
+      ],
+      [
+        -1.475,
+        0.0,
+        0.75,
+        0.25
+      ],
+      [
+        -1.475,
+        -0.5,
+        0.75,
+        0.25
+      ],
+      [
+        -1.475,
+        -1.0,
+        0.75,
+        0.25
+      ],
+      [
+        1.475,
+        -1.0,
+        0.75,
+        0.25
+      ],
+      [
+        1.475,
+        -0.5,
+        0.75,
+        0.25
+      ],
+      [
+        1.475,
+        0.0,
+        0.75,
+        0.25
+      ],
+      [
+        1.475,
+        0.5,
+        0.75,
+        0.25
+      ],
+      [
+        1.475,
+        1.0,
+        0.75,
+        0.25
+      ],
+      [
+        0.0,
+        0.0,
+        1.8,
+        2.5
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_U3.step"
+  },
+  {
+    "board": "main_board",
+    "ref": "J2",
+    "fp": "Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal",
+    "value": "BAT1",
+    "bounds": [
+      -3.95,
+      3.95,
+      -4.4,
+      3.2
+    ],
+    "height": 4.8,
+    "kind": "connector",
+    "pads": [
+      [
+        -1.0,
+        2.85,
+        1.0,
+        3.5
+      ],
+      [
+        1.0,
+        2.85,
+        1.0,
+        3.5
+      ],
+      [
+        -3.35,
+        -2.9,
+        1.5,
+        3.4
+      ],
+      [
+        3.35,
+        -2.9,
+        1.5,
+        3.4
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "main_board_J2.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D40",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D40.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D42",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D42.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D10",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D10.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D46",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D46.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D19",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D19.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D48",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D48.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D11",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D11.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D36",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D36.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D39",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D39.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D31",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D31.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D37",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D37.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D21",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D21.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D47",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D47.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D7",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D7.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D25",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D25.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D33",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D33.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D24",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D24.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D18",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D18.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D12",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D12.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D2",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D2.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D17",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D17.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D1",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D1.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D20",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D20.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D34",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D34.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D27",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D27.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D44",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D44.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D22",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D22.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D35",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D35.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D5",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D5.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D9",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D9.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D4",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D4.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D30",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D30.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D38",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D38.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D6",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D6.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D8",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D8.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D16",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D16.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D43",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D43.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D41",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D41.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D23",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D23.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D32",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D32.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "U5",
+    "fp": "OptoDevice:Lite-On_LTR-303ALS-01",
+    "value": "LTR-303ALS-01",
+    "bounds": [
+      -1.0,
+      1.0,
+      -1.0,
+      1.0
+    ],
+    "height": 0.6,
+    "kind": "sensor",
+    "pads": [
+      [
+        -0.9,
+        0.65,
+        0.65,
+        0.3
+      ],
+      [
+        -0.9,
+        -0.0,
+        0.65,
+        0.3
+      ],
+      [
+        -0.9,
+        -0.65,
+        0.65,
+        0.3
+      ],
+      [
+        0.9,
+        -0.65,
+        0.65,
+        0.3
+      ],
+      [
+        0.9,
+        -0.0,
+        0.65,
+        0.3
+      ],
+      [
+        0.9,
+        0.65,
+        0.65,
+        0.3
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_U5.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D29",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D29.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D3",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D3.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D26",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D26.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D45",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D45.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D28",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D28.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D15",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D15.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D13",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D13.step"
+  },
+  {
+    "board": "display_board_in4",
+    "ref": "D14",
+    "fp": "LED_SMD:LED_WS2812B-2020_PLCC4_2.0x2.0mm",
+    "value": "WS2812B-2020",
+    "bounds": [
+      -1.1,
+      1.1,
+      -1.0,
+      1.0
+    ],
+    "height": 0.9,
+    "kind": "led",
+    "pads": [
+      [
+        -0.915,
+        0.55,
+        0.7,
+        0.7
+      ],
+      [
+        -0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        -0.55,
+        0.7,
+        0.7
+      ],
+      [
+        0.915,
+        0.55,
+        0.7,
+        0.7
+      ]
+    ],
+    "source": "footprint fabrication outline; height estimated",
+    "path": "display_board_in4_D14.step"
+  }
+]

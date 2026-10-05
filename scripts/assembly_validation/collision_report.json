@@ -1,0 +1,47 @@
+{
+  "case_surface_intersections": [],
+  "rear_probes": [
+    {
+      "object": "main_U6",
+      "z_bounds": [
+        41.41999816894531,
+        47.41999816894531
+      ],
+      "rear_inner_z": 54.5,
+      "clearance": 7.0800018310546875
+    },
+    {
+      "object": "main_J1",
+      "z_bounds": [
+        42.41999816894531,
+        45.71999740600586
+      ],
+      "rear_inner_z": 54.5,
+      "clearance": 8.78000259399414
+    },
+    {
+      "object": "main_C34",
+      "z_bounds": [
+        41.41999816894531,
+        50.619998931884766
+      ],
+      "rear_inner_z": 54.5,
+      "clearance": 3.8800010681152344
+    },
+    {
+      "object": "main_U9",
+      "z_bounds": [
+        41.41999816894531,
+        54.41999816894531
+      ],
+      "rear_inner_z": 54.5,
+      "clearance": 0.0800018310546875
+    }
+  ],
+  "display_front_z": 32.5,
+  "main_front_z": 40.735,
+  "board_gap": 6.635,
+  "socket_tail_z": 40.3,
+  "nominal_socket_tail_to_main_front": 0.435,
+  "notes": "Axial stack is estimated, not measured; generated package heights are provisional."
+}

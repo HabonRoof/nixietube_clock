@@ -1,0 +1,14 @@
+{
+  "socket_holes": 84,
+  "mounts": 4,
+  "minimum_hole_center_spacing_mm": 3.732788182632362,
+  "diametral_clearance_assumed_mm": 0.04,
+  "guide_thickness_mm": 4.0,
+  "entry_chamfer_axial_mm": 0.15,
+  "effective_engagement_mm": 3.85,
+  "angular_play_estimate_deg": 0.5952594084984363,
+  "physical_fit_verified": false,
+  "thermal_test_performed": false,
+  "axial_tail_interpretation_confirmed": true,
+  "installed_height_discrepancy_mm": 0.7
+}
