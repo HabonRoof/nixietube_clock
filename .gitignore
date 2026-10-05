@@ -19,3 +19,15 @@ hardware/**/*.kicad_pro-bak
 hardware/**/*.kicad_prl
 hardware/**/*fp-info-cache
 managed_components/
+
+# Generated previews, Python caches, and editor backups
+/tmp/
+__pycache__/
+*.py[cod]
+*.blend[0-9]*
+*.FCBak
+~$*
+Thumbs.db
+
+# Rebuild with scripts/assembly_validation/export_stl_assembly.py
+/scripts/assembly_validation/clock_assembly.stl

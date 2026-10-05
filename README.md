@@ -484,3 +484,8 @@ Contributions are welcome — effects, CLI tools, web UI polish, driver fixes, d
 4. Open a pull request describing **what** changed and **how to test** it.
 
 If you are unsure where something belongs, open an issue first — happy to point you at the right module.
+
+
+## 檔案整理與目前機殼版本
+
+目前暫定機殼為 [`hardware/case/revision_l/`](hardware/case/revision_l/)。裝配檢查、模型建置、驗證與文件製作工具統一收在 [`scripts/`](scripts/README.md)，文件與交付產物分別保留在 `doc/user_guide/` 與 `output/`。`tmp/` 為不納入 Git 的暫存目錄。
