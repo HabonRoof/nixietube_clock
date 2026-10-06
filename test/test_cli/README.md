@@ -55,17 +55,17 @@ This document outlines the test plan for the Nixie Clock CLI.
 
 ## Automated Testing
 
-A Python script `test_cli.py` is provided to automate sending commands.
+A Python script `scripts/test_cli.py` is provided to automate sending commands. Run it from the repository root; install `pyserial` in your Python environment first.
 
 ### Usage
 
 ```bash
-python test_cli.py <port>
+python scripts/test_cli.py <port>
 ```
 
 Example:
 ```bash
-python test_cli.py /dev/ttyUSB0
+python scripts/test_cli.py /dev/ttyUSB0
 ```
 
 The script will send a sequence of commands and prompt you to verify the visual output on the device.

@@ -488,4 +488,4 @@ If you are unsure where something belongs, open an issue first — happy to poin
 
 ## 檔案整理與目前機殼版本
 
-目前暫定機殼為 [`hardware/case/revision_l/`](hardware/case/revision_l/)。裝配檢查、模型建置、驗證與文件製作工具統一收在 [`scripts/`](scripts/README.md)，文件與交付產物分別保留在 `doc/user_guide/` 與 `output/`。`tmp/` 為不納入 Git 的暫存目錄。
+目前暫定機殼為 [`hardware/case/revision_l/`](hardware/case/revision_l/README.md)，保留 Blender 裝配、STEP 與列印零件。現有 Python 腳本統一收在 [`scripts/`](scripts/README.md)，內含 Cursor 遠端虛擬機的執行說明。目前分支沒有 user guide 產生工具、`doc/user_guide/` 或 `output/`；`tmp/` 為不納入 Git 的暫存目錄。
