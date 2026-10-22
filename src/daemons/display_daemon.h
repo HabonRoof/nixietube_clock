@@ -28,6 +28,7 @@ enum class TubeTransitionPhase
 {
     STABLE,
     FADE_OUT,
+    BLANK,
     FADE_IN,
 };
 
@@ -42,6 +43,7 @@ struct TubeTransitionState
     TubeTransitionPhase phase = TubeTransitionPhase::STABLE;
     uint8_t pending_digit = 0;
     uint8_t current_scale = 255;
+    uint32_t elapsed_ms = 0;
 };
 
 struct DivergenceMeterState
@@ -132,7 +134,9 @@ private:
     static constexpr uint32_t kDivergenceJumpMs = 1500;
     static constexpr uint32_t kCathodeStepMs = 300;
     static constexpr uint8_t kCathodePoisonCtr = 15;
-    static constexpr uint8_t kFadeStep = 51;
+    static constexpr uint32_t kFadeOutMs = 450;
+    static constexpr uint32_t kFadeBlankMs = 80;
+    static constexpr uint32_t kFadeInMs = 450;
     static constexpr uint32_t kPomodoroWorkMs = 25 * 60 * 1000;
     static constexpr uint32_t kPomodoroBreakMs = 5 * 60 * 1000;
 

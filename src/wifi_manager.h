@@ -8,6 +8,7 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
+#include "freertos/event_groups.h"
 #include "esp_event.h"
 #include "esp_netif.h"
 #include "wifi_credentials.h"
@@ -109,13 +110,14 @@ private:
     uint8_t client_count_;
     uint16_t client_aids_[4];
     uint8_t client_aid_count_;
+    uint16_t last_sta_disconnect_reason_;
     bool handlers_registered_;
     esp_netif_t *ap_netif_;
     esp_netif_t *sta_netif_;
     esp_event_handler_instance_t ap_stop_handler_;
     esp_event_handler_instance_t sta_stop_handler_;
     SemaphoreHandle_t wifi_stopped_sem_;
-    SemaphoreHandle_t ntp_done_sem_;
+    EventGroupHandle_t sta_events_;
 
     ConfigEnterFn on_config_enter_;
     ConfigClientFn on_config_client_;
@@ -126,7 +128,7 @@ private:
 
     static constexpr const char *kApPass = "nixie2026";
     static constexpr uint32_t kConfigDurationSec = 15 * 60;
-    static constexpr uint32_t kIdleAfterDisconnectSec = 120;
+    static constexpr uint32_t kIdleAfterDisconnectSec = 15;
     static constexpr uint32_t kStaConnectTimeoutMs = 30000;
     static constexpr uint32_t kNtpTimeoutMs = 30000;
 };

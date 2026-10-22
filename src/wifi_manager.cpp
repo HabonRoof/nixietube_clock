@@ -6,7 +6,7 @@
 #include "esp_random.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
-#include "esp_sntp.h"
+#include "esp_netif_sntp.h"
 #include <cstring>
 #include <cmath>
 
@@ -47,15 +47,8 @@ bool configure_ap_address(esp_netif_t *ap_netif)
 }
 
 portMUX_TYPE g_event_mux = portMUX_INITIALIZER_UNLOCKED;
-WifiManager *g_wifi_manager = nullptr;
-
-void sntp_sync_callback(struct timeval *tv)
-{
-    if (g_wifi_manager) {
-        // Handled via semaphore in run_sta_ntp_sync_blocking
-    }
-    (void)tv;
-}
+constexpr EventBits_t kStaGotIp = BIT0;
+constexpr EventBits_t kStaDisconnected = BIT1;
 } // namespace
 
 WifiManager::WifiManager()
@@ -69,13 +62,14 @@ WifiManager::WifiManager()
       idle_timer_active_(false),
       client_count_(0),
       client_aid_count_(0),
+      last_sta_disconnect_reason_(0),
       handlers_registered_(false),
       ap_netif_(nullptr),
       sta_netif_(nullptr),
       ap_stop_handler_(nullptr),
       sta_stop_handler_(nullptr),
       wifi_stopped_sem_(nullptr),
-      ntp_done_sem_(nullptr),
+      sta_events_(nullptr),
       command_queue_(nullptr)
 {
     config_ssid_[0] = '\0';
@@ -103,11 +97,10 @@ WifiManager::~WifiManager()
         vSemaphoreDelete(wifi_stopped_sem_);
         wifi_stopped_sem_ = nullptr;
     }
-    if (ntp_done_sem_) {
-        vSemaphoreDelete(ntp_done_sem_);
-        ntp_done_sem_ = nullptr;
+    if (sta_events_) {
+        vEventGroupDelete(sta_events_);
+        sta_events_ = nullptr;
     }
-    g_wifi_manager = nullptr;
 }
 
 void WifiManager::start()
@@ -117,12 +110,11 @@ void WifiManager::start()
     }
     command_queue_ = xQueueCreate(4, sizeof(CommandMsg));
     wifi_stopped_sem_ = xSemaphoreCreateBinary();
-    ntp_done_sem_ = xSemaphoreCreateBinary();
-    if (!command_queue_ || !wifi_stopped_sem_ || !ntp_done_sem_) {
+    sta_events_ = xEventGroupCreate();
+    if (!command_queue_ || !wifi_stopped_sem_ || !sta_events_) {
         ESP_LOGE(kTag, "Failed to create WiFi manager queues");
         return;
     }
-    g_wifi_manager = this;
     xTaskCreate(task_entry, "wifi_mgr", 8192, this, 4, &task_handle_);
 }
 
@@ -265,12 +257,17 @@ void WifiManager::wifi_event_handler(void *arg, esp_event_base_t event_base, int
             mgr->idle_deadline_ = xTaskGetTickCount() + pdMS_TO_TICKS(kIdleAfterDisconnectSec * 1000);
         }
         portEXIT_CRITICAL(&g_event_mux);
-        ESP_LOGI(kTag, "AP client disconnected aid=%u total=%u", ev->aid, mgr->client_count_);
+        ESP_LOGI(kTag, "AP client disconnected aid=%u reason=%u total=%u", ev->aid, ev->reason,
+                 mgr->client_count_);
         break;
     }
-    case WIFI_EVENT_STA_DISCONNECTED:
-        xSemaphoreGive(mgr->ntp_done_sem_);
+    case WIFI_EVENT_STA_DISCONNECTED: {
+        const auto *ev = static_cast<const wifi_event_sta_disconnected_t *>(event_data);
+        mgr->last_sta_disconnect_reason_ = static_cast<uint16_t>(ev->reason);
+        ESP_LOGW(kTag, "STA disconnected reason=%u", ev->reason);
+        xEventGroupSetBits(mgr->sta_events_, kStaDisconnected);
         break;
+    }
     default:
         break;
     }
@@ -282,7 +279,7 @@ void WifiManager::ip_event_handler(void *arg, esp_event_base_t event_base, int32
     auto *mgr = static_cast<WifiManager *>(arg);
     if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ESP_LOGI(kTag, "STA got IP");
-        xSemaphoreGive(mgr->ntp_done_sem_);
+        xEventGroupSetBits(mgr->sta_events_, kStaGotIp);
     }
     (void)event_data;
 }
@@ -570,6 +567,9 @@ bool WifiManager::run_sta_ntp_sync_blocking()
                  sizeof(sta_config.sta.password));
     sta_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
 
+    ESP_LOGI(kTag, "NTP stage: starting STA");
+    last_sta_disconnect_reason_ = 0;
+    xEventGroupClearBits(sta_events_, kStaGotIp | kStaDisconnected);
     if (!wifi_call_ok(esp_wifi_set_mode(WIFI_MODE_STA), "esp_wifi_set_mode(STA)") ||
         !wifi_call_ok(esp_wifi_set_config(WIFI_IF_STA, &sta_config), "esp_wifi_set_config(STA)") ||
         !wifi_call_ok(esp_wifi_start(), "esp_wifi_start(STA)")) {
@@ -578,7 +578,6 @@ bool WifiManager::run_sta_ntp_sync_blocking()
         return false;
     }
 
-    xSemaphoreTake(ntp_done_sem_, 0);
     state_ = WifiManagerState::StaNtpSync;
     if (!wifi_call_ok(esp_wifi_connect(), "esp_wifi_connect")) {
         shutdown_wifi();
@@ -587,51 +586,59 @@ bool WifiManager::run_sta_ntp_sync_blocking()
         return false;
     }
 
-    if (xSemaphoreTake(ntp_done_sem_, pdMS_TO_TICKS(kStaConnectTimeoutMs)) != pdTRUE) {
-        ESP_LOGW(kTag, "STA connect timeout");
+    const EventBits_t connection = xEventGroupWaitBits(
+        sta_events_, kStaGotIp | kStaDisconnected, pdFALSE, pdFALSE,
+        pdMS_TO_TICKS(kStaConnectTimeoutMs));
+    if (!(connection & kStaGotIp) || (connection & kStaDisconnected)) {
+        ESP_LOGW(kTag, "NTP cancelled: STA %s reason=%u",
+                 (connection & kStaDisconnected) ? "disconnected" : "connect timeout",
+                 last_sta_disconnect_reason_);
         shutdown_wifi();
         wifi_ntp_status_save(0, false);
         return false;
     }
 
-    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    esp_sntp_setservername(0, "pool.ntp.org");
-    esp_sntp_set_time_sync_notification_cb(sntp_sync_callback);
-    esp_sntp_init();
-
-    bool ntp_ok = false;
-    time_t utc_now = 0;
-    for (int i = 0; i < 20; ++i) {
-        vTaskDelay(pdMS_TO_TICKS(500));
-        time(&utc_now);
-        if (utc_now > 1700000000) {
-            ntp_ok = true;
-            break;
-        }
+    ESP_LOGI(kTag, "NTP stage: waiting for fresh server response");
+    esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
+    const esp_err_t init_err = esp_netif_sntp_init(&sntp_config);
+    if (!wifi_call_ok(init_err, "esp_netif_sntp_init")) {
+        shutdown_wifi();
+        wifi_ntp_status_save(0, false);
+        return false;
     }
-    esp_sntp_stop();
+
+    // The system clock may already be valid from RTC. Only a notification from
+    // this SNTP session proves that we received a fresh network time.
+    const esp_err_t sync_err = esp_netif_sntp_sync_wait(pdMS_TO_TICKS(kNtpTimeoutMs));
+    const bool ntp_ok = sync_err == ESP_OK &&
+        !(xEventGroupGetBits(sta_events_) & kStaDisconnected);
+    time_t utc_now = 0;
+    if (ntp_ok) {
+        time(&utc_now);
+    }
+    esp_netif_sntp_deinit();
+    ESP_LOGI(kTag, "NTP stage: stopping WiFi (sync=%s)", esp_err_to_name(sync_err));
 
     const esp_err_t disc = esp_wifi_disconnect();
     if (disc != ESP_OK && disc != ESP_ERR_WIFI_NOT_STARTED && disc != ESP_ERR_WIFI_NOT_INIT) {
         ESP_LOGW(kTag, "esp_wifi_disconnect: %s", esp_err_to_name(disc));
     }
-    shutdown_wifi();
+    const bool stopped = shutdown_wifi();
 
-    if (!ntp_ok) {
-        ESP_LOGW(kTag, "NTP sync timeout");
+    if (!ntp_ok || !stopped) {
+        ESP_LOGW(kTag, "NTP cancelled: sync failed, connection lost, or WiFi stop unconfirmed");
         wifi_ntp_status_save(0, false);
         return false;
     }
 
-    if (on_ntp_apply_) {
-        if (!on_ntp_apply_(utc_now)) {
-            wifi_ntp_status_save(utc_now, false);
-            return false;
-        }
+    ESP_LOGI(kTag, "NTP stage: queueing UTC for RTC");
+    if (!on_ntp_apply_ || !on_ntp_apply_(utc_now)) {
+        ESP_LOGW(kTag, "NTP cancelled: RTC apply was not accepted");
+        wifi_ntp_status_save(utc_now, false);
+        return false;
     }
 
-    ESP_LOGI(kTag, "NTP sync OK utc=%lld", static_cast<long long>(utc_now));
-    wifi_ntp_status_save(utc_now, true);
+    ESP_LOGI(kTag, "NTP sync queued utc=%lld", static_cast<long long>(utc_now));
     return true;
 }
 

@@ -329,6 +329,8 @@ void DisplayDaemon::handle_digit_update(const std::array<uint8_t, 6> &digits)
 
         if (tube.phase == TubeTransitionPhase::STABLE) {
             tube.phase = TubeTransitionPhase::FADE_OUT;
+            tube.elapsed_ms = 0;
+            tube.current_scale = 255;
         }
     }
 
@@ -377,32 +379,48 @@ void DisplayDaemon::update_nixie_transitions(uint32_t dt_ms)
                 break;
 
             case TubeTransitionPhase::FADE_OUT: {
-                if (tube.current_scale <= kFadeStep) {
+                tube.elapsed_ms += dt_ms;
+                if (tube.elapsed_ms >= kFadeOutMs) {
                     tube.current_scale = 0;
                     nixie_driver_.set_tube_brightness(i, 0);
                     nixie_driver_.set_digit_at(i, tube.pending_digit);
-                    tube.phase = TubeTransitionPhase::FADE_IN;
+                    tube.phase = TubeTransitionPhase::BLANK;
+                    tube.elapsed_ms = 0;
                 } else {
-                    tube.current_scale = static_cast<uint8_t>(tube.current_scale - kFadeStep);
+                    tube.current_scale = static_cast<uint8_t>(
+                        255U - (255U * tube.elapsed_ms) / kFadeOutMs);
                     nixie_driver_.set_tube_brightness(i, tube.current_scale);
+                }
+                break;
+            }
+
+            case TubeTransitionPhase::BLANK: {
+                nixie_driver_.set_tube_brightness(i, 0);
+                tube.elapsed_ms += dt_ms;
+                if (tube.elapsed_ms >= kFadeBlankMs) {
+                    nixie_driver_.set_digit_at(i, tube.pending_digit);
+                    tube.phase = TubeTransitionPhase::FADE_IN;
+                    tube.elapsed_ms = 0;
+                    tube.current_scale = 0;
                 }
                 break;
             }
 
             case TubeTransitionPhase::FADE_IN: {
-                if (tube.current_scale >= static_cast<uint8_t>(255 - kFadeStep)) {
+                tube.elapsed_ms += dt_ms;
+                if (tube.elapsed_ms >= kFadeInMs) {
                     tube.current_scale = 255;
                     nixie_driver_.set_tube_brightness(i, 255);
                     tube.phase = TubeTransitionPhase::STABLE;
+                    tube.elapsed_ms = 0;
                 } else {
-                    tube.current_scale = static_cast<uint8_t>(tube.current_scale + kFadeStep);
+                    tube.current_scale = static_cast<uint8_t>(
+                        (255U * tube.elapsed_ms) / kFadeInMs);
                     nixie_driver_.set_tube_brightness(i, tube.current_scale);
                 }
                 break;
             }
         }
-
-        (void)dt_ms;
     }
 }
 

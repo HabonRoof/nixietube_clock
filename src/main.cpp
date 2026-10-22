@@ -143,7 +143,10 @@ extern "C" void app_main(void)
         []() { system_controller.on_wifi_config_client_connected(); },
         []() { system_controller.exit_wifi_config_ui(); });
     wifi_manager.set_ntp_apply_callback([](time_t utc) {
-        return system_controller.apply_ntp_utc(utc, nullptr);
+        SystemMessage msg = {};
+        msg.event = SystemEvent::RTC_UPDATE;
+        msg.data.rtc_utc = utc;
+        return xQueueSend(system_controller.get_queue(), &msg, pdMS_TO_TICKS(200)) == pdTRUE;
     });
     wifi_manager.start();
     ntp_scheduler.start();

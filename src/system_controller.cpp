@@ -45,6 +45,20 @@ bool hibernate_is_active(const ClockSettings &settings, uint8_t hour, uint8_t mi
     return in_hibernate_period(now_minutes, settings.hibernation);
 }
 
+bool rtc_tm_is_writable(const struct tm *timeinfo)
+{
+    if (!timeinfo) {
+        return false;
+    }
+    return timeinfo->tm_sec >= 0 && timeinfo->tm_sec <= 59 &&
+           timeinfo->tm_min >= 0 && timeinfo->tm_min <= 59 &&
+           timeinfo->tm_hour >= 0 && timeinfo->tm_hour <= 23 &&
+           timeinfo->tm_mday >= 1 && timeinfo->tm_mday <= 31 &&
+           timeinfo->tm_mon >= 0 && timeinfo->tm_mon <= 11 &&
+           timeinfo->tm_year >= 100 && timeinfo->tm_year <= 199 &&
+           timeinfo->tm_wday >= 0 && timeinfo->tm_wday <= 6;
+}
+
 } // namespace
 
 // Timekeeping policy: maintain ESP32 system time (UTC) and periodically
@@ -238,6 +252,8 @@ SystemController::SystemController(DisplayDaemon &display_daemon, AudioDaemon &a
       battery_read_failures_(0),
       gasgauge_ready_(gasgauge_ready_at_boot),
       alarm_audio_active_(false),
+      alarm_latched_(false),
+      alarm_latch_unix_(0),
       alarm_stop_timer_(nullptr),
       display_preview_timer_(nullptr),
       hibernate_state_(HibernateState::Normal),
@@ -312,7 +328,7 @@ SystemController::~SystemController()
 
 void SystemController::start()
 {
-    xTaskCreate(task_entry, "system_controller", 4096, this, 5, &task_handle_);
+    xTaskCreate(task_entry, "system_controller", 8192, this, 5, &task_handle_);
 }
 
 QueueHandle_t SystemController::get_queue() const
@@ -421,6 +437,9 @@ void SystemController::process_message(const SystemMessage &msg)
                 }
             }
             break;
+        case SystemEvent::RTC_UPDATE:
+            apply_ntp_utc(msg.data.rtc_utc, nullptr);
+            break;
         case SystemEvent::SETTINGS_UPDATE:
             if (msg.data.apply.cancel_preview) {
                 cancel_display_preview();
@@ -457,7 +476,9 @@ void SystemController::apply_settings(const ClockSettings &settings, const struc
 
             struct tm utc_tm;
             gmtime_r(&utc_epoch, &utc_tm);
-            if (rtc_.set_time(&utc_tm)) {
+            if (!rtc_tm_is_writable(&utc_tm)) {
+                ESP_LOGE(TAG, "RTC update rejected: time fields out of range");
+            } else if (rtc_.set_time(&utc_tm)) {
                 struct timeval tv = { .tv_sec = utc_epoch, .tv_usec = 0 };
                 settimeofday(&tv, nullptr);
                 publish_time_status(true);
@@ -604,18 +625,18 @@ void SystemController::stop_display_preview_timer()
     }
 }
 
-void SystemController::start_display_preview_timer()
+void SystemController::latch_alarm_until_second_changes()
 {
-    if (!display_preview_timer_) {
-        return;
-    }
-    stop_display_preview_timer();
-    esp_timer_start_once(display_preview_timer_, kDisplayPreviewDurationMs * 1000ULL);
+    time_t now = 0;
+    time(&now);
+    alarm_latched_ = true;
+    alarm_latch_unix_ = now;
 }
 
 void SystemController::stop_alarm_audio()
 {
     cancel_alarm_timer();
+    latch_alarm_until_second_changes();
     if (!alarm_audio_active_) {
         return;
     }
@@ -639,12 +660,34 @@ void SystemController::check_alarm()
     }
 
     bool triggered = false;
-    if (!rtc_.alarm1_triggered(&triggered) || !triggered) {
+    if (!rtc_.alarm1_triggered(&triggered)) {
+        return;
+    }
+
+    time_t now = 0;
+    time(&now);
+    if (alarm_latched_) {
+        if (now == alarm_latch_unix_) {
+            if (triggered) {
+                rtc_.clear_alarm1_flag();
+            }
+            return;
+        }
+        alarm_latched_ = false;
+        if (triggered) {
+            // The match second already started or stopped this alarm.
+            rtc_.clear_alarm1_flag();
+            return;
+        }
+    }
+
+    if (!triggered) {
         return;
     }
 
     // TODO: check the INT pin of DS3231
     rtc_.clear_alarm1_flag();
+    latch_alarm_until_second_changes();
 
     uint16_t track = settings.alarm_track;
     if (track == 0) {
@@ -1240,7 +1283,7 @@ void SystemController::apply_display_preview(const BacklightProfile &profile)
 {
     display_preview_active_ = true;
     display_preview_ = profile;
-    start_display_preview_timer();
+    stop_display_preview_timer();
     if (hibernate_state_ == HibernateState::Hibernating) {
         return;
     }
@@ -1348,6 +1391,12 @@ void SystemController::handle_button_press(uint8_t button_id)
 {
     ESP_LOGI(TAG, "Button pressed: %u", button_id);
 
+    if (button_id == kButtonAlarmStop && is_alarm_audio_active()) {
+        note_user_activity();
+        stop_alarm_audio();
+        return;
+    }
+
     if (hibernate_state_ == HibernateState::Hibernating && !alarm_audio_active_) {
         peek_from_hibernate();
         return;
@@ -1409,6 +1458,8 @@ void SystemController::handle_button_press(uint8_t button_id)
 bool SystemController::apply_ntp_utc(time_t ntp_utc, int *drift_sec_out)
 {
     if (i2c_debug::kDisableDs3231Rtc) {
+        ESP_LOGE(TAG, "NTP apply failed: RTC disabled");
+        wifi_ntp_status_save(ntp_utc, false);
         return false;
     }
 
@@ -1420,6 +1471,11 @@ bool SystemController::apply_ntp_utc(time_t ntp_utc, int *drift_sec_out)
     for (int attempt = 1; attempt <= kMaxAttempts; ++attempt) {
         struct tm utc_tm = {};
         gmtime_r(&ntp_utc, &utc_tm);
+        if (!rtc_tm_is_writable(&utc_tm)) {
+            ESP_LOGE(TAG, "NTP apply failed: RTC time fields out of range");
+            wifi_ntp_status_save(ntp_utc, false);
+            return false;
+        }
         if (!rtc_.set_time(&utc_tm)) {
             ESP_LOGW(TAG, "NTP apply attempt %d/%d: RTC write failed", attempt, kMaxAttempts);
             vTaskDelay(kRtcSettleDelay);
@@ -1452,6 +1508,7 @@ bool SystemController::apply_ntp_utc(time_t ntp_utc, int *drift_sec_out)
             settings.rtc_calibrated = true;
             system_state_.set_settings(settings);
             system_state_.save_settings();
+            wifi_ntp_status_save(ntp_utc, true);
 
             ESP_LOGI(TAG, "NTP applied UTC %lld verified drift=%d s (attempt %d)",
                      static_cast<long long>(ntp_utc), last_drift, attempt);
@@ -1467,6 +1524,7 @@ bool SystemController::apply_ntp_utc(time_t ntp_utc, int *drift_sec_out)
     }
     ESP_LOGE(TAG, "NTP apply failed after %d attempts (last drift=%d s)", kMaxAttempts,
              last_drift);
+    wifi_ntp_status_save(ntp_utc, false);
     return false;
 }
 

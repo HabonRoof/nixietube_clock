@@ -179,7 +179,6 @@ struct SystemMessage
         GasgaugeData battery;
         ChargerData charger;
         SettingsUpdate apply;
-        // TODO: Add other features
-        // Add other event data as needed
+        time_t rtc_utc;
     } data;
 };

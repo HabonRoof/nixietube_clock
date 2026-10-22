@@ -108,8 +108,8 @@ private:
     void push_local_time_now();
     void cancel_alarm_timer();
     void start_alarm_timer();
+    void latch_alarm_until_second_changes();
     void stop_alarm_audio();
-    void start_display_preview_timer();
     void stop_display_preview_timer();
     void handle_button_press(uint8_t button_id);
     void return_to_clock_mode();
@@ -137,6 +137,8 @@ private:
     uint8_t battery_read_failures_;
     bool gasgauge_ready_;
     bool alarm_audio_active_;
+    bool alarm_latched_;
+    time_t alarm_latch_unix_;
     esp_timer_handle_t alarm_stop_timer_;
     esp_timer_handle_t display_preview_timer_;
     HibernateState hibernate_state_;
@@ -163,7 +165,6 @@ private:
     static constexpr uint8_t kBatteryProtectionSocResume = 78;
     static constexpr uint8_t kHibernatePeekNixieBrightness = 50;
     static constexpr uint32_t kAlarmMaxDurationMs = 180000;
-    static constexpr uint32_t kDisplayPreviewDurationMs = 2000;
     static constexpr uint32_t kHibernationPeekMs = 5000;
     static constexpr uint32_t kIdleStandbyMs = 60000;
     static constexpr float standby_brightness_factor = 0.25f;
