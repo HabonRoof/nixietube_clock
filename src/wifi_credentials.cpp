@@ -10,6 +10,7 @@ constexpr const char *kNamespace = "wifi_sta";
 constexpr const char *kKeySsid = "ssid";
 constexpr const char *kKeyPass = "pass";
 constexpr const char *kKeyConfigured = "cfg";
+constexpr const char *kKeyEnabled = "enabled";
 constexpr const char *kKeyLastNtp = "last_ntp";
 constexpr const char *kKeyLastNtpOk = "last_ok";
 } // namespace
@@ -36,10 +37,13 @@ bool wifi_credentials_load(WifiStaCredentials *out)
         return false;
     }
 
+    uint8_t enabled = 0;
+    nvs_get_u8(handle, kKeyEnabled, &enabled);
+    out->enabled = enabled != 0;
+
     size_t ssid_len = sizeof(out->ssid);
     size_t pass_len = sizeof(out->password);
     uint8_t configured = 0;
-
     if (nvs_get_str(handle, kKeySsid, out->ssid, &ssid_len) != ESP_OK) {
         nvs_close(handle);
         return true;
@@ -49,6 +53,25 @@ bool wifi_credentials_load(WifiStaCredentials *out)
     nvs_close(handle);
 
     out->configured = configured != 0 && out->ssid[0] != '\0';
+    return true;
+}
+
+bool wifi_credentials_set_enabled(bool enabled)
+{
+    nvs_handle_t handle = 0;
+    if (!open_namespace(&handle, NVS_READWRITE)) {
+        return false;
+    }
+
+    esp_err_t err = nvs_set_u8(handle, kKeyEnabled, enabled ? 1 : 0);
+    if (err == ESP_OK) {
+        err = nvs_commit(handle);
+    }
+    nvs_close(handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(kTag, "set enabled failed: %s", esp_err_to_name(err));
+        return false;
+    }
     return true;
 }
 
@@ -92,6 +115,7 @@ bool wifi_credentials_clear()
     nvs_erase_key(handle, kKeySsid);
     nvs_erase_key(handle, kKeyPass);
     nvs_set_u8(handle, kKeyConfigured, 0);
+    nvs_set_u8(handle, kKeyEnabled, 0);
     const esp_err_t err = nvs_commit(handle);
     nvs_close(handle);
     return err == ESP_OK;
@@ -106,7 +130,7 @@ bool wifi_ntp_status_load(WifiNtpStatus *out)
 
     WifiStaCredentials creds = {};
     wifi_credentials_load(&creds);
-    out->configured = creds.configured;
+    out->configured = creds.enabled && creds.configured;
 
     nvs_handle_t handle = 0;
     if (!open_namespace(&handle, NVS_READONLY)) {

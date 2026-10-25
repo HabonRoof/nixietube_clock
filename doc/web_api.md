@@ -32,8 +32,8 @@ Maximum POST body size: **4096 bytes**.
 | `/api/audio/play` | POST | Toggle play/pause for a track |
 | `/api/ap/status` | GET | Config AP active flag, SSID, password, session code, remaining seconds |
 | `/api/ap/stop` | POST | Deauth connected clients and stop config AP |
-| `/api/wifi` | GET | Home WiFi SSID (configured flag; password never returned) |
-| `/api/wifi` | POST | Save home WiFi credentials to NVS |
+| `/api/wifi` | GET | Home WiFi enable flag and SSID (password never returned) |
+| `/api/wifi` | POST | Enable or disable home WiFi, and optionally save credentials |
 | `/api/wifi` | DELETE | Clear home WiFi credentials |
 | `/api/ntp/status` | GET | Last NTP sync timestamp and success flag |
 
@@ -58,15 +58,27 @@ Stops the config AP after deauthenticating connected stations. Response: `{"ok":
 
 ```json
 {
+  "enabled": false,
   "configured": true,
   "ssid": "MyHomeWiFi"
 }
 ```
 
+`enabled` defaults to false. Scheduled NTP runs only when `enabled` is true and an SSID is saved. While disabled, the clock keeps offline time sync from the settings page.
+
 ## `POST /api/wifi`
+
+Enable or disable without changing the saved network:
+
+```json
+{ "enabled": true }
+```
+
+Save credentials. `password` may be empty. Include `enabled` when the switch is on:
 
 ```json
 {
+  "enabled": true,
   "ssid": "MyHomeWiFi",
   "password": "secret"
 }
@@ -74,7 +86,7 @@ Stops the config AP after deauthenticating connected stations. Response: `{"ok":
 
 ## `DELETE /api/wifi`
 
-Clears stored home WiFi credentials. NTP scheduled sync is skipped until reconfigured.
+Clears stored home WiFi credentials and turns `enabled` off. NTP scheduled sync is skipped until home WiFi is enabled again and an SSID is saved.
 
 ## `GET /api/ntp/status`
 
@@ -85,6 +97,8 @@ Clears stored home WiFi credentials. NTP scheduled sync is skipped until reconfi
   "last_ntp_unix": 1736123456
 }
 ```
+
+`configured` is true only when home WiFi is enabled and an SSID is saved.
 
 ## `GET /api/settings`
 
@@ -153,7 +167,7 @@ Clears stored home WiFi credentials. NTP scheduled sync is skipped until reconfi
 
 Send only the groups you want to change. Unknown keys are rejected.
 
-`persist` defaults to `true`. When `persist` is `false`, only a `display` preview may be sent; settings are applied to the hardware immediately but **not** written to NVS. After **2 seconds** without a newer preview, the device automatically restores the active saved profile on the hardware.
+`persist` defaults to `true`. When `persist` is `false`, only a `display` preview may be sent. The preview is applied to the tubes immediately, except during hibernation or a hibernate peek, and it is **not** written to NVS. It stays until the page sends `preview.cancel`, a later request is saved with `persist: true`, or button 2 changes the profile. `SystemController` creates a preview timer whose callback would restore the saved profile, but the firmware never starts that timer.
 
 ### Examples
 
@@ -219,14 +233,14 @@ Update hibernation schedule:
 | :--- | :--- |
 | `save_index` | Copies the current display state (after any `display` fields in the same request) into the given slot and makes it active. Requires `persist: true` (default). |
 
-On the device, switch the active profile with **button 2** (not the web UI).
+The web UI switches profiles by tapping a color swatch (`profiles.active_index`). Button 2 cycles the same four slots on the device.
 
 ### Web UI behavior
 
 - The **Light** tab sends `persist: false` display previews while sliders move (throttled live updates via pointer events; flush on pointer up).
-- Each preview restarts a **2 second** device-side timer; when the timer expires without a newer preview, the active saved profile is restored on the hardware (form values stay so Save can still commit).
-- **Save 1–4** commits the preview to a profile slot with `persist: true` and clears the preview timer.
-- Leaving the Light tab or closing the browser cancels the preview via `preview.cancel` and restores the active saved profile (and the form from the last committed display).
+- **Save 1–4** commits the preview to a profile slot with `persist: true` and clears the preview flag.
+- Leaving the Light tab or closing the browser cancels the preview via `preview.cancel`, restores the form from the last committed display, and restores that profile on the tubes unless the clock is hibernating.
+- Button 2 cancels an active web preview, then advances to the next profile.
 
 ## `GET /api/time`
 

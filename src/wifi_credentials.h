@@ -7,6 +7,7 @@ struct WifiStaCredentials {
     char ssid[33];
     char password[65];
     bool configured;
+    bool enabled;
 };
 
 struct WifiNtpStatus {
@@ -17,6 +18,7 @@ struct WifiNtpStatus {
 
 bool wifi_credentials_load(WifiStaCredentials *out);
 bool wifi_credentials_save(const char *ssid, const char *password);
+bool wifi_credentials_set_enabled(bool enabled);
 bool wifi_credentials_clear();
 
 bool wifi_ntp_status_load(WifiNtpStatus *out);

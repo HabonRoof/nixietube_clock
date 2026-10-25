@@ -54,6 +54,7 @@ public:
 
     void get_ap_status(WifiApStatus *out) const;
     bool set_sta_credentials(const char *ssid, const char *password);
+    bool set_sta_enabled(bool enabled);
     bool clear_sta_credentials();
     bool load_sta_credentials(WifiStaCredentials *out) const;
 

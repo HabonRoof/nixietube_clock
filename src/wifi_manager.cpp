@@ -176,6 +176,11 @@ bool WifiManager::set_sta_credentials(const char *ssid, const char *password)
     return wifi_credentials_save(ssid, password);
 }
 
+bool WifiManager::set_sta_enabled(bool enabled)
+{
+    return wifi_credentials_set_enabled(enabled);
+}
+
 bool WifiManager::clear_sta_credentials()
 {
     return wifi_credentials_clear();
@@ -541,8 +546,8 @@ void WifiManager::handle_idle_timeout()
 bool WifiManager::run_sta_ntp_sync_blocking()
 {
     WifiStaCredentials creds = {};
-    if (!wifi_credentials_load(&creds) || !creds.configured) {
-        ESP_LOGI(kTag, "NTP skipped: no STA credentials");
+    if (!wifi_credentials_load(&creds) || !creds.enabled || !creds.configured) {
+        ESP_LOGI(kTag, "NTP skipped: home WiFi disabled or not configured");
         return false;
     }
 

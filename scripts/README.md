@@ -4,6 +4,19 @@
 
 - `generate_git_version.py`：由 PlatformIO 的兩個環境呼叫，產生目前 Git commit 的編譯巨集；需安裝 Git。
 - `test_cli.py`：透過序列埠發送指令的互動式硬體測試，需安裝 `pyserial`。測試步驟見 [CLI 測試說明](../test/test_cli/README.md)。
+- `mock_web_ui.py`：沒有開發板時，在瀏覽器預覽設定頁。只使用 Python 標準庫。
+
+## 沒有硬體時預覽設定頁
+
+設定頁的 HTML 嵌在 `src/web_page.cpp`，瀏覽器不能直接打開那個 C 檔。`mock_web_ui.py` 會抽出同一份頁面，並用記憶體裡的假資料回應頁面會呼叫的 API（`/api/settings`、`/api/time`、`/api/wifi`、`/api/ap/status`、`/api/ap/stop`、`/api/audio/tracks`、`/api/audio/status`、`/api/audio/play`）。
+
+```sh
+python3 scripts/mock_web_ui.py
+```
+
+然後打開 `http://127.0.0.1:8080/`。埠被占用時改用 `python3 scripts/mock_web_ui.py --port 8765`。
+
+假資料在程式結束後就消失。終端機會印出每一筆會改設定的請求：拖曳燈光是 `persist: false`，只記在預覽、重新整理後會回到已儲存的設定檔；按「儲存」或調整音量、鬧鐘、休眠才寫進假的設定。頁面一開始是已校時的時鐘，所以不會一打開就自動送出對時。
 
 ## Cursor 遠端虛擬機
 

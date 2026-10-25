@@ -267,7 +267,8 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     server->wifi_manager().load_sta_credentials(&creds);
 
     CJsonPtr response(cJSON_CreateObject());
-    if (!response || !cJSON_AddBoolToObject(response.get(), "configured", creds.configured) ||
+    if (!response || !cJSON_AddBoolToObject(response.get(), "enabled", creds.enabled) ||
+        !cJSON_AddBoolToObject(response.get(), "configured", creds.configured) ||
         !cJSON_AddStringToObject(response.get(), "ssid",
                                  creds.configured ? creds.ssid : "")) {
         return send_json_error(req, "500 Internal Server Error", "allocation_failed", nullptr,
@@ -285,17 +286,34 @@ static esp_err_t wifi_post_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
+    const cJSON *enabled_value = cJSON_GetObjectItemCaseSensitive(request.get(), "enabled");
     const cJSON *ssid_value = cJSON_GetObjectItemCaseSensitive(request.get(), "ssid");
     const cJSON *pass_value = cJSON_GetObjectItemCaseSensitive(request.get(), "password");
-    if (!cJSON_IsString(ssid_value) || ssid_value->valuestring[0] == '\0') {
-        send_json_error(req, "400 Bad Request", "missing_field", "ssid", "ssid is required");
+    if (!enabled_value && !ssid_value) {
+        send_json_error(req, "400 Bad Request", "missing_field", "enabled",
+                        "enabled or ssid is required");
         return ESP_FAIL;
     }
-    const char *password = cJSON_IsString(pass_value) ? pass_value->valuestring : "";
-
-    if (!server->wifi_manager().set_sta_credentials(ssid_value->valuestring, password)) {
-        send_json_error(req, "500 Internal Server Error", "save_failed", nullptr,
-                        "failed to save wifi credentials");
+    if (enabled_value && !cJSON_IsBool(enabled_value)) {
+        send_json_error(req, "400 Bad Request", "invalid_type", "enabled", "must be a boolean");
+        return ESP_FAIL;
+    }
+    if (ssid_value) {
+        if (!cJSON_IsString(ssid_value) || ssid_value->valuestring[0] == '\0') {
+            send_json_error(req, "400 Bad Request", "missing_field", "ssid", "ssid is required");
+            return ESP_FAIL;
+        }
+        const char *password = cJSON_IsString(pass_value) ? pass_value->valuestring : "";
+        if (!server->wifi_manager().set_sta_credentials(ssid_value->valuestring, password)) {
+            send_json_error(req, "500 Internal Server Error", "save_failed", nullptr,
+                            "failed to save wifi credentials");
+            return ESP_FAIL;
+        }
+    }
+    if (enabled_value &&
+        !server->wifi_manager().set_sta_enabled(cJSON_IsTrue(enabled_value))) {
+        send_json_error(req, "500 Internal Server Error", "save_failed", "enabled",
+                        "failed to save wifi enabled");
         return ESP_FAIL;
     }
     return send_json_ok(req);

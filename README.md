@@ -184,7 +184,7 @@ nixietube_clock/
 ├── test/                   # Manual CLI tests and component experiments
 └── doc/                    # Datasheets, photos, architecture drawings
     ├── web_api.md          # HTTP JSON API schemas
-    ├── state_machine.drawio  # Behavioral modes (keep in sync with firmware)
+    ├── state_machine.drawio  # Behavioral modes (six pages, kept in sync with firmware)
     └── structure.drawio    # Early aspirational block diagram (outdated)
 ```
 
@@ -335,7 +335,7 @@ Connect to the AP and open `http://192.168.8.8/`. Use **完成並關閉設定 Wi
 
 Home WiFi credentials enable a brief daily STA session at **06:00 local** for NTP → DS3231 sync (always write, verify RTC within 1 min, retry up to 3×); WiFi is off the rest of the time.
 
-Full schemas: [doc/web_api.md](doc/web_api.md).
+Full schemas: [doc/web_api.md](doc/web_api.md). Without hardware, `python3 scripts/mock_web_ui.py` serves this same page at `http://127.0.0.1:8080/` with in-memory stand-ins for the JSON API. See [scripts/README.md](scripts/README.md).
 
 Configurable settings include timezone offset, alarm, backlight, nixie brightness/transition, volume, profiles, hibernation, and home WiFi. The web **Light** tab provides live display preview; **Save 1–4** commits a profile. Short-press button 2 to switch profiles on the device.
 

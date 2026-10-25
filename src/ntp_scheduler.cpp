@@ -58,7 +58,7 @@ bool NtpScheduler::should_run_today() const
     }
 
     WifiStaCredentials creds = {};
-    if (!wifi_manager_.load_sta_credentials(&creds) || !creds.configured) {
+    if (!wifi_manager_.load_sta_credentials(&creds) || !creds.enabled || !creds.configured) {
         return false;
     }
 

@@ -1,676 +1,449 @@
-<mxfile host="65bd71144e">
-    <diagram id="CGXSgRpGKFLWcSJx0gLR" name="Page-1">
-        <mxGraphModel dx="4060" dy="1873" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-            <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="76" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="9" target="64">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="9" value="" style="shape=ellipse;html=1;fillColor=strokeColor;fontSize=18;fontColor=#ffffff;" vertex="1" parent="1">
-                    <mxGeometry x="765" y="-275" width="40" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="11" value="Start" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="820" y="-265" width="50" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="192" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="13" target="191">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="13" value="DisplayMode::&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px;&quot;&gt;CLOCK_HHMMSS&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="170" y="220" width="230" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="229" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="14" target="228">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="14" value="DisplayMode::&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px;&quot;&gt;DATE_YYMMDD&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-540" y="220" width="230" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="98" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="15" target="94">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="15" value="DisplayMode::&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px;&quot;&gt;POMODORO&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1010" y="220" width="190" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="261" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="16" target="90">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="16" value="DisplayMode::&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24); font-size: 14px;&quot;&gt;&lt;font face=&quot;Consolas, Courier New, monospace&quot;&gt;DIVERGENCE_METER&lt;/font&gt;&lt;br&gt;&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1530" y="220" width="230" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="284" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="18" target="283">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="18" value="DisplayMode::&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px;&quot;&gt;CATHODE_POISONING&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1795" y="90" width="230" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="19" value="DisplayMode::&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px;&quot;&gt;MANUAL_DISPLAY&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="950" y="-155" width="230" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="20" value="Hibernate mode awake time: 5S" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="1280" y="720" width="190" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="30" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="23" target="29">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="23" value="generate a temporary 'preview_profile'" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="1334" y="368" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="28" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" target="23">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="1394.772727272727" y="330" as="sourcePoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="289" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="25" target="201">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="25" value="DisplayMode::&lt;font face=&quot;Consolas, Courier New, monospace&quot; color=&quot;#d6d6dd&quot;&gt;&lt;span style=&quot;font-size: 14px; background-color: rgb(24, 24, 24);&quot;&gt;OFF&lt;br&gt;&lt;/span&gt;&lt;/font&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-47.5" y="330" width="170" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="46" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="29" target="45">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="29" value="Apply 'preview_profile' for 2 seconds" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="1335" y="470" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="52" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" target="37">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="1194" y="330" as="sourcePoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="31" value="User press 'Save profile[1..4]'" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="1119" y="250" width="150" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="33" value="&lt;font color=&quot;#d6d6dd&quot;&gt;&lt;span style=&quot;background-color: rgb(24, 24, 24);&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;HibernateState::Hibernating&lt;/font&gt;&lt;br&gt;&lt;/span&gt;&lt;/font&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="940" y="535" width="230" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="50" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" target="23">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="1394" y="330" as="sourcePoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="34" value="User move the slider on WebUI" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="1320" y="250" width="150" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="36" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="35" target="34">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="35" value="Show current profile" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="1335" y="140" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="37" value="Save user_profile[1..4] to NVS" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="1134" y="360" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="41" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="1531" y="290" as="sourcePoint"/>
-                        <mxPoint x="1531" y="170" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="42" value="" style="endArrow=classic;html=1;fontFamily=Helvetica;fontSize=12;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="35">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="1531" y="170" as="sourcePoint"/>
-                        <mxPoint x="1631" y="250" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="44" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="1531" y="590" as="sourcePoint"/>
-                        <mxPoint x="1531" y="290" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="45" value="Clear 'preview_profile'" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="1335" y="560" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="47" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="1455" y="589.38" as="sourcePoint"/>
-                        <mxPoint x="1530" y="589.86" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="49" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="34" target="31">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="1405" y="210" as="sourcePoint"/>
-                        <mxPoint x="1405" y="260" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="53" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="1189" y="590" as="sourcePoint"/>
-                        <mxPoint x="1189" y="420" as="targetPoint"/>
-                        <Array as="points">
-                            <mxPoint x="1189" y="490"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="54" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="45">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="1189" y="590" as="sourcePoint"/>
-                        <mxPoint x="1204" y="370" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="56" value="Hibernate mode always turn off the tube and LED backlight&lt;br&gt;But can be awake by pressing any button and get 5s preview with no backlight and dimmed tube brightness" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
-                    <mxGeometry x="1090" y="650" width="590" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="57" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
-                    <mxGeometry x="1270" y="250" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="58" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
-                    <mxGeometry x="1400" y="330" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="59" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="35">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="1190" y="170" as="sourcePoint"/>
-                        <mxPoint x="1280" y="300" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="60" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="31">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="1195" y="170" as="sourcePoint"/>
-                        <mxPoint x="1120" y="290.0500000000001" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="62" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
-                    <mxGeometry x="1200" y="210" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="63" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
-                    <mxGeometry x="1214" y="325" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="67" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="64" target="19">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="64" value="CLI command set digit" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="710" y="-175" width="150" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="301" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="77" target="181">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="77" value="No any button press&lt;br&gt;for 1min" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-270" y="195" width="175" height="90" as="geometry"/>
-                </mxCell>
-                <mxCell id="263" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="88" target="262">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="88" value="Button0 pressed" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1503.75" y="390" width="177.5" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="92" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="90" target="88">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="90" value="&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24);&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Digit jumping&lt;/font&gt;&lt;br&gt;&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1500" y="310" width="170" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="267" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="93" target="260">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="93" value="&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24);&quot;&gt;Freeze the number&lt;br&gt;&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1500" y="605" width="170" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="99" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="94" target="95">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="94" value="&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24);&quot;&gt;Show 25min countdown&lt;br&gt;&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1006.25" y="310" width="180" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="113" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="95" target="100">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="95" value="Button0 pressed?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1003.75" y="390" width="177.5" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="114" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="100" target="101">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="100" value="&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24);&quot;&gt;Set LED to red breathing&lt;br&gt;countdown from 25min&lt;br&gt;&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1006.25" y="500" width="180" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="121" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="101" target="120">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="101" value="Counter reach zero?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1003.75" y="575" width="177.5" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="103" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1400" y="460" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="104" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1555" y="390" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="105" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="88">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1680" y="425" as="sourcePoint"/>
-                        <mxPoint x="-1050" y="510" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="106" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="90">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="-1560" y="330" as="sourcePoint"/>
-                        <mxPoint x="-1300" y="330" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="111" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1040" y="390" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="112" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-900" y="460" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="115" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="101">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1170" y="610" as="sourcePoint"/>
-                        <mxPoint x="-826.25" y="609.6" as="targetPoint"/>
-                        <Array as="points">
-                            <mxPoint x="-1020" y="610"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="118" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-910" y="650" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="119" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1040" y="575" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="123" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="120" target="122">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="120" value="&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24);&quot;&gt;Set LED to green breathing&lt;br&gt;countdown from 5 min&lt;br&gt;&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1006.25" y="690" width="180" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="122" value="Counter reach zero" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1003.75" y="765" width="177.5" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="124" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-790" y="800" as="sourcePoint"/>
-                        <mxPoint x="-826.25" y="799.5999999999999" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="125" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="94">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="-790" y="330" as="sourcePoint"/>
-                        <mxPoint x="-800" y="710" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="126" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-790" y="330" as="sourcePoint"/>
-                        <mxPoint x="-790" y="800" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="127" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1060" y="750" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="129" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-840" y="765" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="130" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="122">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-910" y="799.81" as="sourcePoint"/>
-                        <mxPoint x="-1170" y="799.41" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="133" value="&lt;span style=&quot;color: rgb(214, 214, 221); background-color: rgb(24, 24, 24);&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Digit sequence&lt;/font&gt;&lt;br&gt;&lt;/span&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-1515" y="-25" width="125" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="140" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="290" y="-80" as="sourcePoint"/>
-                        <mxPoint x="289.7" y="220" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="146" value="Button2 pressed" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-636.25" y="-420" width="150" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="195" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="181" target="185">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="181" value="&lt;font color=&quot;#d6d6dd&quot;&gt;&lt;span style=&quot;background-color: rgb(24, 24, 24);&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Enter standby Mode&lt;br&gt;Dim LED and Nixie brightness&lt;/font&gt;&lt;br&gt;&lt;/span&gt;&lt;/font&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-268.75" y="337.5" width="170" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="183" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-20" y="280" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="185" value="Any button pressed?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-270" y="422.5" width="175" height="90" as="geometry"/>
-                </mxCell>
-                <mxCell id="193" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="191" target="77">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="198" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="191" target="25">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="191" value="current time in hibernation period?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-50" y="195" width="175" height="90" as="geometry"/>
-                </mxCell>
-                <mxCell id="196" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-150" y="165" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="197" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-90" y="200" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="204" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="201" target="203">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="201" value="Any button pressed?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-50" y="420" width="175" height="90" as="geometry"/>
-                </mxCell>
-                <mxCell id="203" value="&lt;font color=&quot;#d6d6dd&quot;&gt;&lt;span style=&quot;background-color: rgb(24, 24, 24);&quot;&gt;Hibernate peek mode for 5s&lt;br&gt;Only show dimmed nixie tube&lt;br&gt;&lt;/span&gt;&lt;/font&gt;" style="shape=rect;rounded=1;html=1;whiteSpace=wrap;align=center;" vertex="1" parent="1">
-                    <mxGeometry x="-56.25" y="550" width="187.5" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="226" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="213" target="16">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="213" value="Button1 pressed?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1260" y="205" width="177.5" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="217" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="213">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1171" y="800" as="sourcePoint"/>
-                        <mxPoint x="-1171.75" y="440" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="219" value="" style="endArrow=classic;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="94">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1060" y="330" as="sourcePoint"/>
-                        <mxPoint x="-850" y="510" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="220" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1082.5" y="200" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="223" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1060" y="330" as="sourcePoint"/>
-                        <mxPoint x="-1060" y="240" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="225" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1170" y="425" as="sourcePoint"/>
-                        <mxPoint x="-1003.75" y="424.5" as="targetPoint"/>
-                        <Array as="points">
-                            <mxPoint x="-1020" y="424.5"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="227" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1300" y="205" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="230" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="228" target="15">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="228" value="Button1 pressed?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-760" y="205" width="177.5" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="233" value="" style="endArrow=classic;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="14">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-420" y="750" as="sourcePoint"/>
-                        <mxPoint x="-490" y="250" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="234" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-670" y="275" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="235" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-230" y="295" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="236" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-800" y="200" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="242" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;exitX=1;exitY=0.5;exitDx=0;exitDy=0;startArrow=none;" edge="1" parent="1" source="240">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-428.75" y="755" as="sourcePoint"/>
-                        <mxPoint x="-270" y="754.55" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="243" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-350" y="785" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="244" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-400" y="700" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="245" value="" style="endArrow=classic;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="290" y="870" as="sourcePoint"/>
-                        <mxPoint x="290" y="260" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="250" value="&lt;span style=&quot;background-color: rgb(24, 24, 24);&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;kAutoReturnDisplayMs&lt;br&gt;elapsed&lt;/font&gt;&lt;/span&gt;&lt;span style=&quot;font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; background-color: rgb(24, 24, 24);&quot;&gt;?&lt;/span&gt;" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-770" y="712" width="200" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="251" value="" style="endArrow=classic;html=1;fontFamily=Helvetica;fontSize=12;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="228" target="250">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-570" y="480" as="sourcePoint"/>
-                        <mxPoint x="-520" y="430" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="253" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="250">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-671" y="870" as="sourcePoint"/>
-                        <mxPoint x="-510" y="430" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="254" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-635" y="813" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="255" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-570" y="717" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="281" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="257" target="18">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="257" value="Button1 pressed?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1770" y="205" width="180" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="260" value="&lt;span style=&quot;background-color: rgb(24, 24, 24);&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;kAutoReturnDisplayMs&lt;br&gt;elapsed&lt;/font&gt;&lt;/span&gt;&lt;span style=&quot;font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; background-color: rgb(24, 24, 24);&quot;&gt;?&lt;/span&gt;" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1515" y="680" width="200" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="264" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="262" target="93">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="262" value="&lt;div style=&quot;background-color: rgb(24, 24, 24); line-height: 19px;&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;kDivergenceJumpMs&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;background-color: rgb(24, 24, 24); line-height: 19px;&quot;&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;elapsed?&lt;/font&gt;&lt;/div&gt;" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1521.25" y="490" width="212.5" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="265" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1555" y="500" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="266" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1400" y="570" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="268" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="262">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1680" y="530" as="sourcePoint"/>
-                        <mxPoint x="-1316.25" y="435" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="270" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1680" y="720" as="sourcePoint"/>
-                        <mxPoint x="-1515" y="719.5" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="271" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1561.25" y="690" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="272" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1420" y="860.0000000000002" as="sourcePoint"/>
-                        <mxPoint x="290" y="870" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="274" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="260">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1415" y="860" as="sourcePoint"/>
-                        <mxPoint x="-1030" y="680" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="275" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1410" y="765" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="276" value="" style="endArrow=classic;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="257">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1680" y="720" as="sourcePoint"/>
-                        <mxPoint x="-1490" y="450" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="277" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1660" y="165" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="278" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1601.25" y="205" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="279" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1590" y="240" as="sourcePoint"/>
-                        <mxPoint x="-1560" y="240" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="280" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1560" y="240" as="sourcePoint"/>
-                        <mxPoint x="-1560" y="330" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="282" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1082.5" y="240" as="sourcePoint"/>
-                        <mxPoint x="-1060" y="240" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="285" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="283" target="133">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="283" value="Button1 pressed?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1770" y="-40" width="180" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="286" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1740" y="-70" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="287" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1580" y="-40" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="290" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="131.25" y="573.8199999999999" as="sourcePoint"/>
-                        <mxPoint x="150" y="574" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="296" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-10" y="505" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="297" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="85" y="410" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="298" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="125" y="464.40999999999974" as="sourcePoint"/>
-                        <mxPoint x="150" y="465" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="300" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="150" y="580" as="sourcePoint"/>
-                        <mxPoint x="150" y="240" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="302" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;startArrow=none;" edge="1" parent="1" source="316">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1453" y="50" as="sourcePoint"/>
-                        <mxPoint x="-1453.09" y="15" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="304" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="290" y="-80" as="sourcePoint"/>
-                        <mxPoint x="-1680" y="-80" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="305" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1680.5" y="-45" as="sourcePoint"/>
-                        <mxPoint x="-1680.5900000000001" y="-80" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="306" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="77">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-180" y="-80" as="sourcePoint"/>
-                        <mxPoint x="-20" y="260" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="309" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="250" target="240">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-570" y="757" as="sourcePoint"/>
-                        <mxPoint x="-270" y="754.5500000000002" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="240" value="Button1 pressed?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-388.75" y="717" width="177.5" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="310" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="185">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-300" y="468" as="sourcePoint"/>
-                        <mxPoint x="-270" y="462.5" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="311" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="240">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-300" y="870" as="sourcePoint"/>
-                        <mxPoint x="-260" y="477.5" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="312" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="240">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-300" y="470" as="sourcePoint"/>
-                        <mxPoint x="-260" y="477.5" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="313" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-308.75" y="430" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="314" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="185">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-182" y="680" as="sourcePoint"/>
-                        <mxPoint x="-290" y="797" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="315" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-180" y="680" as="sourcePoint"/>
-                        <mxPoint x="290" y="680" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="317" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" target="316">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1453" y="50" as="sourcePoint"/>
-                        <mxPoint x="-1453.0900000000001" y="15" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="316" value="4.5S slapse?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-1542.5" y="30" width="180" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="319" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="316">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1680" y="65" as="sourcePoint"/>
-                        <mxPoint x="-1020" y="230" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="320" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1362.5" y="64.28999999999999" as="sourcePoint"/>
-                        <mxPoint x="-1320" y="64" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="321" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="-1320" y="-80" as="sourcePoint"/>
-                        <mxPoint x="-1320" y="60" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="323" value="No" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1605" y="30" width="40" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="324" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-                    <mxGeometry x="-1370" y="30" width="40" height="30" as="geometry"/>
-                </mxCell>
-            </root>
-        </mxGraphModel>
-    </diagram>
+<mxfile host="app.diagrams.net">
+  <diagram id="buttons" name="按鍵分流">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="短按之後的判斷順序" style="text;html=1;fontSize=22;fontStyle=1;align=left;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="420" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="src" value="對照 SystemController::handle_button_press。上面的判斷先成立就直接返回，不會再換模式或設定檔。長按 BTN1+BTN2 三秒由 InputDaemon 另外處理，不進入這條鏈；組合按住期間，這兩顆鍵的短按不會送出。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;spacingRight=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="980" y="24" width="560" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="start" value="短按" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="250" y="70" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="d1" value="BTN0，而且鬧鐘正在響？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="180" y="170" width="280" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="o1" value="停止鬧鐘。這次按鍵結束。&lt;br&gt;曲目最長循環 180 秒。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="560" y="185" width="280" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="d2" value="休眠中，而且鬧鐘沒有在響？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="180" y="330" width="280" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="o2" value="進入 Peek。見「休眠與待機」。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="560" y="345" width="280" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="d3" value="正在 Peek？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="180" y="490" width="280" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="o3" value="把 5 秒倒數重設。不換模式。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="560" y="505" width="280" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="d4" value="待機變暗中？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="180" y="640" width="280" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="o4" value="恢復設定檔亮度。留在時鐘模式。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="560" y="655" width="280" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="d5" value="設定熱點開著？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="180" y="790" width="280" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="o5" value="忽略這次短按。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="560" y="805" width="280" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="d6" value="哪一顆鍵？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="180" y="940" width="280" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="b0" value="BTN0　GPIO 8&lt;br&gt;番茄鐘且還在等待：開始工作&lt;br&gt;發散計：重新亂跳&lt;br&gt;其他模式：沒有動作" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1120" width="300" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="b1" value="BTN1　GPIO 12&lt;br&gt;循環顯示模式&lt;br&gt;見「顯示模式」" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="380" y="1120" width="260" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="b2" value="BTN2　GPIO 13&lt;br&gt;番茄鐘：忽略&lt;br&gt;其他：下一組燈光設定檔&lt;br&gt;若網頁正在預覽，先取消預覽" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="680" y="1120" width="320" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="pins" value="三顆鍵都是低電位有效。BTN1 是模式，BTN2 短按是設定檔。設定檔有 4 組，0 到 3 循環，並寫入 NVS。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="1120" width="500" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="start" target="d1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1y" value="是" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d1" target="o1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1n" value="否" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d1" target="d2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2y" value="是" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d2" target="o2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2n" value="否" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d2" target="d3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3y" value="是" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d3" target="o3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3n" value="否" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d3" target="d4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4y" value="是" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d4" target="o4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4n" value="否" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d4" target="d5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5y" value="是" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d5" target="o5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5n" value="否" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d5" target="d6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6a" value="BTN0" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d6" target="b0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6b" value="BTN1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d6" target="b1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6c" value="BTN2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="d6" target="b2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="modes" name="顯示模式">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="顯示模式　BTN1 循環" style="text;html=1;fontSize=22;fontStyle=1;align=left;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="480" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="boot" value="開機" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="90" y="80" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="clock" value="CLOCK_HHMMSS&lt;br&gt;時鐘 HHMMSS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="190" width="220" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="date" value="DATE_YYMMDD&lt;br&gt;日期 YYMMDD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="340" y="190" width="220" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="pomo" value="POMODORO&lt;br&gt;番茄鐘" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="640" y="190" width="220" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="div" value="DIVERGENCE_METER&lt;br&gt;發散計" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="940" y="190" width="230" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="cath" value="CATHODE_POISONING&lt;br&gt;陰極防護" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="190" width="240" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="manual" value="MANUAL_DISPLAY&lt;br&gt;CLI：set_nixie" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="520" width="220" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="off" value="OFF&lt;br&gt;休眠關掉燈管。見「休眠與待機」。不在 BTN1 循環裡。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="340" y="500" width="280" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="config" value="CONFIG_CODE&lt;br&gt;設定熱點的四位連線碼。見「設定熱點」。不在 BTN1 循環裡。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="680" y="500" width="320" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="note" value="實線是 BTN1。虛線是時間到了自動回到時鐘。&lt;br&gt;日期、發散計都是 10 秒後返回。陰極防護是 15 步、每步 300 ms（4.5 秒）後返回。&lt;br&gt;每 15 分鐘，若目前是時鐘、日期或手動顯示，而且鬧鐘沒有在響，會自動進入陰極防護。若當時在番茄鐘、發散計、陰極防護或關閉，時間到了也不開始，離開那些模式後才補跑。&lt;br&gt;用 BTN1 離開番茄鐘時，背光恢復成使用中的設定檔。&lt;br&gt;MANUAL_DISPLAY 不在循環中間；從它按 BTN1 會回到時鐘（next_display_mode 的 default）。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="680" width="1100" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="eb" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="boot" target="clock">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="BTN1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="clock" target="date">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="BTN1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="date" target="pomo">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="BTN1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="pomo" target="div">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="BTN1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="div" target="cath">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="BTN1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="cath" target="clock">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1370" y="420"/>
+              <mxPoint x="150" y="420"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad" value="10 秒" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="date" target="clock">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="140"/>
+              <mxPoint x="150" y="140"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="av" value="10 秒" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="div" target="clock">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1055" y="120"/>
+              <mxPoint x="150" y="120"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ac" value="4.5 秒" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="cath" target="clock">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1370" y="100"/>
+              <mxPoint x="150" y="100"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="em" value="BTN1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="manual" target="clock">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="auto15" value="每 15 分鐘" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="clock" target="cath">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="360"/>
+              <mxPoint x="1370" y="360"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="hibernate" name="休眠與待機">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="休眠與待機" style="text;html=1;fontSize=22;fontStyle=1;align=left;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="320" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="normal" value="HibernateState::Normal&lt;br&gt;依設定檔顯示" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="180" width="250" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="hib" value="Hibernating&lt;br&gt;DisplayMode::OFF&lt;br&gt;燈管與背光關閉" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="480" y="170" width="250" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="peek" value="Peek&lt;br&gt;時鐘模式&lt;br&gt;燈管亮度 50，背光關，5 秒" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="900" y="170" width="270" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="standby" value="待機&lt;br&gt;只有時鐘模式&lt;br&gt;燈管與背光都降到設定檔的 25%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="460" width="280" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="note" value="休眠時段要先啟用。開始與結束相同時，時段不會生效。同一天內是開始 ≤ 現在 &lt; 結束；若開始晚於結束，時段跨過午夜。&lt;br&gt;設定熱點開著時不評估休眠。進入熱點時若正在休眠或 Peek，會先把 HibernateState 拉回 Normal，燈管維持點亮。&lt;br&gt;離開時段時恢復設定檔。若當時不是 Normal，顯示模式回到時鐘。&lt;br&gt;網頁燈光預覽在休眠或 Peek 期間只記在記憶體，不會推到燈管。取消預覽時也不會在休眠中把燈管打開。&lt;br&gt;待機只在 Normal 而且是時鐘模式時累計。60 秒沒有按鍵才變暗。任一鍵恢復亮度，這次按鍵不換模式。日期、番茄鐘等模式不進入待機。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="430" width="820" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="進入休眠時段" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="normal" target="hib">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="任一鍵，鬧鐘未響" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="hib" target="peek">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="5 秒到" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="peek" target="hib">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1035" y="330"/>
+              <mxPoint x="605" y="330"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="再按，重設 5 秒" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;rounded=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;entryX=1;entryY=0.25;" edge="1" parent="1" source="peek" target="peek">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1035" y="120"/>
+              <mxPoint x="1220" y="120"/>
+              <mxPoint x="1220" y="195"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="離開時段" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="hib" target="normal">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="605" y="140"/>
+              <mxPoint x="185" y="140"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="60 秒無按鍵" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="normal" target="standby">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" value="任一鍵，恢復亮度" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="standby" target="normal">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="510"/>
+              <mxPoint x="40" y="220"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="wifi" name="設定熱點">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="設定熱點" style="text;html=1;fontSize=22;fontStyle=1;align=left;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="idle" value="一般運作&lt;br&gt;記住進來前的顯示模式與休眠狀態" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="180" width="280" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="wait" value="WaitingClient&lt;br&gt;CONFIG_CODE&lt;br&gt;六管顯示四位連線碼&lt;br&gt;背光綠色呼吸" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="460" y="160" width="260" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="client" value="ClientConnected&lt;br&gt;回到時鐘&lt;br&gt;套用已存的燈光設定檔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="880" y="170" width="260" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="exit" value="關閉熱點" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontFamily=Helvetica;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="620" y="420" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="restore" value="還原&lt;br&gt;進來前是休眠，而且現在仍在時段：回到休眠&lt;br&gt;進來前是時鐘或日期：回到時鐘&lt;br&gt;其他模式：還原進來前的模式" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="420" y="560" width="520" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="note" value="進入：長按 BTN1+BTN2 三秒。熱點名稱 NixieClock-XXXX，密碼 nixie2026，位址 192.168.8.8。&lt;br&gt;若進來時正在休眠或 Peek，先把休眠狀態改回 Normal，避免燈管被關掉。燈管亮度用設定檔；設定檔是 0 時用 200。背光是 RGB 120,255,120、亮度 200、呼吸。&lt;br&gt;手機一連上就切到時鐘與設定檔背光，熱點仍開著，設定頁可以繼續用。&lt;br&gt;關閉條件：再長按同一組合、頁面按完成並關閉、開滿 15 分鐘，或最後一個客戶端斷線後 15 秒。&lt;br&gt;熱點開著時，通過休眠與待機判斷之後的短按會被忽略，所以不會用 BTN1 換模式。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="740" width="1280" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="長按 3 秒" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="idle" target="wait">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="有客戶端連上" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="wait" target="client">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="逾時、斷線或再長按" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="wait" target="exit">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="同上" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="client" target="exit">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="exit" target="restore">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="回到一般運作" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="restore" target="idle">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="615"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="preview" name="燈光預覽">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="網頁燈光預覽與設定檔" style="text;html=1;fontSize=22;fontStyle=1;align=left;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="460" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="open" value="打開燈光頁&lt;br&gt;GET /api/settings&lt;br&gt;表單顯示使用中的設定檔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="280" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="slide" value="拖曳顏色、亮度、效果&lt;br&gt;POST display，persist: false&lt;br&gt;約 60 ms 合併一次" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="70" y="250" width="300" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="hib" value="休眠或 Peek？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="90" y="430" width="260" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="hold" value="只記在記憶體&lt;br&gt;燈管維持關閉或 Peek" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="460" y="440" width="250" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="apply" value="立刻套用到燈管&lt;br&gt;不寫入 NVS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="100" y="590" width="240" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="save" value="儲存 1–4&lt;br&gt;persist: true，profiles.save_index&lt;br&gt;寫入該格、設成使用中、清掉預覽" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="820" y="120" width="320" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="swatch" value="點色塊&lt;br&gt;profiles.active_index&lt;br&gt;套用該格已存的外觀" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="820" y="260" width="320" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="leave" value="離開燈光頁，或瀏覽器關閉&lt;br&gt;POST preview.cancel&lt;br&gt;表單回到上次儲存的外觀&lt;br&gt;非休眠時，燈管也恢復該設定檔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="820" y="400" width="360" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="btn" value="裝置上按 BTN2&lt;br&gt;先取消預覽，再切到下一組設定檔並寫入 NVS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="820" y="560" width="360" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="note" value="預覽會一直留著，直到取消、儲存，或 BTN2 換設定檔。SystemController 有 display_preview_timer_，回呼會取消預覽，但韌體沒有呼叫 esp_timer_start，所以不會在 2 秒後自己恢復。&lt;br&gt;表單上的「預覽中」是網頁自己的旗標。離開燈光頁時，即使裝置沒有把燈管改回去，網頁也會把滑桿設回上次儲存的值。&lt;br&gt;沒有板子時，用 python3 scripts/mock_web_ui.py 開同一份頁面。persist: false 只會印在終端機，重新整理後表單回到已儲存的設定。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="80" y="720" width="1100" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="open" target="slide">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;" edge="1" parent="1" source="slide" target="hib">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="是" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="hib" target="hold">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="否" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="hib" target="apply">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="submodes" name="番茄鐘與自動模式">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="番茄鐘、發散計、陰極防護、鬧鐘" style="text;html=1;fontSize=22;fontStyle=1;align=left;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="640" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="idle" value="PomodoroPhase::IDLE&lt;br&gt;顯示 002500&lt;br&gt;靜態橘 255,140,0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="230" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="work" value="WORK&lt;br&gt;呼吸橘，25 分鐘" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="360" y="120" width="210" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="brk" value="BREAK&lt;br&gt;呼吸綠 0,255,0，5 分鐘" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="660" y="120" width="230" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="pnote" value="只有等待中按 BTN0 會開始。工作或休息中再按 BTN0 沒有作用。BTN1 離開並恢復設定檔背光。BTN2 在番茄鐘中無效。工作與休息會一直交替，不會自己回時鐘。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="250" width="850" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="jump" value="DivergencePhase::JUMPING&lt;br&gt;1.5 秒內六管各自亂跳" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="380" width="260" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="frozen" value="FROZEN&lt;br&gt;停在 0–199999" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="380" y="380" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="back" value="回到時鐘" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="680" y="395" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="dnote" value="從進入發散計算起滿 10 秒就回時鐘，含亂跳的 1.5 秒。BTN0 在凍結或亂跳中都會從頭再來。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="490" width="780" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="cstep" value="陰極防護&lt;br&gt;六管同一數字，起點 0–9 隨機&lt;br&gt;每 300 ms 全部 +1（超過 9 回到 0）&lt;br&gt;走完 15 步後回時鐘" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="600" width="360" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="alarm" value="鬧鐘&lt;br&gt;DS3231 鬧鐘 1 觸發後循環播放曲目&lt;br&gt;最長 180 秒，或 BTN0 停止&lt;br&gt;BTN0 比休眠 Peek 先判斷" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="460" y="600" width="360" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="fade" value="數字淡入淡出只在時鐘、日期、番茄鐘，而且設定是 fade 時運作。&lt;br&gt;單管：穩定 → 淡出 450 ms → 全暗 80 ms → 淡入 450 ms → 穩定。&lt;br&gt;背光效果：static 是恆亮，breath 是呼吸，rainbow 是色相旋轉，off 是全關。" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;align=left;spacingLeft=8;fontFamily=Helvetica;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="760" width="900" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="BTN0" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="idle" target="work">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="25 分鐘到" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="work" target="brk">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="5 分鐘到" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="brk" target="work">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="775" y="90"/>
+              <mxPoint x="465" y="90"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="1.5 秒" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="jump" target="frozen">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="滿 10 秒" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;dashed=1;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="frozen" target="back">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="BTN0 重來" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=classic;fontFamily=Helvetica;fontSize=12;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="frozen" target="jump">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="490" y="350"/>
+              <mxPoint x="170" y="350"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>
