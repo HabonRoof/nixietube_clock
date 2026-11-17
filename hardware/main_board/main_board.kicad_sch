@@ -9597,6 +9597,14 @@
 		(uuid "02087f5b-9392-44d8-b98e-6bf3544edefe")
 	)
 	(no_connect
+		(at 80.01 57.15)
+		(uuid "c4e1a7b2-6d08-4f3a-9c15-2b8e7a41d6f0")
+	)
+	(no_connect
+		(at 80.01 59.69)
+		(uuid "e7b3c9d1-5a24-4e86-8f70-1c6d9b52a8e3")
+	)
+	(no_connect
 		(at 182.88 237.49)
 		(uuid "07897894-6ebe-45a9-8e8d-80ac07856d3e")
 	)
@@ -9821,16 +9829,6 @@
 			(type default)
 		)
 		(uuid "018e3ac7-80cb-4e97-8e37-6c9bd3ae7065")
-	)
-	(wire
-		(pts
-			(xy 74.93 57.15) (xy 80.01 57.15)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "023523a6-e5dd-4ba9-8219-da6cf78ca528")
 	)
 	(wire
 		(pts
@@ -10611,6 +10609,16 @@
 			(type default)
 		)
 		(uuid "2adf2eec-7b4f-4100-86e6-bceed356ef43")
+	)
+	(wire
+		(pts
+			(xy 101.6 52.07) (xy 100.33 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2b802a68-faa7-4208-902b-00d4fbb720e9")
 	)
 	(wire
 		(pts
@@ -11614,16 +11622,6 @@
 	)
 	(wire
 		(pts
-			(xy 80.01 59.69) (xy 73.66 59.69)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6cbaa29f-4f5a-4adf-81f6-83dbe6612df3")
-	)
-	(wire
-		(pts
 			(xy 308.61 80.01) (xy 318.77 80.01)
 		)
 		(stroke
@@ -11894,16 +11892,6 @@
 	)
 	(wire
 		(pts
-			(xy 49.53 49.53) (xy 74.93 49.53)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7a15022a-2cce-489b-8afb-36d43bc007f9")
-	)
-	(wire
-		(pts
 			(xy 32.766 143.51) (xy 58.42 143.51)
 		)
 		(stroke
@@ -12071,16 +12059,6 @@
 			(type default)
 		)
 		(uuid "86250044-f08f-4fb0-8a9f-a1a833dcef16")
-	)
-	(wire
-		(pts
-			(xy 74.93 49.53) (xy 74.93 57.15)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "8638471d-ad98-4e95-b41a-837ad488b5a4")
 	)
 	(wire
 		(pts
@@ -13334,16 +13312,6 @@
 	)
 	(wire
 		(pts
-			(xy 73.66 59.69) (xy 73.66 54.61)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cc7df9fe-1a8e-4bbe-95ff-6fcffa9a3e5c")
-	)
-	(wire
-		(pts
 			(xy 247.65 21.59) (xy 257.81 21.59)
 		)
 		(stroke
@@ -13601,16 +13569,6 @@
 			(type default)
 		)
 		(uuid "d6904a46-8d7b-40a3-b2ef-1b4a7b2650f0")
-	)
-	(wire
-		(pts
-			(xy 50.8 54.61) (xy 73.66 54.61)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d73fd519-86a0-4ca8-86ba-9e4a0eaf339b")
 	)
 	(wire
 		(pts
@@ -14214,6 +14172,16 @@
 	)
 	(wire
 		(pts
+			(xy 101.6 49.53) (xy 100.33 49.53)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f7827bc3-15f3-45f8-9ae2-a58d786e0f0d")
+	)
+	(wire
+		(pts
 			(xy 232.41 31.75) (xy 234.95 31.75)
 		)
 		(stroke
@@ -14336,7 +14304,7 @@
 	)
 	(global_label "I2C0_SCL"
 		(shape input)
-		(at 100.33 52.07 0)
+		(at 101.6 49.53 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -14346,7 +14314,7 @@
 		)
 		(uuid "072cb5bb-6680-44a5-a061-8f613db0ee82")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 112.0842 52.07 0)
+			(at 113.3542 49.53 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15524,7 +15492,7 @@
 	)
 	(global_label "I2C0_SDA"
 		(shape input)
-		(at 100.33 49.53 0)
+		(at 101.6 52.07 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -15534,7 +15502,7 @@
 		)
 		(uuid "efdeecd8-c923-43cb-a65e-d6350036397d")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 112.1447 49.53 0)
+			(at 113.4147 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18652,7 +18620,7 @@
 		(exclude_from_sim no)
 		(in_bom no)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "29f8507f-79bd-4813-a331-09bff0f9cb53")
 		(property "Reference" "U9"
 			(at 268.986 191.008 0)
@@ -18828,7 +18796,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_SON:VSON-8_3.3x3.3mm_P0.65mm_NexFET"
+		(property "Footprint" "habonroof_kicad_library:FDMC4435BZ"
 			(at 114.3 24.13 0)
 			(effects
 				(font
@@ -18837,7 +18805,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://www.mouser.tw/datasheet/2/389/stl6p3llh6-1851075.pdf"
+		(property "Datasheet" "https://www.onsemi.com/pdf/datasheet/fdmc4435bz-d.pdf"
 			(at 111.76 29.21 0)
 			(effects
 				(font
@@ -18846,7 +18814,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "P-MOSFET transistor, gate/drain/source"
+		(property "Description" "P-MOSFET transistor, drain/gate/source"
 			(at 111.76 29.21 0)
 			(effects
 				(font
@@ -22643,7 +22611,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SMF28A"
+		(property "Value" "SMF15A"
 			(at 96.52 24.1299 90)
 			(effects
 				(font
@@ -22652,7 +22620,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Diode_SMD:D_SMF"
+		(property "Footprint" "Diode_SMD:D_SOD-123F"
 			(at 99.06 22.86 0)
 			(effects
 				(font
@@ -22661,7 +22629,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://www.vishay.com/doc?85881"
+		(property "Datasheet" "https://jlc-prod-smt.oss-eu-central-1.aliyuncs.com/smtDataManualFile/8756679445271203840-C123802.pdf?response-content-disposition=attachment%3B%20filename%3DC123802.pdf%3B%20filename%2A%3DUTF-8%27%27C123802.pdf&x-oss-date=20261117T050915Z&x-oss-expires=3600&x-oss-security-token=CAISgAN1q6Ft5B2yfSjIr5rFO4L31bVs%2F4OdRkiHo2QfdLkarPbyozz2IHhMdHJsAOodtv0%2FmmhT6PkclqRLcbhpcmfjV%2BZHzLB8qeBHpSA3557b16cNrbH4M4H6aXeirtuwDsz9SNTCALjPD3nPii50x5bjaDymRCbLGJaViJlhHLN1Ow6jdmhpCctxLAlvo9NgFxm3D%2Fu2NQPwiWf9FVdhvhEG6Vly8qOi2MaRmFy8yFTx0b0SvJ%2BjYMrmPctoN9JnSdC5mfdzau3a1TJ84gRD0a5wkaVA1zbDs5bfISEIuUzebreLqY03dV4mOvdqIcMe8qigz88fk%2FfIioH6xyxKOexoSCnFTOiiupCcQLPyao9jLu6iayqViY7QaIOTqQohZmkAMwVOasAsI3Ngh4zF97Qt0cVNkXO9gWfLI8DtuMleWhqjVVBfqaHD0eS19jklBdzSlusJRAJJUVBflCeKEaRNSAd3WGhEfM2%2BBt4QT30w5N2u00S8OSMIm3G%2BpKKWD5sagAGdhuJQv%2BBnIy4RtdePzhvyX%2BKKwMOYzmKeHnuOaeP80afqzqghGS01niYySzDJJSM0F%2FFw3SBK7C8xTKzxkJVHzPSWH9pOMv9opXymmB%2F8X6kWS2%2BbOw0CGKozAF2F0PtbCyV90t%2B4IwcPqtWQ3mr9dqMlSItK9WMpkg7QpVcAlyAA&x-oss-signature-version=OSS4-HMAC-SHA256&x-oss-credential=STS.NYpp8C8jMHAvDn6GdJx66C3YA%2F20261117%2Feu-central-1%2Foss%2Faliyun_v4_request&x-oss-signature=685d0ed9576aa164d99473c1902e4e54895ad958923195d22caa47d9b60f19aa"
 			(at 93.98 24.13 0)
 			(effects
 				(font
@@ -22670,8 +22638,17 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "200W unidirectional Transil Transient Voltage Suppressor, 28Vrwm, SMF"
+		(property "Description" ""
 			(at 93.98 22.86 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LSCS PN" "C123802"
+			(at 93.98 22.86 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -26143,7 +26120,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C25900"
+		(property "LCSC PN" "C881388"
 			(at 266.7 151.13 0)
 			(effects
 				(font
@@ -26230,7 +26207,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" "C25900"
+		(property "LCSC PN" "C881388"
 			(at 269.24 151.13 0)
 			(effects
 				(font

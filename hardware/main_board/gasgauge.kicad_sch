@@ -1489,7 +1489,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC PN" ""
+		(property "LCSC PN" "C52923"
 			(at 105.41 91.44 0)
 			(effects
 				(font
