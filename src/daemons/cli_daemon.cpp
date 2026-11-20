@@ -908,6 +908,39 @@ static int cal_ambient_func(int argc, char **argv)
     return 0;
 }
 
+// BQ25601 REG08 VBUS_STAT. PSEL parts only define 000/001/011/111.
+static const char *bq25601_vbus_state(uint8_t code)
+{
+    switch (code) {
+    case 0: return "no input";
+    case 1: return "USB SDP 500mA";
+    case 3: return "Adapter 2.4A";
+    case 7: return "OTG";
+    default: return "unknown";
+    }
+}
+
+// BQ25601 REG08 CHRG_STAT.
+static const char *bq25601_charge_state(uint8_t code)
+{
+    switch (code) {
+    case 0: return "disable";
+    case 1: return "pre-charge";
+    case 2: return "fast charging";
+    default: return "charge done";
+    }
+}
+
+// BQ25601 REG01 SYS_MIN[2:0], in millivolts.
+static uint16_t bq25601_sys_min_mv(uint8_t code)
+{
+    static const uint16_t kSysMinMv[] = {2600, 2800, 3000, 3200, 3400, 3500, 3600, 3700};
+    if (code > 7) {
+        code = 7;
+    }
+    return kSysMinMv[code];
+}
+
 // --- Command: get_bq25601_status ---
 static int get_bq25601_status_func(int argc, char **argv)
 {
@@ -928,8 +961,34 @@ static int get_bq25601_status_func(int argc, char **argv)
         return 1;
     }
 
-    printf("BQ25601 REG08 (System Status): 0x%02X\n", status);
-    printf("BQ25601 REG01 (Power-on Config): 0x%02X\n", reg01);
+    const uint8_t vbus = static_cast<uint8_t>((status >> 5) & 0x07);
+    const uint8_t charge = static_cast<uint8_t>((status >> 3) & 0x03);
+    const char *vbus_name = bq25601_vbus_state(vbus);
+    const uint16_t sys_min_mv = bq25601_sys_min_mv(static_cast<uint8_t>((reg01 >> 1) & 0x07));
+    char vbus_text[24];
+    if (strcmp(vbus_name, "unknown") == 0) {
+        snprintf(vbus_text, sizeof(vbus_text), "unknown (%u)", vbus);
+    } else {
+        snprintf(vbus_text, sizeof(vbus_text), "%s", vbus_name);
+    }
+
+    printf("BQ25601 System status: Vbus state: %s, Charging: %s, Power status: %s, "
+           "Thermal: %s, VSYS: %s (0x%02X)\n",
+           vbus_text,
+           bq25601_charge_state(charge),
+           (status & 0x04) ? "Good" : "Not good",
+           (status & 0x02) ? "regulating" : "normal",
+           (status & 0x01) ? "at minimum" : "normal",
+           status);
+
+    printf("BQ25601 Power-on config: Charging: %s, OTG: %s, PFM: %s, SYS_MIN: %u.%uV, "
+           "OTG min battery: %s (0x%02X)\n",
+           (reg01 & 0x10) ? "enable" : "disable",
+           (reg01 & 0x20) ? "enable" : "disable",
+           (reg01 & 0x80) ? "disable" : "enable",
+           sys_min_mv / 1000, (sys_min_mv % 1000) / 100,
+           (reg01 & 0x01) ? "2.5V" : "2.8V",
+           reg01);
     return 0;
 }
 
@@ -1027,7 +1086,7 @@ static int help_func(int argc, char **argv)
     printf("get_uuid                                        Get UUID of device\n");
     printf("get_hw_version                                  Get hardware version\n");
     printf("get_fw_version                                  Get firmware version\n");
-    printf("get_bq25601_status                             Get BQ25601 status register (REG08, REG01)\n");
+    printf("get_bq25601_status                             Decode BQ25601 REG08 and REG01\n");
     printf("get_ambient                                     Get ambient light lux and factor\n");
     printf("cal_ambient dark|bright|reset|self              3-step self-cal in dark room\n");
     printf("enable_charging                                 Enable charging\n");
@@ -1238,7 +1297,7 @@ void CliDaemon::register_commands()
     // Register: get_bq25601_status
     const esp_console_cmd_t get_bq25601_status_cmd = {
         .command = "get_bq25601_status",
-        .help = "Get BQ25601 status register (REG08, REG01)",
+        .help = "Decode BQ25601 REG08 and REG01",
         .hint = NULL,
         .func = &get_bq25601_status_func,
         .argtable = NULL,
